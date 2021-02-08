@@ -1,7 +1,9 @@
 # Docker swarm demo for cronicle cluster
 
-# sample secret:
-# docker secret create cronicle.env /path/to/cronicle.env
+# Before you start:
+# make sure your docker engine is in swarm mode
+# build a local cronicle-edge image: docker build -t cronicle:edge -f Dockerfile .
+# create sample secret (dotenv file for shell plug): echo "test=12345" > $HOME/cronicle.env && docker secret create cronicle.env $HOME/cronicle.env
 
 # start cluster:         docker stack deploy --compose-file  LocalCluster.yaml cron_stack
 # check status:          docker stack ps cron_stack
