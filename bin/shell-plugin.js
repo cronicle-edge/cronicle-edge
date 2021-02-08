@@ -40,7 +40,7 @@ stream.on('json', function (job) {
 	fs.writeFileSync(script_file, job.params.script, { mode: "775" });
 
 	if (job.params.tty) { // execute thru script tool
-		var child = cp.spawn("/usr/bin/script", ["-qec", script_file, "--flush"], {
+		var child = cp.spawn("/usr/bin/script", ["-qec", script_file, "--flush", "/dev/null"], {
 			stdio: ['pipe', 'pipe', 'pipe']
 		});
 	}
