@@ -2,12 +2,22 @@
 # test run: docker run -it -v $HOME/data:/opt/cronicle/data -p 3012:3012 cronicle:edge manager
 
 FROM mcr.microsoft.com/powershell:alpine-3.11
-RUN apk add --no-cache  nodejs npm git tini util-linux bash neovim openssl krb5 procps coreutils curl acl highlight jq
+RUN apk add --no-cache  nodejs npm git tini util-linux bash openssl procps coreutils curl acl neovim krb5 highlight jq
+# neovim, krb5, highlight, jq are not required. You can omit util-linux, procps and coreutils if using Ubuntu or Centos
 
-# optional java 15
+# optional lolcat for tty/color debugging
+RUN apk add lolcat --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+
+# optional java 15, for java 11 just use "apk add openjdk11"
 # RUN apk add openjdk15-jdk --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 # ENV JAVA_HOME=/usr/lib/jvm/java-15-openjdk
 # ENV PATH="$JAVA_HOME/bin:${PATH}"
+
+# optional PySpark
+# RUN apk add python3 gcompat
+# RUN pip3 install pyspark
+# ENV SPARK_CLASSPATH=/jars/*
+# ENV PYSPARK_PYTHON=python3.7
 
 # optional mc s3 client (+20MB)
 # RUN wget -O /usr/bin/mc http://dl.min.io/client/mc/release/linux-amd64/mc && chmod +x /usr/bin/mc
