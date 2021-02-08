@@ -39,6 +39,6 @@ RUN git checkout ${branch}
 RUN npm audit fix --force; npm install; node bin/build dist
 
 # protect sensitive folders
-RUN  mkdir -p /opt/cronicle/data /opt/cronicle/config && chmod 700 /opt/cronicle/data /opt/cronicle/config
+RUN  mkdir -p /opt/cronicle/data /opt/cronicle/config && chmod 0700 /opt/cronicle/data /opt/cronicle/config
 
 ENTRYPOINT ["/sbin/tini", "--"]
