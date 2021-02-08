@@ -17,7 +17,8 @@ RUN apk add lolcat --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testin
 # RUN apk add python3 gcompat
 # RUN pip3 install pyspark
 # ENV SPARK_CLASSPATH=/jars/*
-# ENV PYSPARK_PYTHON=python3.7
+# python version, might change (e.g. to 3.9)
+# ENV PYSPARK_PYTHON=python3.8
 
 # optional mc s3 client (+20MB)
 # RUN wget -O /usr/bin/mc http://dl.min.io/client/mc/release/linux-amd64/mc && chmod +x /usr/bin/mc
