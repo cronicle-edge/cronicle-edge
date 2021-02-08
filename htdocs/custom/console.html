@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronicle Console</title>
+    <script src="../js/external/ansi_up.js"></script>
+    
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            background-color: black;
+            color: #f2f2f2;
+            background-image: radial-gradient(rgba(47, 79, 79, 0.75), black 120%);
+            font: 1rem Inconsolata, monospace;
+        }
+
+        #progress {
+            position: fixed;
+            z-index: 999;
+            background-color: rgba(22, 22, 22, 0.90);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="progress"></div>
+    <div id="console" style="padding: 10px 20px 20px 20px;"></div>
+
+     <script>
+        let ansi_up = new AnsiUp;
+
+        let invalidJobError = `<span style="color:red"><b>Invalid job id </b></span>`
+        let prog = document.getElementById('progress');
+        let validId = false;
+        let query = location.search
+        webConsole = document.getElementById('console');
+        let qParams = new URLSearchParams(query)
+
+        function refresh() {
+            fetch('/api/app/get_live_console' + query + '&session_id=' + localStorage.session_id)
+                .then(response => {
+                    response.json().then(data => {
+                        if (data.data) {
+                            if (!validId) validId = true;
+                             webConsole.innerHTML = `<pre>${ansi_up.ansi_to_html(data.data.replace(/\u001B=/g, ''))} </pre>`;
+                            if(qParams.get('download') == 1) return; // if download=1 stop polling (just print entire log)
+                            prog.innerHTML = `<span style="color:green">
+                                <b>In progress:  ${data.event_title} on ${data.hostname} </b> -
+                                ${(new Date()).toLocaleString()}
+                            </span>`
+                        } 
+                        else if(data.code == 'api' || data.code == 'session') {
+                            webConsole.innerHTML = '<span style="color:red">Unauthorized</span>';
+                            return;
+                        }
+                        else {
+                            // if no live log data check history and return
+                            fetch('/api/app/get_job_log' + query).then(
+                                //if( response.status == 200) { }
+                                response => response.text().then(data => {
+                                    if (response.status == 200) {
+                                        data = data.split("\n").slice(4, -4).join("\n").replace(/\u001B=/g, ''); 
+                                         webConsole.innerHTML = '<pre>' + ansi_up.ansi_to_html(data) + '</pre>';
+                                         }
+                                    else { webConsole.innerHTML = invalidJobError; }
+
+                                }))
+                            if (validId) prog.innerHTML = `<span style="color:green"><b>Completed:</b> ${(new Date()).toLocaleString()}</span>`
+                            return;
+                        }
+                        setTimeout(refresh, 1000);
+                    });
+                }
+                )
+                .catch(function (err) {
+                    webConsole.innerHTML = invalidJobError;
+                });
+        }
+
+        refresh();
+
+    </script>
+
+</body>
+
+</html>

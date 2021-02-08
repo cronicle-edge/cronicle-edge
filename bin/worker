@@ -1,0 +1,12 @@
+#!/bin/sh
+HOMEDIR="$(dirname "$(cd -- "$(dirname "$(readlink -f "$0")")" && (pwd -P 2>/dev/null || pwd))")"
+
+if [ -f "$HOMEDIR/logs/cronicled.pid" ]; then
+  echo 'removing old pid file'
+  rm "$HOMEDIR/logs/cronicled.pid"
+fi
+
+$HOMEDIR/bin/control.sh start
+
+
+

@@ -1,0 +1,59 @@
+html, body, div, span, applet, object,
+h1, h2, h3, h4, h5, h6, p, a, em, img,
+strong, ol, ul, li, dl, dd, dt,
+form, label, input,
+article, aside, canvas, details,
+embed, figure, figcaption, footer,
+header, hgroup, menu, nav, output,
+ruby, section, summary, time, mark,
+audio, video  {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    font-style: inherit;
+    font-size: 100%;
+    font-family: inherit;
+    vertical-align: baseline;
+    background: transparent;
+}
+:focus {
+    outline: 0;
+}
+ul, ol {
+    list-style: none;
+}
+html {
+    height: 100%;
+}
+body {
+    padding: 0;
+    margin: 0;
+    font-family: 'Trebuchet MS', Arial, sans-serif;
+    font-size: 14px;
+    color: #000;
+    height: 100%;
+    min-height: 100%;
+    background: #FFF;
+    line-height: 1;
+    overflow-y: scroll;
+}
+img {
+    border: 0;
+}
+a:link, a:visited {
+    outline: none;
+    text-decoration: none;
+    color: #000;
+}
+.clear {
+    clear: both;
+}
+.clearfix:after {
+    content: ".";
+    display: block;
+    clear: both;
+    visibility: hidden;
+    line-height: 0;
+    height: 0;
+}

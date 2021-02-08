@@ -1,0 +1,70 @@
+# Docker swarm demo for cronicle cluster
+
+# sample secret:
+# docker secret create cronicle.env /path/to/cronicle.env
+
+# start cluster:         docker stack deploy --compose-file  LocalCluster.yaml cron_stack
+# check status:          docker stack ps cron_stack
+# check logs on error:   docker service logs cron_stack_manager1
+# remove cluster:        docker stack rm cron_stack
+
+version: '3.8'
+services:
+  worker1:
+    image: cronicle:latest
+    hostname: worker1
+    ports: 
+      - "3013:3012"
+    networks:
+      - cw
+    deploy:
+      replicas: 1
+    entrypoint: worker
+    secrets:
+      - cronicle.env
+    environment:
+      - "CRONICLE_secret_key=cronicle_demo"
+      - "ENV_FILE=/run/secrets/cronicle.env"
+
+  worker2:
+    image: cronicle:latest
+    hostname: worker2
+    ports: 
+      - "3014:3012"
+    networks:
+      - cw
+    deploy:
+      replicas: 1
+    entrypoint: worker
+    secrets:
+      - cronicle.env
+    environment:
+      - "CRONICLE_secret_key=cronicle_demo"
+      - "ENV_FILE=/run/secrets/cronicle.env"
+ 
+  manager1:
+    image: cronicle:latest
+    hostname: manager1
+    ports: 
+      - "3012:3012"
+    networks:
+      - cw
+    deploy:
+      replicas: 1
+    entrypoint: manager 
+    secrets:
+      - cronicle.env
+    environment:
+      - "CRONICLE_secret_key=cronicle_demo"
+      - "ENV_FILE=/run/secrets/cronicle.env"
+
+networks:
+  cw:
+    driver: overlay
+    attachable: true
+    
+secrets:
+  cronicle.env:
+    external: true
+
+# once manager1 is up and running go to Add Server menu and add worker1 and worker2

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Config Viewer</title>
+
+    <link href="jsonTree/jsonTree.css" rel="stylesheet" />
+    <script src="jsonTree/jsonTree.js"></script>
+    <link href="jsonTree/reset.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=PT+Mono" rel="stylesheet">
+    <link rel="stylesheet" href="css/_combo.css">
+
+    <script>
+
+        var url = "/api/app/get_config?session_id=" + localStorage.session_id
+        var xhttp = new XMLHttpRequest();
+        var data = {};
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                var wrapper = document.getElementById("config_viewer");
+                try { data = JSON.parse(this.responseText) }
+                catch (e) { data = { error: e } }
+                var tree = jsonTree.create(data, wrapper);
+                tree.expand( node => node.label === 'config');
+            }
+        };
+        xhttp.open("GET", url, true);
+        xhttp.send();
+
+    </script>
+
+</head>
+
+<body>
+
+    <div style="padding-left: 30px; padding-top: 20px; font-size: 1rem;"><a href="/#Admin?sub=conf_keys">
+        <i class="fa fa-arrow-circle-left"></i>
+        <b> Go Back</b></a>
+    </div>
+    <div style="padding:20px 20px 30px 20px" id="config_viewer"></div>
+
+
+
+</body>
+
+</html>
