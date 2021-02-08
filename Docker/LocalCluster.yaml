@@ -13,7 +13,7 @@
 version: '3.8'
 services:
   worker1:
-    image: cronicle:latest
+    image: cronicle:edge
     hostname: worker1
     ports: 
       - "3013:3012"
@@ -29,7 +29,7 @@ services:
       - "ENV_FILE=/run/secrets/cronicle.env"
 
   worker2:
-    image: cronicle:latest
+    image: cronicle:edge
     hostname: worker2
     ports: 
       - "3014:3012"
@@ -45,7 +45,7 @@ services:
       - "ENV_FILE=/run/secrets/cronicle.env"
  
   manager1:
-    image: cronicle:latest
+    image: cronicle:edge
     hostname: manager1
     ports: 
       - "3012:3012"
