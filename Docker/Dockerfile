@@ -1,4 +1,5 @@
-# build: docker build -t cronicle:test -f Dockerfile --build-arg branch=master --build-arg echo=1 .
+# build: docker build -t cronicle:edge -f Dockerfile --build-arg branch=main --build-arg echo=1 .
+# test run: docker run -it -v $HOME/data:/opt/cronicle/data -p 3012:3012 cronicle:edge manager
 
 FROM mcr.microsoft.com/powershell:alpine-3.11
 RUN apk add --no-cache  nodejs npm git tini util-linux bash neovim openssl krb5 procps coreutils curl acl highlight jq
@@ -29,15 +30,15 @@ ARG CRONICLE_UID=1007
 ARG CRONICLE_GID=1099
 RUN  addgroup cronicle --gid $CRONICLE_GID && adduser -D -h /opt/cronicle -u $CRONICLE_UID -G cronicle cronicle
 
-# protect sensitive folders
-RUN  mkdir -p /jars /opt/cronicle/data /opt/cronicle/config && chmod 700 /opt/cronicle/data /opt/cronicle/config
-
 WORKDIR /opt/cronicle
 ARG echo
 RUN echo $echo
 ARG branch=main
-RUN git clone https://github/cronicle-edge/cronicle-edge.git /opt/cronicle
+RUN git clone https://github.com/cronicle-edge/cronicle-edge.git /opt/cronicle
 RUN git checkout ${branch}
 RUN npm audit fix --force; npm install; node bin/build dist
+
+# protect sensitive folders
+RUN  mkdir -p /opt/cronicle/data /opt/cronicle/config && chmod 700 /opt/cronicle/data /opt/cronicle/config
 
 ENTRYPOINT ["/sbin/tini", "--"]
