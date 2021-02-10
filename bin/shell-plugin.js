@@ -5,58 +5,38 @@
 // Copyright (c) 2015 Joseph Huckaby
 // Released under the MIT License
 
-var fs = require('fs');
-var os = require('os');
-var cp = require('child_process');
-var path = require('path');
-var JSONStream = require('pixl-json-stream');
-var Tools = require('pixl-tools');
-var dotenv = require('dotenv');
+const fs = require('fs');
+const os = require('os');
+const cp = require('child_process');
+const path = require('path');
+const JSONStream = require('pixl-json-stream');
+const Tools = require('pixl-tools');
 
-var env_cms_file = process.env.ENV_CMS_FILE || 'env.cms'
-var env_file = process.env.ENV_FILE || '.env'
-
-if (fs.existsSync(env_cms_file)) { 
-	try {
-		var env = require('dotenv').parse(cp.execSync(`bin/cms.sh d ${env_cms_file}`))
-		for (const k in env) {
-			process.env[k] = env[k]
-		}
-	} catch { };
-}
-else { 
-	dotenv.config({ path: env_file});
-}
-
+require('dotenv').config()
 
 // setup stdin / stdout streams 
 process.stdin.setEncoding('utf8');
 process.stdout.setEncoding('utf8');
 
-var stream = new JSONStream(process.stdin, process.stdout);
+const stream = new JSONStream(process.stdin, process.stdout);
+
 stream.on('json', function (job) {
 	// got job from parent 
-	var script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.sh');
+
+	let script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.sh');
 	fs.writeFileSync(script_file, job.params.script, { mode: "775" });
 
-	if (job.params.tty) { // execute thru script tool
-		process.env['TERM'] = 'xterm';
-		var child = cp.spawn("/usr/bin/script", ["-qec", script_file, "--flush", "/dev/null"], {
-			stdio: ['pipe', 'pipe', 'pipe']
-		});
-	}
-	else {
-		var child = cp.spawn(script_file, [], {
-			stdio: ['pipe', 'pipe', 'pipe']
-		});
-	}
+	if (job.params.tty) process.env['TERM'] = 'xterm';
+	let child_exec = job.params.tty ? "/usr/bin/script" : script_file;
+	let child_args = job.params.tty ? ["-qec", script_file, "--flush", "/dev/null"] : [];
+	
+	const child = cp.spawn(child_exec, child_args, {stdio: ['pipe', 'pipe', 'pipe']});
 
-	var kill_timer = null;
-	var stderr_buffer = '';
+	let kill_timer = null;
+	let stderr_buffer = '';
 
 	// if tty option is checked do not pass stdin (to avoid it popping up in the log)
-	if (job.params.tty) { var cstream = new JSONStream(child.stdout); }
-	else { var cstream = new JSONStream(child.stdout, child.stdin); }
+	const cstream = job.params.tty ? new JSONStream(child.stdout) : new JSONStream(child.stdout, child.stdin);
 
 	cstream.recordRegExp = /^\s*\{.+\}\s*$/;
 
@@ -70,7 +50,7 @@ stream.on('json', function (job) {
 		// received non-json text from child
 		// look for plain number from 0 to 100, treat as progress update
 		if (line.match(/^\s*(\d+)\%\s*$/)) {
-			var progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
+			let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
 			stream.write({
 				progress: progress
 			});
@@ -78,7 +58,7 @@ stream.on('json', function (job) {
 		else {
 			// otherwise just log it
 			if (job.params.annotate) {
-				var dargs = Tools.getDateArgs(new Date());
+				let dargs = Tools.getDateArgs(new Date());
 				line = '[' + dargs.yyyy_mm_dd + ' ' + dargs.hh_mi_ss + '] ' + line;
 			}
 			fs.appendFileSync(job.log_file, line);
@@ -106,7 +86,7 @@ stream.on('json', function (job) {
 		if (kill_timer) clearTimeout(kill_timer);
 		code = (code || signal || 0);
 
-		var data = {
+		let data = {
 			complete: 1,
 			code: code,
 			description: code ? ("Script exited with code: " + code) : ""
@@ -120,7 +100,7 @@ stream.on('json', function (job) {
 
 			if (code) {
 				// possibly augment description with first line of stderr, if not too insane
-				var stderr_line = stderr_buffer.trim().split(/\n/).shift();
+				let stderr_line = stderr_buffer.trim().split(/\n/).shift();
 				if (stderr_line.length < 256) data.description += ": " + stderr_line;
 			}
 		}
