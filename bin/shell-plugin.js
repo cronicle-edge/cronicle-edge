@@ -12,7 +12,11 @@ const path = require('path');
 const JSONStream = require('pixl-json-stream');
 const Tools = require('pixl-tools');
 
-require('dotenv').config()
+if(process.env['ENV_FILE']) {
+ try { 
+	 require('dotenv').config({path: process.env['ENV_FILE']})
+  } catch { }
+}
 
 // setup stdin / stdout streams 
 process.stdin.setEncoding('utf8');
