@@ -26,9 +26,9 @@ stream.on('json', function (job) {
 	let script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.sh');
 	fs.writeFileSync(script_file, job.params.script, { mode: "775" });
 
-	if (job.params.tty) process.env['TERM'] = 'xterm';
-	let child_exec = job.params.tty ? "/usr/bin/script" : script_file;
-	let child_args = job.params.tty ? ["-qec", script_file, "--flush", "/dev/null"] : [];
+	if (job.tty) process.env['TERM'] = 'xterm';
+	let child_exec = job.tty ? "/usr/bin/script" : script_file;
+	let child_args = job.tty ? ["-qec", script_file, "--flush", "/dev/null"] : [];
 	
 	const child = cp.spawn(child_exec, child_args, {stdio: ['pipe', 'pipe', 'pipe']});
 
@@ -36,7 +36,7 @@ stream.on('json', function (job) {
 	let stderr_buffer = '';
 
 	// if tty option is checked do not pass stdin (to avoid it popping up in the log)
-	const cstream = job.params.tty ? new JSONStream(child.stdout) : new JSONStream(child.stdout, child.stdin);
+	const cstream = job.tty ? new JSONStream(child.stdout) : new JSONStream(child.stdout, child.stdin);
 
 	cstream.recordRegExp = /^\s*\{.+\}\s*$/;
 

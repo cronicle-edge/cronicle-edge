@@ -831,17 +831,28 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// run event in its current (possibly edited, unsaved) state
 		app.clearError();
 
-		var event = this.get_event_form_json();
+		let event = this.get_event_form_json();
+		let event_copy = JSON.parse(JSON.stringify(event));
+
 		if (!event) return; // error
 
 		// debug options 
-		if ($("#fe_ee_debug_chain").is(":checked")) { event.chain = ""; }
-		if ($("#fe_ee_debug_email").is(":checked")) { event.notify_success = ""; event.notify_fail = ""; }
-		if ($("#fe_ee_debug_webhook").is(":checked")) { event.web_hook = ""; event.web_hook_start = "" }
+		if ($("#fe_ee_debug_chain").is(":checked")) { 
+			event.chain = "";
+			event.chain_error = ""; 
+		}
+		if ($("#fe_ee_debug_notify").is(":checked")) {
+			event.notify_success = "";
+			event.notify_fail = ""; 
+			event.web_hook = "";
+			event.web_hook_start = "" 
+		}
+		event.tty = $("#fe_ee_debug_tty").is(":checked") ? 1 : 0;
+		event.debug_sudo = $("#fe_ee_debug_sudo").is(":checked") && app.isAdmin() ? 1: 0;
 
 		this.event = event;
-
 		this.run_event('edit', e);
+		this.event = event_copy;
 	},
 
 	do_save_event: function () {
@@ -1271,19 +1282,15 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		// debugging options (avoid emails/webhooks/history), existing events only
 		if (event.id) {
-			html += get_form_table_row('Debug', `
-				
-				  <input type="checkbox" id="fe_ee_debug_chain" class="debug_options" value="1"><label> Omit Chaining</label><br>
-				  <input type="checkbox" id="fe_ee_debug_email" class="debug_options"  value="1"><label> Omit Email </label><br>
-				  <input type="checkbox" id="fe_ee_debug_webhook" class="debug_options" value="1"><label> Omit Webhook</label><br>
-				  <input type="checkbox" id="fe_ee_debug_all" value="1"><label> Check All</label><br>
-				  <script>
-				  $( '#fe_ee_debug_all' ).click( function () {
-					$( '.debug_options' ).prop('checked', this.checked)
-				  })
-				  </script>
+			let sudo = app.isAdmin() ? '<input type="checkbox" id="fe_ee_debug_sudo" class="debug_options" value="1"><label title="This will ignore plugin UID setting and run the job using main process UID"> Sudo </label><br>' : "";
+			let ttyTitle = "This option let you capture colorized terminal output using /usr/bin/script tool (typically in the box, on alpine install util-linux). Please note - it will supress stdin/stderr sent to/from job and will also hang on interactive prompts"
+			html += get_form_table_row('Debug Opts', `				
+				  <input type="checkbox" id="fe_ee_debug_chain"  value="1"><label> Omit chaining</label><br>
+				  <input type="checkbox" id="fe_ee_debug_notify"  value="1"><label> Omit notification </label><br>
+				  <input type="checkbox" id="fe_ee_debug_tty" value="1"><label title="${ttyTitle}"> Use terminal emulator</label><br>
+				  ${sudo}
 				  `);
-			html += get_form_table_caption("Temporarily override chaining if running job manually (debug)");
+			html += get_form_table_caption("Debugging options. Applies only to manual execution (not stored with event)");
 			html += get_form_table_spacer();
 		} //
 
@@ -1979,10 +1986,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 						case 'checkbox':
 							html += '<div class="plugin_params_content"><input type="checkbox" id="fe_ee_pp_' + param.id + '" value="1" ' + (value ? 'checked="checked"' : '') + '/><label for="fe_ee_pp_' + param.id + '">' + param.title + '</label></div>';
-							if (param.id == 'tty') {
-								//console.log(event)
+							if (param.id == 'sub_params') {
 								html += `<script>
-								 document.getElementById('fe_ee_pp_tty').title = "This option let you capture colorized terminal output using /usr/bin/script tool (typically in the box, on alpine install util-linux). Please note - it will supress stdin/stderr sent to/from actual process, so you won't be able to catch input parameters (from stdin) or error message (although you'll receive proper exit code). It will also hang on interactive prompts. To be safe use it for debugging only."
+								$("label[for='fe_ee_pp_sub_params']").attr("title", "Substitute placeholders (e.g. [/p1/p2]) using config.params and argument values");
 								 </script>
 								 `
 							}

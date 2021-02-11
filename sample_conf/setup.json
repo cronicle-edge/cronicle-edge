@@ -46,9 +46,7 @@
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala"],"value":"shell"},
 				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
-				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0},
-				{"type":"checkbox","id":"tty","title":"Use terminal emulator","value":0}
-				
+				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0}				
 			]
 		} ],
 
@@ -325,13 +323,6 @@
 			"title": "ui.live_log_ws",
 			"key": 0,
 			"description": "Turns on classic websocket api for live log"
-		}]
-
-		,[ "listPush", "global/conf_keys", {
-			"id": "manager", 
-			"title": "manager",
-			"key": 0,
-			"description": "If set to true eligble node will become a manager right away skipping default manager election procedure (and avoiding initial lag on start up). Only do this on single manager cluster / single node setup"
 		}]
 
 		,[ "listPush", "global/conf_keys", {
