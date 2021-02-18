@@ -15,7 +15,7 @@ Class.add( Page.Admin, {
 		html += this.getSidebarTabs( 'servers',
 			[
 				['activity', "Activity Log"],
-				['conf_keys', "Config Keys"],
+				['conf_keys', "Configs"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['plugins', "Plugins"],

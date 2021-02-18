@@ -37,6 +37,7 @@
 		"moment": "2.22.1",
 		"moment-timezone": "0.5.32",
 		"netmask": "1.0.6",
+		"openssl-wrapper": "^0.3.4",
 		"pixl-args": "^1.0.3",
 		"pixl-class": "^1.0.2",
 		"pixl-cli": "^1.0.8",

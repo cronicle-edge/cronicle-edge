@@ -1,16 +1,22 @@
-// Cronicle Admin Page -- Config Keys
+// Cronicle Admin Page -- Configs
 
 Class.add( Page.Admin, {
 	
-	gosub_conf_keys: function(args) {
+	gosub_conf_keys: function (args) {
 		// show Config Key list
-		app.setWindowTitle( "Config Keys" );
-		this.div.addClass('loading');
-		app.api.post( 'app/get_conf_keys', copy_object(args), this.receive_confkeys.bind(this) );
+		app.setWindowTitle("Configs");
+		var self = this;
+		self.div.addClass('loading');
+		self.secret = {};
+		app.api.post('/api/app/get_secret', { id: 'globalenv' }, function (resp) {
+			//if(err) console.log('failed to retreive secret');
+			if (resp.secret) self.secret = resp.secret;
+			app.api.post('app/get_conf_keys', copy_object(args), self.receive_confkeys.bind(self));
+		});
 	},
 	
 	receive_confkeys: function(resp) {
-		// receive all Config Keys from server, render them sorted
+		// receive all Configs from server, render them sorted
 		this.lastConfigKeysResp = resp;
 		
 		var html = '';
@@ -29,7 +35,7 @@ Class.add( Page.Admin, {
 		html += this.getSidebarTabs( 'conf_keys',
 			[
 				['activity', "Activity Log"],
-				['conf_keys', "Config Keys"],
+				['conf_keys', "Configs"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['plugins', "Plugins"],
@@ -43,16 +49,45 @@ Class.add( Page.Admin, {
 		html += '<div style="padding:20px 20px 30px 20px">';
 		
 		html += '<div class="subtitle">';
-		html += 'Config Keys';
+		let env_lock = this.secret.encrypted ? '<i class="fa fa-lock">&nbsp;&nbsp;</i>' : ''
+		html += `Configs &nbsp;&nbsp;<span id="fe_env_lock">${env_lock}</span>`;
+
+		var showEnvEditor = app.showEnvEditor ? 'checked' : ''
+
 		html += `<div class="subtitle_widget"><a href="/conf" ><b>Config Viewer</b></a></div>`
+		html += `<div class="subtitle_widget" ><input ${showEnvEditor} id="fe_ee_env_toggle" onclick="$('#fe_ee_env').toggle();editor.refresh();app.showEnvEditor=!app.showEnvEditor;" type="checkbox"></input><label for="fe_ee_env_toggle">Show Env Editor</label></div>`
+
 		html += '<div class="clear"></div>';
 		html += '</div>';
+
+		html += `
+		<div  class="plugin_params_content" id="fe_ee_env" style="${app.showEnvEditor ? '' : 'display: none'}">
+		  <textarea id="fe_ee_env_editor" ></textarea>
+		  <div style="height:10px;"></div>
+		  <center><table><tr>
+		  <td><div id="env_enc_button" class="button" style="width:130px;" onMouseUp="$P().toggle_env_encryption()">${this.secret.encrypted ? 'Decrypt' : 'Encrypt'}</div></td>
+		  <td width="40">&nbsp;</td>
+		  <td><div class="button" style="width:130px;" onMouseUp="$P().update_globalenv()"><i class="fa fa-save">&nbsp;&nbsp;</i>Save</div></td>
+		  </tr></table></center>		  
+		</div>
+		<script>
 		
-		var self = this;
-		html += this.getBasicTable( this.conf_keys, cols, 'key', function(item, idx) {
+		var editor = CodeMirror.fromTextArea(document.getElementById("fe_ee_env_editor"), {
+		  mode: "text/x-properties",
+		  styleActiveLine: true,
+		  lineWrapping: false,
+		  scrollbarStyle: "overlay",
+		  lineNumbers: true,
+		  matchBrackets: true							  
+		});
+
+		editor.setValue($P().secret.data);
+		</script>
+		`
+		html += this.getBasicTable(this.conf_keys, cols, 'key', function (item, idx) {
 			var actions = [
-				'<span class="link" onMouseUp="$P().edit_conf_key('+idx+')"><b>Edit</b></span>',
-				'<span class="link" onMouseUp="$P().delete_conf_key('+idx+')"><b>Delete</b></span>'
+				'<span class="link" onMouseUp="$P().edit_conf_key(' + idx + ')"><b>Edit</b></span>',
+				'<span class="link" onMouseUp="$P().delete_conf_key(' + idx + ')"><b>Delete</b></span>'
 			];
 
 			return [
@@ -60,19 +95,37 @@ Class.add( Page.Admin, {
 				, `<div class="activity_desc">${item.key}</div>`
 				, '<div style="white-space:nowrap;">' + actions.join(' | ') + '</div>'
 			];
-		} );
-		
+		});
+
 		html += '<div style="height:30px;"></div>';
 		html += '<center><table><tr>';
-			html += '<td><div class="button" style="width:130px;" onMouseUp="$P().edit_conf_key(-1)"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Add Config Key...</div></td>';
-			html += '<td width="40">&nbsp;</td>';
-			html += '<td><div class="button" style="width:130px;" onMouseUp="$P().do_reload_conf_key()"><i class="fa fa-refresh">&nbsp;&nbsp;</i>Reload</div></td>';
+		html += '<td><div class="button" style="width:130px;" onMouseUp="$P().edit_conf_key(-1)"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Add Config Key...</div></td>';
+		html += '<td width="40">&nbsp;</td>';
+		html += '<td><div class="button" style="width:130px;" onMouseUp="$P().do_reload_conf_key()"><i class="fa fa-refresh">&nbsp;&nbsp;</i>Reload</div></td>';
 		html += '</tr></table></center>';
-		
+
 		html += '</div>'; // padding
 		html += '</div>'; // sidebar tabs
-		
-		this.div.html( html );
+
+		this.div.html(html);
+	},
+
+	update_globalenv: function () {
+		this.secret.data = editor.getValue();
+		app.showProgress(1.0, "Updating Enviroment Data...");
+
+		app.api.post('/api/app/update_secret', this.secret, function (resp) {
+			app.hideProgress();
+			if (resp.code == 0) app.showMessage('success', "Enviroment Data has been updated successfully.");
+
+		});
+	},
+
+	toggle_env_encryption: function () {
+		this.secret.encrypted = !this.secret.encrypted;
+		$("#env_enc_button").html(this.secret.encrypted ? 'Decrypt' : 'Encrypt');
+		$("#fe_env_lock").html(this.secret.encrypted ? '<i class="fa fa-lock">&nbsp;&nbsp;</i>' : '')
+
 	},
 	
 	edit_conf_key: function(idx) {
@@ -96,7 +149,7 @@ Class.add( Page.Admin, {
 		html += this.getSidebarTabs( 'new_conf_key',
 			[
 				['activity', "Activity Log"],
-				['conf_keys', "Config Keys"],
+				['conf_keys', "Configs"],
 				['new_conf_key', "New Config Key"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
@@ -189,7 +242,7 @@ Class.add( Page.Admin, {
 		html += this.getSidebarTabs( 'edit_conf_key',
 			[
 				['activity', "Activity Log"],
-				['conf_keys', "Config Keys"],
+				['conf_keys', "Configs"],
 				['edit_conf_key', "Edit Config Key"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
@@ -260,7 +313,7 @@ Class.add( Page.Admin, {
 	reload_conf_key_finish: function(resp, tx) {
 		// new Config Key saved successfully
 		app.hideProgress();
-		app.showMessage('success', "Config Keys were reloaded successfully.");
+		app.showMessage('success', "Configs were reloaded successfully.");
 		window.scrollTo( 0, 0 );
 	},
 

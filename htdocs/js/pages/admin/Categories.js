@@ -15,7 +15,7 @@ Class.add( Page.Admin, {
 		html += this.getSidebarTabs( 'categories',
 			[
 				['activity', "Activity Log"],
-				['conf_keys', "Config Keys"],
+				['conf_keys', "Configs"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['plugins', "Plugins"],
@@ -103,7 +103,7 @@ Class.add( Page.Admin, {
 		html += this.getSidebarTabs( 'new_category',
 			[
 				['activity', "Activity Log"],
-				['conf_keys', "Config Keys"],
+				['conf_keys', "Configs"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['new_category', "New Category"],
@@ -199,7 +199,7 @@ Class.add( Page.Admin, {
 		html += this.getSidebarTabs( 'edit_category',
 			[
 				['activity', "Activity Log"],
-				['conf_keys', "Config Keys"],
+				['conf_keys', "Configs"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['edit_category', "Edit Category"],

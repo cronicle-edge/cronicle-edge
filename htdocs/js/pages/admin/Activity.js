@@ -8,7 +8,8 @@ Class.add( Page.Admin, {
 		'^plugin': '<i class="fa fa-plug">&nbsp;</i>Plugin',
 		// '^apikey': '<i class="fa fa-key">&nbsp;</i>API Key',	
 		'^apikey': '<i class="mdi mdi-key-variant">&nbsp;</i>API Key',
-		'^confkey': '<i class="fa fa-wrench">&nbsp;</i>Config',	
+		'^confkey': '<i class="fa fa-wrench">&nbsp;</i>Config',
+		'^secret': '<i class="fa fa-lock">&nbsp;</i>Secret',	
 		'^event': '<i class="fa fa-clock-o">&nbsp;</i>Event',
 		'^user': '<i class="fa fa-user">&nbsp;&nbsp;</i>User',
 		'server': '<i class="mdi mdi-desktop-tower mdi-lg">&nbsp;</i>Server',
@@ -41,7 +42,7 @@ Class.add( Page.Admin, {
 		html += this.getSidebarTabs( 'activity',
 			[
 				['activity', "Activity Log"],
-				['conf_keys', "Config Keys"],
+				['conf_keys', "Configs"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['plugins', "Plugins"],
@@ -128,8 +129,19 @@ Class.add( Page.Admin, {
 				case 'apikey_delete':
 					desc = 'API Key deleted: <b>' + item.api_key.title + '</b> (Key: ' + item.api_key.key + ')';
 				break;
+				
+				// secrets
+				case 'secret_create':
+					desc = 'New Secret created: <b>' + item.secret + '</b> (encrypted: ' + item.encrypted + ')';
+					break;
+				case 'secret_update':
+					desc = 'Secret updated: <b>' + item.secret + '</b> (encrypted: ' + item.encrypted + ')';
+					break;
+				case 'secret_delete':
+					desc = 'Secret deleted: <b>' + item.secret + '</b> (encrypted: ' + item.encrypted + ')';
+					break;				
 
-				// config keys
+				// Configs
 				case 'confkey_create':
 					desc = 'Config created: <b>' + item.conf_key.title + '</b> : ' + item.conf_key.key;
 					actions.push( '<a href="#Admin?sub=edit_config_key&id='+item.conf_key.id+'">Edit Config</a>' );

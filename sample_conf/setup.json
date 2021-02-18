@@ -169,6 +169,16 @@
 			"gcolor": "#3498DB",
 			"max_children": 0
 		} ],
+
+		[ "listCreate", "global/secrets", {} ],
+		[ "listPush", "global/secrets", {
+			"id": "globalenv",
+			"encrypted": false,
+			"target": null,
+			"form": "props",
+			"data": "# dotenv style key/value pairs representing env variables\n# to generate encryption key:\n# openssl req -x509 -sha256 -nodes -newkey rsa:4096 -keyout conf/cronicle.key -out conf/cronicle.key -subj '/CN=cronicle'\nmyvar = some_value"
+		} ],
+		
 		[ "listCreate", "global/server_groups", {} ],
 		[ "listPush", "global/server_groups", {
 			"id": "maingrp",
