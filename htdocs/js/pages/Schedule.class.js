@@ -1055,8 +1055,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		html += get_form_table_spacer();
 		
 		// arguments
-		html += get_form_table_row('Arguments', `<input type="text" id="fe_ee_args" size="50" value="${event.args || ''}" spellcheck="false"/>`);
-		html += get_form_table_caption("Specify a list of comma separated arguments. Access via ARG[1-9] env variable or [/ARG] params");
+		let arg_title = "Argument values are available as ARG[1-9] env variable or parameter on shellplug (e.g. $ARG1 or [/ARG1])\nOn httpplug use [/params/ARG1], on event workflow JOB_ARG env variable. ARGS env variable will store entire string";
+		html += get_form_table_row('Arguments', `<input title="${arg_title}" type="text" id="fe_ee_args" size="50" value="${event.args || ''}" spellcheck="false"/>`);
+		html += get_form_table_caption("List of comma separated arguments. Use alphanumeric/email characters only");
 		html += get_form_table_spacer();
 
 		// timing
@@ -1937,8 +1938,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 							if (param.id == 'wf_args') {
 								html += `
 								<div hidden id="wf_args_div">
-								<div class="plugin_params_label">Event arguments: </div>
-								<div class="plugin_params_content"><input type="text" id="fe_ee_pp_wf_args" size="${param.size}" value="${escape_text_field_value(value)}" spellcheck="false""></input></div>
+								<div class="plugin_params_content">Target event will be spawned for each valid argument<br>Refer to argument as JOB_ARG env variable</div>
 								</div>
 								`
 								break;

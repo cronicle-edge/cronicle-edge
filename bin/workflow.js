@@ -70,12 +70,12 @@ rl.on('line', function (line) {
 	console.log(JSON.stringify({ progress: 0.01 }))
 
 	const input = JSON.parse(line);
-	let concur = parseInt(process.env['WF_CONCUR'])
+	let concur = parseInt(process.env['WF_CONCUR']) || 1
 
 	let wf_type = process.env['WF_TYPE'] || 'category'  // cat or event
 	let wf_strict = parseInt(process.env['WF_STRICT']) // report error on child failure (warning is default)
-	let eventid = process.env['WF_EVENT']
-	let event_params = process.env['WF_ARGS']
+	let eventid = process.env['WF_EVENT']  // target event
+	let event_params = (process.env['ARGS'] || '').trim();
 	if(eventid == process.env['JOB_EVENT']) throw new Error("Event Workflow is not allowed to run itself!");
 	//let pendingJobs = 0;
 
@@ -84,12 +84,19 @@ rl.on('line', function (line) {
 		// get a list of tasks (either events of category or same job with different parameters)
 
 		if (wf_type == 'event') {  // run event N times
+			
+			if(!event_params) throw new Error('Event Workflow requires at least 1 argument');
+
 			let evt = await getJson(baseUrl + '/api/app/get_event', { api_key: apikey, id: eventid })
 			if (evt.data.plugin == 'workflow') throw new Error('Workflow events are not allowed for this action')
 			console.log(`Running event: \u001b[1m${evt.data.event.title}\u001b[22m  `)
-			if (!concur) concur = 1; // run one by one by default
-			if (concur > evt.data.event.max_children) concur = evt.data.event.max_children;
+
+			let concur_info = concur > evt.data.event.max_children ? '(reset to event concurrency)' : '';
+            concur = Math.min(concur, evt.data.event.max_children) || 1
+			console.log(`Concurrency level: ${concur} ${concur_info}`);
+			
 			taskList = event_params.split(',')
+			    .map(e=>e.trim())
 				.filter(e => e.match(/^[\w\.\@\-\s]+$/g))
 				.map(arg => {
 				return {
