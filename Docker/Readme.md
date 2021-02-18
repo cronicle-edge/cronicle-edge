@@ -5,7 +5,7 @@ Edit nginx.conf to set different key path, or change/add other routes if needed 
 Then:
 
 ```bash
- docker run -it  -d --net=host -v ~/secrets:/run/secrets  --name nginx --restart=always nginx
+ docker run -d --net=host -v ~/secrets:/run/secrets  --name nginx --restart=always nginx
  docker cp nginx.conf nginx:/etc/nginx/nginx.conf
  docker restart nginx
  ```
