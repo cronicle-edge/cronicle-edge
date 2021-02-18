@@ -76,6 +76,7 @@ rl.on('line', function (line) {
 	let wf_strict = parseInt(process.env['WF_STRICT']) // report error on child failure (warning is default)
 	let eventid = process.env['WF_EVENT']
 	let event_params = process.env['WF_ARGS']
+	if(eventid == process.env['JOB_EVENT']) throw new Error("Event Workflow is not allowed to run itself!");
 	//let pendingJobs = 0;
 
 	async function poll() {
@@ -84,11 +85,13 @@ rl.on('line', function (line) {
 
 		if (wf_type == 'event') {  // run event N times
 			let evt = await getJson(baseUrl + '/api/app/get_event', { api_key: apikey, id: eventid })
-			if (evt.data.plugin == 'workflow') throw new Error('workflow events are not allowed for this action')
+			if (evt.data.plugin == 'workflow') throw new Error('Workflow events are not allowed for this action')
 			console.log(`Running event: \u001b[1m${evt.data.event.title}\u001b[22m  `)
 			if (!concur) concur = 1; // run one by one by default
 			if (concur > evt.data.event.max_children) concur = evt.data.event.max_children;
-			taskList = event_params.split(',').map(arg => {
+			taskList = event_params.split(',')
+				.filter(e => e.match(/^[\w\.\@\-\s]+$/g))
+				.map(arg => {
 				return {
 					id: evt.data.event.id,
 					title: evt.data.event.title + `@${arg}`,
@@ -96,6 +99,7 @@ rl.on('line', function (line) {
 					arg: arg,
 				}
 			});
+			if(taskList.length == 0) throw new Error('Event Workflow has no valid arguments')
 		}
 		else { // run all jobs in category
 			let sched = await getJson(baseUrl + '/api/app/get_schedule', { api_key: apikey })
