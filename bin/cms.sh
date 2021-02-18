@@ -1,6 +1,6 @@
 HOMEDIR=$(dirname $(readlink -f $0))
 input=${2:--}
-key_file=${key_file:-$HOMEDIR/../conf/key.pem}
+key_file=${key_file:-$HOMEDIR/../conf/cronicle.key}
 
 if [ "$1" == "e" ] || [ "$1" == "encrypt" ] ; then
  cat $input | openssl cms -encrypt -outform PEM $key_file
