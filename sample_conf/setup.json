@@ -418,7 +418,7 @@
 			},
 			[ "copyDir", "sample_conf", "conf", true ],
 			[ "copyFile", "htdocs/index-dev.html", "htdocs/index.html" ],
-			[ "copyDir", "node_modules/codemirror", "htdocs/codemirror", true ],
+			[ "symlinkFile", "node_modules/codemirror", "htdocs/codemirror" ],
 			{
 				"action": "bundleCompress",
 				"uglify": false,

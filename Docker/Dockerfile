@@ -1,9 +1,9 @@
 # build: docker build -t cronicle:edge -f Dockerfile --build-arg branch=main --build-arg echo=1 .
 # test run: docker run -it -v $HOME/data:/opt/cronicle/data -p 3012:3012 cronicle:edge manager
 
-FROM mcr.microsoft.com/powershell:alpine-3.11
-RUN apk add --no-cache  nodejs npm git tini util-linux bash openssl procps coreutils curl acl neovim krb5 highlight jq
-# neovim, krb5, highlight, jq are not required. You can omit util-linux, procps and coreutils if using Ubuntu or Centos
+FROM node:14-alpine3.12
+RUN apk add --no-cache  nodejs-current npm git tini util-linux bash openssl procps coreutils curl acl neovim jq
+# required: all: tini; alpine: util-linux procps coreutils
 
 # optional lolcat for tty/color debugging
 RUN apk add lolcat --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
@@ -22,6 +22,10 @@ RUN apk add lolcat --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testin
 
 # optional mc s3 client (+20MB)
 # RUN wget -O /usr/bin/mc http://dl.min.io/client/mc/release/linux-amd64/mc && chmod +x /usr/bin/mc
+
+# optional kafkacat
+# RUN apk add kafkacat --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+# extra deps if using kerberos: apk add krb5 cyrus-sasl cyrus-sasl-gssapiv2
 
 # optional - set up custom CA cert
 # COPY myCA.cer /usr/local/share/ca-certificates/myCA.crt

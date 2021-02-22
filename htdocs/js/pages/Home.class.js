@@ -39,6 +39,7 @@ Class.subclass( Page.Base, "Page.Home", {
 			  <option value="25">Last 25</option>
 			  <option value="35">Last 35</option>
 			  <option value="100">Last 100</option></select>
+			  <div class="subtitle_widget"><span id="chart_times" ></span></div>
 		  </div>
 		  <div class="clear"></div>
 		</div>
@@ -342,6 +343,11 @@ Class.subclass( Page.Base, "Page.Home", {
 
 		app.api.post('app/get_history', { offset: 0, limit: ($('#fe_cmp_job_chart_limit').val() || 50) }, function (d) {
 			var jobs = d.rows.reverse();
+			if(jobs.length > 1) {
+				let jFrom =  moment.unix(jobs[0].time_start).format('MMM DD, HH:mm:ss');
+				let jTo =  moment.unix(jobs[jobs.length-1].time_start).format('MMM DD, HH:mm:ss');
+				$("#chart_times").text(` from ${jFrom} | to ${jTo}`);
+			}
 			var labels = jobs.map((j, i) => i == 0 ? j.event_title.substring(0, 4) : j.event_title);
 			var datasets = [{
 				label: 'Completed Jobs',
