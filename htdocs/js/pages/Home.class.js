@@ -345,7 +345,7 @@ Class.subclass( Page.Base, "Page.Home", {
 			var jobs = d.rows.reverse();
 			if(jobs.length > 1) {
 				let jFrom =  moment.unix(jobs[0].time_start).format('MMM DD, HH:mm:ss');
-				let jTo =  moment.unix(jobs[jobs.length-1].time_start).format('MMM DD, HH:mm:ss');
+				let jTo =  moment.unix(jobs[jobs.length-1].time_start + (jobs[jobs.length-1].elapsed || 0)).format('MMM DD, HH:mm:ss');
 				$("#chart_times").text(` from ${jFrom} | to ${jTo}`);
 			}
 			var labels = jobs.map((j, i) => i == 0 ? j.event_title.substring(0, 4) : j.event_title);
