@@ -38,9 +38,9 @@ Class.subclass( Page.Base, "Page.Home", {
 			  <option value="10">Last 10</option>
 			  <option value="25">Last 25</option>
 			  <option value="35">Last 35</option>
-			  <option value="100">Last 100</option></select>
-			  <div class="subtitle_widget"><span id="chart_times" ></span></div>
+			  <option value="100">Last 100</option></select>	  
 		  </div>
+		  <div class="subtitle_widget"><span id="chart_times" ></span></div>
 		  <div class="clear"></div>
 		</div>
 		<script src="js/external/Chart.min.js"></script>

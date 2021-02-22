@@ -2,7 +2,7 @@
 # test run: docker run -it -v $HOME/data:/opt/cronicle/data -p 3012:3012 cronicle:edge manager
 
 FROM node:14-alpine3.12
-RUN apk add --no-cache  nodejs-current npm git tini util-linux bash openssl procps coreutils curl acl neovim jq
+RUN apk add --no-cache git tini util-linux bash openssl procps coreutils curl acl neovim jq
 # required: all: tini; alpine: util-linux procps coreutils
 
 # optional lolcat for tty/color debugging
