@@ -22,7 +22,7 @@ fi
 
 input=${2:--}
 
-key_file=${CMS_KEY:-$HOMEDIR/../conf/cronicle.key}
+key_file=${CMS_KEY:-/run/secrets/cronicle.key}
 
 if [ "$1" == "e" ] || [ "$1" == "encrypt" ] ; then
  cat $input | openssl cms -encrypt -outform PEM $key_file
