@@ -1,9 +1,13 @@
 
 # Running cronicle in swarm mode
 
-## step 1 - create network
+## step 1 - create network and prepare volume for data
 
- ```docker network create --driver overlay cron```
+ ```bash
+ docker network create --driver overlay cron
+ mkdir -p /var/data/cronicle/v1/data # could be anything, but should be in line with step 3 (--mount arg)
+ ```
+ 
 
 ## step 2 - create secrets
 
