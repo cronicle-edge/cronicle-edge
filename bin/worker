@@ -6,7 +6,8 @@ if [ -f "$HOMEDIR/logs/cronicled.pid" ]; then
   rm "$HOMEDIR/logs/cronicled.pid"
 fi
 
-$HOMEDIR/bin/control.sh start
+#$HOMEDIR/bin/control.sh start
+exec node $HOMEDIR/lib/main.js
 
 
 
