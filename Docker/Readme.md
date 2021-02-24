@@ -49,7 +49,7 @@ If secret is meant to be accessed by non-root user then just specify it as ```--
 ## step 4: create a worker node if needed. Worker node is stateless and doesn't need storage
 
 ```bash
-   docker service create --name cron_worker1 --hostname worker1 \
+   docker service create --name worker1 --hostname worker1 \
    --secret  source=secret_key,target=secret_key,uid=0,mode=0400  \
    --secret  source=cronicle.key,target=cronicle.key,uid=0,mode=0400  \
    --network cron  \
