@@ -53,7 +53,7 @@ If secret is meant to be accessed by non-root user then just specify it as ```--
    --secret  source=secret_key,target=secret_key,uid=0,mode=0400  \
    --secret  source=cronicle.key,target=cronicle.key,uid=0,mode=0400  \
    --network cron  \
-   cronicle/cronicle:edge-1.0.0
+   cronicle/cronicle:edge-1.0.0 worker
 ```
 
 # Setting up https reverse proxy with nginx
