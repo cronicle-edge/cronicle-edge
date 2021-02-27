@@ -55,7 +55,7 @@ Class.add( Page.Admin, {
 		var showEnvEditor = app.showEnvEditor ? 'checked' : ''
 
 		html += `<div class="subtitle_widget"><a href="/conf" ><b>Config Viewer</b></a></div>`
-		html += `<div class="subtitle_widget" ><input ${showEnvEditor} id="fe_ee_env_toggle" onclick="$('#fe_ee_env').toggle();editor.refresh();app.showEnvEditor=!app.showEnvEditor;" type="checkbox"></input><label for="fe_ee_env_toggle">Show Env Editor</label></div>`
+		html += `<div class="subtitle_widget" ><input ${showEnvEditor} id="fe_ee_env_toggle" onclick="$('#fe_ee_env').toggle();env_editor.refresh();app.showEnvEditor=!app.showEnvEditor;" type="checkbox"></input><label for="fe_ee_env_toggle">Show Env Editor</label></div>`
 
 		html += '<div class="clear"></div>';
 		html += '</div>';
