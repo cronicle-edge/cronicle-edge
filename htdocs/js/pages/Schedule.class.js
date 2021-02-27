@@ -1946,13 +1946,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 							}
 
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
-							html += '<div class="plugin_params_content"><input type="text" id="fe_ee_pp_' + param.id + '" size="' + param.size + '" value="' + escape_text_field_value(value) + '" spellcheck="false"/></div>';
+							html += '<div class="plugin_params_content" style="width: 54rem"><input type="text" id="fe_ee_pp_' + param.id + '" size="' + param.size + '" value="' + escape_text_field_value(value) + '" spellcheck="false"/></div>';
 							break;
 
 						case 'textarea':
 							let ta_height = parseInt(param.rows) * 15;
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
-							html += '<div class="plugin_params_content"><textarea id="fe_ee_pp_' + param.id + '" style="width:99%; height:' + ta_height + 'px; resize:vertical;" spellcheck="false" onkeydown="return catchTab(this,event)">' + escape_text_field_value(value) + '</textarea></div>';
+							html += '<div class="plugin_params_content" style="width: 54rem"><textarea id="fe_ee_pp_' + param.id + '" style="width:99%; height:' + ta_height + 'px; resize:vertical;" spellcheck="false" onkeydown="return catchTab(this,event)">' + escape_text_field_value(value) + '</textarea></div>';
 							let privs = app.user.privileges;
 							let canEdit = privs.admin || privs.edit_events || privs.create_events;
 
@@ -1973,7 +1973,15 @@ Class.subclass(Page.Base, "Page.Schedule", {
 							  scrollbarStyle: "overlay",
 							  lineNumbers: true,
 							  theme: "${theme}",
-							  matchBrackets: true							  
+							  matchBrackets: true,
+							  extraKeys: {
+                                "F11": function(cm) {
+                                  cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                                },
+                                "Esc": function(cm) {
+                                  if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+                                }
+                              }							  
 							});
 		
 							editor.on('change', function(cm){
