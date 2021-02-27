@@ -72,7 +72,7 @@ Class.add( Page.Admin, {
 		</div>
 		<script>
 		
-		var editor = CodeMirror.fromTextArea(document.getElementById("fe_ee_env_editor"), {
+		var env_editor = CodeMirror.fromTextArea(document.getElementById("fe_ee_env_editor"), {
 		  mode: "text/x-properties",
 		  styleActiveLine: true,
 		  lineWrapping: false,
@@ -81,7 +81,7 @@ Class.add( Page.Admin, {
 		  matchBrackets: true							  
 		});
 
-		editor.setValue($P().secret.data);
+		env_editor.setValue(($P().secret.data || '').toString());
 		</script>
 		`
 		html += this.getBasicTable(this.conf_keys, cols, 'key', function (item, idx) {
@@ -90,9 +90,20 @@ Class.add( Page.Admin, {
 				'<span class="link" onMouseUp="$P().delete_conf_key(' + idx + ')"><b>Delete</b></span>'
 			];
 
+			let kt_map = {
+				'application/json': '[JSON]',
+				'text/xml': '[XML]',
+				'text/x-sql': '[SQL]',
+				'text/plain': '[TEXT]'
+			}
+
+			let key_disp = kt_map[item.type] || item.key ;
+			if(item.type == "bool" && item.key) key_disp = "☑"
+			if(item.type == "bool" && !item.key) key_disp = "☐"
+
 			return [
 				`<div style="white-space:nowrap;" title="${item.description}" ><i class="fa fa-wrench">&nbsp;&nbsp;</i><b>${item.title}<b></div>`
-				, `<div class="activity_desc">${item.key}</div>`
+				, `<div class="activity_desc">${key_disp}</div>`
 				, '<div style="white-space:nowrap;">' + actions.join(' | ') + '</div>'
 			];
 		});
@@ -111,7 +122,7 @@ Class.add( Page.Admin, {
 	},
 
 	update_globalenv: function () {
-		this.secret.data = editor.getValue();
+		this.secret.data = env_editor.getValue();
 		app.showProgress(1.0, "Updating Enviroment Data...");
 
 		app.api.post('/api/app/update_secret', this.secret, function (resp) {
@@ -342,47 +353,121 @@ Class.add( Page.Admin, {
 	},
 	
 	get_conf_key_edit_html: function() {
-		// get html for editing an Config Key (or creating a new one)
-		var html = '';
-		var conf_key = this.conf_key;
+        // get html for editing an Config Key (or creating a new one)
+        var html = '';
+        var conf_key = this.conf_key;
 
-				
-		// title
-		var disableConfTitle = ''
-		if(conf_key.title) disableConfTitle = 'disabled' // let edit only if new
-		html += get_form_table_row( 'Config Title', `<input type="text" id="fe_ck_title" size="73" value="${escape_text_field_value(conf_key.title)}" spellcheck="false" ${disableConfTitle}/>` );
-		html += get_form_table_caption( "For nested properties use . (e.g. servers.worker1)");
-		html += get_form_table_spacer();
+
+        // title
+        var disableConfTitle = ''
+        if(conf_key.title) disableConfTitle = 'disabled' // let edit only if new
+        html += get_form_table_row( 'Config Title', `<input type="text" id="fe_ck_title" size="86" value="${escape_text_field_value(conf_key.title)}" spellcheck="false" ${disableConfTitle}/>` );
+        html += get_form_table_caption( "For nested properties use . (e.g. servers.worker1)");
+        html += get_form_table_spacer();
+
+        // Config  Value
+        html += get_form_table_row( 'Type', `
+        <select name="ck_type" id="fe_ck_type" onchange="toggleCkType();">
+          <option value="string">String</option>
+		  <option value="bool">Boolean</option>
+          <option value="text/plain">Text</option>
+          <option value="text/x-sql">SQL</option>
+          <option value="application/json">JSON</option>
+          <option value="text/xml">XML</option>
+        </select>
+        <script>
+        $("#fe_ck_type").val($P().conf_key.type || 'string');
+
+        function toggleCkType(){
+            if($("#fe_ck_type").val()==="string") {
+                $("#conf_editor_div").hide();
+				$("#fe_ck_key_bool").hide();
+                $("#fe_ck_key").show();
+            } 
+			else if($("#fe_ck_type").val()==="bool") {
+                $("#conf_editor_div").hide();
+				$("#fe_ck_key").hide();
+                $("#fe_ck_key_bool").show();
+            } else {
+                $("#conf_editor_div").show();
+                conf_editor.refresh();
+                $("#fe_ck_key").hide();
+				$("#fe_ck_key_bool").hide();
+            }
+        }
+
+		document.getElementById("fe_ck_type").addEventListener("change", function(){
+			conf_editor.setOption("mode", this.options[this.selectedIndex].value);
+		});
 		
-		// Config Key
-		html += get_form_table_row( 'Value', '<input type="text" id="fe_ck_key" size="73" value="'+escape_text_field_value(conf_key.key)+'" spellcheck="false"/>' );
-		html += get_form_table_caption( "For boolean use 0/1 or true/false" );
-		html += get_form_table_spacer();
+        </script>
+        ` );
+
+        html += get_form_table_caption( "Choose value type" );
+        html += get_form_table_spacer();
+
+                // Config  Type
+
+        let isString = (conf_key.type || 'string') == 'string';
+		let isBool = conf_key.type == 'bool'
+		let isText = !isString && !isBool
+
+		html += get_form_table_row( 'Value', `
+		<input type="text" style="${isString ? '' : 'display: none'}" id="fe_ck_key" size="73" value="${escape_text_field_value(conf_key.key)}" spellcheck="false"/>
+		<input type="checkbox" style="${isBool ? '' : 'display: none'}" id="fe_ck_key_bool" ${conf_key.key ? 'checked' : ''}></input>
+		<div id="conf_editor_div" style="width: 40rem;${isText? '' : 'display: none' }" ><textarea id="fe_ee_conf_editor" ></textarea></div>
+
+		<script>
+		var conf_editor = CodeMirror.fromTextArea(document.getElementById("fe_ee_conf_editor"), {
+			mode: "${ conf_key.type ? conf_key.type : 'text/plain'}",
+			styleActiveLine: true,
+			lineWrapping: false,
+			scrollbarStyle: "overlay",
+			lineNumbers: true,
+			matchBrackets: true,
+			lint: true
+
+		  });
+
+		  if($P().conf_key.type == 'bool' && $P().conf_key.key) $("#fe_ck_key_bool").prop("checked", true);
+		  conf_editor.setValue(($P().conf_key.key || ' ').toString());
+		  </script>
+
+		` );
+
+        // html += get_form_table_caption( "For boolean use 0/1 or true/false" );
+        html += get_form_table_spacer();
 
 
-		// description
-		html += get_form_table_row('Description', '<textarea id="fe_ck_desc" style="width:550px; height:100px; resize:vertical;">'+escape_text_field_value(conf_key.description)+'</textarea>');
-		html += get_form_table_caption( "Config purpose (optional)" );
-		html += get_form_table_spacer();
-		
-		return html;
-	},
+        // description
+        html += get_form_table_row('Description', '<textarea id="fe_ck_desc" style="width:40rem; height:100px; resize:vertical;">'+escape_text_field_value(conf_key.description)+'</textarea>');
+        html += get_form_table_caption( "Config purpose (optional)" );
+        html += get_form_table_spacer();
+
+        return html;
+    },
 	
 	get_conf_key_form_json: function() {
-		// get Config Key elements from form, used for new or edit
-		var conf_key = this.conf_key;
-		
-		conf_key.key = $('#fe_ck_key').val();
-		conf_key.active = $('#fe_ck_status').val();
-		conf_key.title = $('#fe_ck_title').val();
-		conf_key.description = $('#fe_ck_desc').val();
-		
-		if (!conf_key.key.length) {
-			return app.badField('#fe_ck_key', "Please enter an Config Key string");
-		}
-		
-		return conf_key;
-	}
+        // get Config Key elements from form, used for new or edit
+        var conf_key = this.conf_key;
+
+		if($('#fe_ck_type').val()  == 'string') conf_key.key = $('#fe_ck_key').val()
+		else if($('#fe_ck_type').val()  == 'bool') conf_key.key = $('#fe_ck_key_bool').is(":checked");
+		else conf_key.key = conf_editor.getValue();
+
+       // conf_key.key = $('#fe_ck_type').val()  == 'string' ? $('#fe_ck_key').val() : conf_editor.getValue();
+        conf_key.active = $('#fe_ck_status').val();
+        conf_key.title = $('#fe_ck_title').val();
+        conf_key.type = $('#fe_ck_type').val();
+
+        conf_key.description = $('#fe_ck_desc').val();
+
+        if (conf_key.key === "") {
+            return app.badField('#fe_ck_key', "Please enter an Config Key string");
+        }
+
+        return conf_key;
+    }
 	
 	
 });

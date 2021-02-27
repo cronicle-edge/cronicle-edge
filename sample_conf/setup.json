@@ -42,7 +42,7 @@
 			"modified": 1434125333,
 			"created": 1434125333,
 			"params": [
-				{ "id":"script", "type":"textarea", "rows":10, "title":"Script Source", "value": "#!/usr/bin/env bash\n\n# Enter your shell script code here\n\necho \"print integer with % to report progress (e.g. 20%)\"\n sleep 2 && echo `date` && echo 10%\n sleep 2 && echo `date` && echo 40%\n sleep 2 && echo `date` && echo 90%\n sleep 2\necho '{\"perf\":{\"step3\":55,\"step2\":30,\"step1\":20}}'" },
+				{ "id":"script", "type":"textarea", "rows":10, "title":"Script Source", "value": "#!/usr/bin/env bash\n\n# Enter your shell script code here\n# Press F11 to toggle full screen mode\n\necho \"print integer with % to report progress (e.g. 20%)\"\n sleep 2 && echo `date` && echo 10%\n sleep 2 && echo `date` && echo 40%\n sleep 2 && echo `date` && echo 90%\n sleep 2\necho '{\"perf\":{\"step3\":55,\"step2\":30,\"step1\":20}}'" },
 				{ "id":"annotate", "type":"checkbox", "title":"Add Date/Time Stamps to Log", "value": 0 },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala"],"value":"shell"},
@@ -188,6 +188,12 @@
 			"manager": 1
 		} ],
 		[ "listPush", "global/server_groups", {
+			"id": "workergrp",
+			"title": "Workers",
+			"regexp": "worker",
+			"manager": 0
+		} ],
+		[ "listPush", "global/server_groups", {
 			"id": "allgrp",
 			"title": "All Servers",
 			"regexp": ".+",
@@ -290,7 +296,8 @@
 		,[ "listPush", "global/conf_keys", {
 			"id": "web_hooks_slack_info_compact", 
 			"title": "web_hooks.slack_info.compact",
-			"key": 0,
+			"type": "bool",
+			"key": false,
 			"description": "(Notification webhooks only) Include only basic info in payload (id, title, action) and your custom data. Useful in case of key conflicts"
 		}]
 
@@ -332,28 +339,32 @@
 		,[ "listPush", "global/conf_keys", {
 			"id": "ui_live_log_ws", 
 			"title": "ui.live_log_ws",
-			"key": 0,
+			"type": "bool",
+			"key": false,
 			"description": "Turns on classic websocket api for live log"
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "params_demo", 
-			"title": "params.jdbc.demo",
-			"key": "jdbc:mysql://localhost:3306/demo",
+			"title": "params.sql.demo",
+			"key": "SELECT * FROM\nSOMETABLE s \nWHERE s.col = 30",
+			"type": "text/x-sql",
 			"description": "If resolve parameters is checked, these params will be injected into script as job parameters.\nIn shell plug you can use placeholder (e.g. [/demo]) or env variable (e.g. $JOB_DEMO)"
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "git_enabled", 
 			"title": "git.enabled",
-			"key": 0,
+			"type": "bool",
+			"key": false,
 			"description": "Sync up data folder with remote git repository. To push data press backup button on scheduled event page.\n Should init git repo in data folder first. You can also set remote, branch and user via config (default is origin/master/cronicle)"
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "git_auto", 
 			"title": "git.auto",
-			"key": 0,
+			"type": "bool",
+			"key": false,
 			"description": "If git is enabled this option will trigger git sync on each metadata update (e.g. on event change)"
 		}]
 

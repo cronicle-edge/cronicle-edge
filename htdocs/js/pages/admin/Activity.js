@@ -81,6 +81,14 @@ Class.add( Page.Admin, {
 			var desc = '';
 			var actions = [];
 			var color = '';
+
+			let kt_map = {
+                'application/json': '[JSON]',
+                'text/xml': '[XML]',
+                'text/x-sql': '[SQL]',
+                'text/plain': '[TEXT]'
+            }
+			let conf_key_val = item.conf_key ? (kt_map[item.conf_key.type] || item.conf_key.key) : ''
 			
 			switch (item.action) {
 				
@@ -143,15 +151,15 @@ Class.add( Page.Admin, {
 
 				// Configs
 				case 'confkey_create':
-					desc = 'Config created: <b>' + item.conf_key.title + '</b> : ' + item.conf_key.key;
+					desc = 'Config created: <b>' + item.conf_key.title + '</b> : ' + conf_key_val;
 					actions.push( '<a href="#Admin?sub=edit_config_key&id='+item.conf_key.id+'">Edit Config</a>' );
 				break;
 				case 'confkey_update':
-					desc = 'Config updated: <b>' + item.conf_key.title + '</b> : ' + item.conf_key.key;
+					desc = 'Config updated: <b>' + item.conf_key.title + '</b> : ' + conf_key_val;
 					actions.push( '<a href="#Admin?sub=edit_conf_key&id='+item.conf_key.id+'">Edit Config</a>' );
 				break;
 				case 'confkey_delete':
-					desc = 'Config deleted: <b>' + item.conf_key.title + '</b> : ' + item.conf_key.key;
+					desc = 'Config deleted: <b>' + item.conf_key.title + '</b> : ' + conf_key_val;
 				break;
 				
 				// events

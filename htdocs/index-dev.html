@@ -21,6 +21,8 @@
 	<link rel="stylesheet" href="codemirror/theme/solarized.css">
 	<link rel="stylesheet" href="codemirror/theme/gruvbox-dark.css">
 	<link rel="stylesheet" href="codemirror/addon/scroll/simplescrollbars.css">
+	<link rel="stylesheet" href="codemirror/addon/display/fullscreen.css">
+	<link rel="stylesheet" href="codemirror/addon/lint/lint.css">
 	<script src="js/external/ansi_up.js"></script>
 	<script src="js/external/graphlib.min.js"></script>
 	<script src="js/external/vis-network.min.js"></script>
@@ -36,6 +38,12 @@
 	<script src="codemirror/mode/groovy/groovy.js"></script>
 	<script src="codemirror/mode/clike/clike.js"></script>
 	<script src="codemirror/mode/properties/properties.js"></script>
+	<script src="codemirror/addon/display/fullscreen.js"></script>
+	<script src="codemirror/mode/xml/xml.js"></script>
+    <script src="codemirror/mode/sql/sql.js"></script>
+	<script src="codemirror/addon/lint/lint.js"></script>
+	<script src="codemirror/addon/lint/json-lint.js"></script>
+	<script src="https://unpkg.com/jsonlint@1.6.3/web/jsonlint.js"></script>
 	<style>
 
 		.data_table tr:hover td {
@@ -49,9 +57,16 @@
 			font-style: normal;
 			font-weight: 400;
 			font-size: 14px;
-			/* width: 55rem; */
-			height: 32rem;
+			height: 28rem;
 			resize: both;
+		}
+
+		#fe_ee_env .CodeMirror {
+      		height: 16rem;
+		}
+
+		#conf_editor_div .CodeMirror {
+      		height: 16rem;
 		}
 
 		.CodeMirror-gutter {

@@ -126,7 +126,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		this.events.forEach((job, index) => {
 			let jobGroup = job.enabled ? job.category : 'disabled';
-			let jobCat = catMap[job.category]
+			let jobCat = catMap[job.category] || {} ;
 			let jobIcon = String.fromCharCode(parseInt(job.graph_icon || 'f111', 16));
 			let jobColor = job.enabled ? (jobCat.gcolor || "#3498DB" ) : "lightgray" // #3f7ed5
 			sNodes.push({ 
@@ -163,6 +163,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		$(document).keyup(function (e) {
 			if (e.keyCode == 46) { // delete button pressed
 				var eventId = app.network.getSelectedNodes()[0]
+				if(! eventId) return;
 				var idx = $P().events.findIndex(i => i.id === eventId)
 				if (eventId) $P().delete_event(idx)
 			}
@@ -2012,7 +2013,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 								</script>
 								`
 								html += '<div class="plugin_params_label">' + param.title + '</div>';
-								html += '<div class="plugin_params_content"><select onchange="toggleWFType()" id="fe_ee_pp_' + param.id + '">' + render_menu_options(param.items, value, true) + '</select></div>';
+								html += '<div class="plugin_params_content" style="width:55rem;"><select onchange="toggleWFType()" id="fe_ee_pp_' + param.id + '">' + render_menu_options(param.items, value, true) + '</select></div>';
 								break;
 							}
 
