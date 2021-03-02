@@ -78,7 +78,15 @@ Class.add( Page.Admin, {
 		  lineWrapping: false,
 		  scrollbarStyle: "overlay",
 		  lineNumbers: true,
-		  matchBrackets: true							  
+		  matchBrackets: true,
+		  extraKeys: {
+			"F11": function(cm) {
+			  cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+			},
+			"Esc": function(cm) {
+			  if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+			}
+		  }								  
 		});
 
 		env_editor.setValue(($P().secret.data || '').toString());
@@ -425,7 +433,15 @@ Class.add( Page.Admin, {
 			scrollbarStyle: "overlay",
 			lineNumbers: true,
 			matchBrackets: true,
-			lint: true
+			lint: true,
+			extraKeys: {
+				"F11": function(cm) {
+				  cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+				},
+				"Esc": function(cm) {
+				  if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+				}
+			}	
 
 		  });
 

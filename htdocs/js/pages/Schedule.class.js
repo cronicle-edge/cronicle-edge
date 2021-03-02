@@ -1664,7 +1664,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		var timing = event.timing;
 
 		html += '<div style="font-size:13px; margin-top:7px; display:none;"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Timing Details</span></div>';
-		html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px; max-width:600px;"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Timing Details</legend>';
+		html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px; max-width:670px;"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Timing Details</legend>';
 
 		// html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px; max-width:600px;"><legend>Timing Details</legend>';
 
