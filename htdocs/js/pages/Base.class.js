@@ -65,17 +65,18 @@ Class.subclass(Page, "Page.Base", {
 		if (!title) return '(None)';
 		if (!style) style = '';
 		if (!extra) extra = '';
-		var icon_class = 'fa fa-clock-o';
+		let icon_class = 'fa fa-clock-o';
+		let notes = title.notes ? title.notes : ""
 		if (typeof (title) == 'object') {
 			title = title.title
         }
-		return `<div class="ellip" style="max-width:${width}px;${style}"><i title="" class="${icon_class}">&nbsp;</i>${title}${extra}</div>`;
+		return `<div class="ellip" style="max-width:${width}px;${style}"><i title="${notes}" class="${icon_class}">&nbsp;</i>${title}${extra}</div>`;
 	},
 
 	getNiceCategory: function (cat, width) {
 		if (!width) width = 500;
 		if (!cat) return '(None)';
-		var title = cat.title;
+		let title = cat.title;
 		if (!cat.enabled) title += ' (Disabled)';
 		return '<div class="ellip" style="max-width:' + width + 'px;"><i class="fa fa-folder-open-o">&nbsp;</i>' + title + '</div>';
 	},
@@ -89,7 +90,7 @@ Class.subclass(Page, "Page.Base", {
 			return '<div class="ellip" style="max-width:' + width + 'px;"><i class="mdi mdi-server-network">&nbsp;</i>' + title + '</div>';
 		}
 		else {
-			return '<div class="ellip" style="max-width:' + width + 'px;" title="' + target + '"><i class="mdi mdi-desktop-tower mdi-lg">&nbsp;</i>' + target.replace(/\.[\w\-]+\.\w+$/, '') + '</div>';
+			return '<div class="ellip" style="max-width:' + width + 'px;" title=""><i class="mdi mdi-desktop-tower mdi-lg">&nbsp;</i>' + target.replace(/\.[\w\-]+\.\w+$/, '') + '</div>';
 		}
 	},
 

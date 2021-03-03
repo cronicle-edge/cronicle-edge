@@ -1139,6 +1139,15 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		html += get_form_table_caption("Select the number of retries to be attempted before an error is reported.");
 		html += get_form_table_spacer();
 
+		// log expiration
+		html += get_form_table_row('Log Expires',
+			'<table cellspacing="0" cellpadding="0"><tr>' +
+			'<td><select id="fe_ee_expire_days" onChange="">' + render_menu_options([[0, 'Default'], 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31], event.log_expire_days, false) + '</select></td>' +
+			'</tr></table>'
+		);
+		html += get_form_table_caption("Number of days to keep job logs in storage (alters job_data_expire_days config)");
+		html += get_form_table_spacer();
+
 		// catch-up mode (run all)
 		// method (interruptable, non-interruptable)
 		html += get_form_table_row('Misc. Options',
@@ -2200,6 +2209,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		if (isNaN(event.retry_delay)) return quiet ? false : app.badField('fe_ee_retry_delay', "Please enter an integer value for the event retry delay.");
 		if (event.retry_delay < 0) return quiet ? false : app.badField('fe_ee_retry_delay', "Please enter a positive integer for the event retry delay.");
 
+		// log expiration
+		event.log_expire_days = parseInt($('#fe_ee_expire_days').val()) || undefined; 
+		
 		// catch-up mode (run all)
 		event.catch_up = $('#fe_ee_catch_up').is(':checked') ? 1 : 0;
 
