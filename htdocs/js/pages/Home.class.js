@@ -48,6 +48,13 @@ Class.subclass( Page.Base, "Page.Home", {
 		<script src="js/external/moment-timezone-with-data.min.js"></script>	
 		<canvas id="d_home_completed_jobs" height="40px"></canvas>
 		<div style="height:10px;"></div>
+		<script>
+		let ui = app.config.ui
+		if(ui) {
+		  $('#fe_cmp_job_chart_scale').val(ui.job_chart_scale === 'logarithmic' ? 'logarithmic' : 'linear')
+		  $('#fe_cmp_job_chart_limit').val(([10, 25, 35, 50, 100]).includes(ui.job_chart_limit) ? ui.job_chart_limit : 50)
+		}
+	   </script>
 		`
 		
 		// queued jobs
@@ -342,7 +349,9 @@ Class.subclass( Page.Base, "Page.Home", {
 		var statusMap = { 0: 'lightgreen', 255: 'orange' }
 
 		app.api.post('app/get_history', { offset: 0, limit: ($('#fe_cmp_job_chart_limit').val() || 50) }, function (d) {
-			var jobs = d.rows.reverse();
+			
+			var jobs = d.rows.reverse().filter(e=>e.event_title);
+
 			if(jobs.length > 1) {
 				let jFrom =  moment.unix(jobs[0].time_start).format('MMM DD, HH:mm:ss');
 				let jTo =  moment.unix(jobs[jobs.length-1].time_start + (jobs[jobs.length-1].elapsed || 0)).format('MMM DD, HH:mm:ss');
