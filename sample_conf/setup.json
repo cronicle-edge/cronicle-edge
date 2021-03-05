@@ -59,7 +59,8 @@
 					"title": "Workflow Type",
 					"items": [
 						"category",
-						"event"
+						"event",
+						"prefix"
 					],
 					"value": "category"
 				},
@@ -70,6 +71,13 @@
 					"items": [
 						"(none)"
 					],
+					"value": ""
+				},
+				{
+					"type": "text",
+					"id": "wf_prefix",
+					"title": "Prefix",
+					"size": 8,
 					"value": ""
 				},
 				{

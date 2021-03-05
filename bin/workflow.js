@@ -72,7 +72,7 @@ rl.on('line', function (line) {
 	const input = JSON.parse(line);
 	let concur = parseInt(process.env['WF_CONCUR']) || 1
 
-	let wf_type = process.env['WF_TYPE'] || 'category'  // cat or event
+	let wf_type = process.env['WF_TYPE'] || 'category'  // cat or event or prefix
 	let wf_strict = parseInt(process.env['WF_STRICT']) // report error on child failure (warning is default)
 	let eventid = process.env['WF_EVENT']  // target event
 	let event_params = (process.env['ARGS'] || '').trim();
@@ -108,6 +108,18 @@ rl.on('line', function (line) {
 			});
 			if(taskList.length == 0) throw new Error('Event Workflow has no valid arguments')
 		}
+		else if(wf_type == 'prefix') {
+			// run all jobs with specific prefix
+			let prefix = process.env['WF_PREFIX'] ;
+			if(!prefix) throw new Error('Invalid prefix');
+			let sched = await getJson(baseUrl + '/api/app/get_schedule', { api_key: apikey })
+			console.log(`Running events with prefix: \u001b[1m${prefix}\u001b[22m  `)
+			taskList = sched.data.rows
+				.filter(t => t.title.startsWith(prefix + '_') && t.id !== input.event && t.plugin != 'workflow')
+				.sort((a, b) => a.title.localeCompare(b.title))
+			if (concur > taskList.length || !concur) concur = taskList.length
+
+	   }
 		else { // run all jobs in category
 			let sched = await getJson(baseUrl + '/api/app/get_schedule', { api_key: apikey })
 			console.log(`Running category: \u001b[1m${input.category_title}\u001b[22m  `)
@@ -116,6 +128,7 @@ rl.on('line', function (line) {
 				.sort((a, b) => a.title.localeCompare(b.title))
 			if (concur > taskList.length || !concur) concur = taskList.length
 		}
+		if(taskList.length == 0) throw new Error('There are no events matching specified criteria');
 
 		// -----------------
 		// get list of running events (prior to wf). This also asserts api endpoint

@@ -1954,6 +1954,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 								break;
 							}
 
+							if(param.id == 'wf_prefix') {
+								html += `
+								  <div id="wf_prefix_box" class="plugin_params_content"><input style="" type="text" size="12" id="fe_ee_pp_wf_prefix" value="${escape_text_field_value(value)}"></input><br><span>Run only events with specific prefix in title<br>E.g. prefix "sql" would trigger event sql_step1</span><br></div>
+								  `
+								break;
+							}
+
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
 							html += '<div class="plugin_params_content" style="width: 54rem"><input type="text" id="fe_ee_pp_' + param.id + '" size="' + param.size + '" value="' + escape_text_field_value(value) + '" spellcheck="false"/></div>';
 							break;
@@ -2014,7 +2021,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 						case 'select':
 							if (param.id == 'wf_event') {
-								let wf_events = render_menu_options(app.schedule.filter(e => e.plugin != 'workflow'), value, true).trim()
+								let wf_events = render_menu_options(app.schedule.filter(e => e.plugin != 'workflow' && e.id != this.event.id), value, true).trim()
 								html += `
 								  <div class="plugin_params_content"><select hidden id="fe_ee_pp_wf_event" style="margin-left:10px; font-size:12px;"><option value="">(None)</option> ${wf_events}</select></div>
 								`
@@ -2024,9 +2031,24 @@ Class.subclass(Page.Base, "Page.Schedule", {
 								html += `
 								<script>
 								function toggleWFType() {
-									 $('#fe_ee_pp_wf_event').toggle()
-									 $('#wf_args_div').toggle()
+									let tp = $('#fe_ee_pp_wf_type').val()
+									if(tp === 'event') {
+									 $('#fe_ee_pp_wf_event').show()
+									 $('#wf_args_div').show()
+									 $('#wf_prefix_box').hide()
 									 }
+									 else if (tp == 'prefix') {
+										$('#fe_ee_pp_wf_event').hide()
+										$('#wf_prefix_box').show()
+										$('#wf_args_div').hide()
+									 }
+									 else {
+										$('#fe_ee_pp_wf_event').hide()
+										$('#wf_args_div').hide()
+										$('#wf_prefix_box').hide()
+									 }
+									}
+									toggleWFType()
 								</script>
 								`
 								html += '<div class="plugin_params_label">' + param.title + '</div>';
