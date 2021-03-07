@@ -122,8 +122,11 @@ Class.subclass( Page.Base, "Page.History", {
 			var plugin = job.plugin ? find_object( app.plugins, { id: job.plugin } ) : null;
 			if (!plugin && job.plugin_title) plugin = { id: job.plugin, title: job.plugin_title };
 			
+			let job_expired = time_now() > job.expires_at
+			let href = job_expired ? '' : '<a href="#JobDetails?id='+job.id+'">'
+
 			var job_link = '<div class="td_big">--</div>';
-			if (job.id) job_link = '<div class="td_big"><a href="#JobDetails?id='+job.id+'">' + self.getNiceJob('<b>' + job.id + '</b>') + '</a></div>';
+			if (job.id) job_link = `<div class="td_big">${href}` + self.getNiceJob('<b>' + job.id + '</b>') + '</a></div>';
 			
 			var errorTitle = job.description ? job.description.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "") : " " 
 			var jobStatus = (job.code == 0) ? '<span class="color_label green"><i class="fa fa-check">&nbsp;</i>Success</span>' : `<span class="color_label red" title="${errorTitle}"><i class="fa fa-warning">&nbsp;</i>Error</span>`
@@ -141,7 +144,7 @@ Class.subclass( Page.Base, "Page.History", {
 				// actions.join(' | ')
 			];
 			
-			if (!job.id) tds.className = 'disabled';
+			if (!job.id || job_expired) tds.className = 'disabled';
 			
 			if (cat && cat.color) {
 				if (tds.className) tds.className += ' '; else tds.className = '';
@@ -733,11 +736,15 @@ Class.subclass( Page.Base, "Page.History", {
 			if (job.cpu) cpu_avg = short_float( (job.cpu.total || 0) / (job.cpu.count || 1) );
 			if (job.mem) mem_avg = short_float( (job.mem.total || 0) / (job.mem.count || 1) );
 			
-			var jobStatusHist = (job.code == 0) ? '<span class="color_label green"><i class="fa fa-check">&nbsp;</i>Success</span>' : '<span class="color_label red"><i class="fa fa-warning">&nbsp;</i>Error</span>'
-			if(job.code == 255) {jobStatusHist = '<span class="color_label yellow"><i class="fa fa-warning">&nbsp;</i>Warning</span>'}
+			var errorTitle = job.description ? job.description.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "") : " " 
+			var jobStatusHist = (job.code == 0) ? '<span class="color_label green"><i class="fa fa-check">&nbsp;</i>Success</span>' : `<span title="${errorTitle}" class="color_label red"><i class="fa fa-warning">&nbsp;</i>Error</span>`
+			if(job.code == 255) {jobStatusHist = `<span title="${errorTitle}" class="color_label yellow"><i class="fa fa-warning">&nbsp;</i>Warning</span>`}
+
+			let job_expired = time_now() > job.expires_at
+			let href = job_expired ? '' : '<a href="#JobDetails?id='+job.id+'">'
 
 			var tds = [
-				'<div class="td_big" style="white-space:nowrap;"><a href="#JobDetails?id='+job.id+'"><i class="fa fa-pie-chart">&nbsp;</i><b>' + job.id.substring(0, 11) + '</b></span></div>',
+				`<div class="td_big" style="white-space:nowrap;">${href}<i class="fa fa-pie-chart">&nbsp;</i><b>${job.id.substring(0, 11)}</b></span></div>`,
 				self.getNiceGroup( null, job.hostname, col_width ),
 				jobStatusHist,
 				get_nice_date_time( job.time_start, false, true ),
@@ -746,6 +753,8 @@ Class.subclass( Page.Base, "Page.History", {
 				get_text_from_bytes(mem_avg)
 				// actions.join(' | ')
 			];
+
+			if(job_expired) tds.className = 'disabled';
 			
 			return tds;
 		} );
