@@ -9,11 +9,15 @@
  ```
  
 
-## step 2 - create secrets
+## step 2 - create secrets (optional)
 
 ```bash
 echo -n "MyCronSecretKey" | docker secret create secret_key -
 docker secret create cronicle.key /path/to/key.pem
+```
+The key is used for data encryption. Use bin/cms (openssl wrapper) to generate one:
+ ```
+  bin/cms new cronicle > /path/to/key.pem
 ```
 
 ## step 3 start manager node
@@ -55,6 +59,12 @@ If secret is meant to be accessed by non-root user then just specify it as ```--
    --network cron  \
    cronicle/cronicle:edge-1.0.0 worker
 ```
+
+# Docker compose
+If you are going to deploy a cluster (1 manager + N workers), it's better to use docker compose, describing all nodes in one file. Even better - install Portainer (docker GUI), so you can just copy/paste those yaml files into web GUI and get the cluster up and running with a single button click. Here are some sample compose files:
+- LocalCluster.yaml - basic example with  1 manager and 1 worker
+- LocalClusterAnchor.yaml - multinode cluster, using docker anchors ("templates")
+
 
 # Setting up https reverse proxy with nginx
 

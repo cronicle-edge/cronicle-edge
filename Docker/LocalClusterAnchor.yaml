@@ -1,0 +1,69 @@
+version: '3.6'
+
+
+# ------------- template
+
+x-node: &node
+  image: cronicle/cronicle:edge
+  deploy:
+    resources:
+      limits:
+        memory: 8g
+  secrets:
+    - source: "cron_secret_key"
+      target: "secret_key"
+      uid: "0"
+      gid: "0"
+      mode: 0400
+
+services:
+
+# ------------ manager ---------------
+
+  manager1:
+    <<: *node
+    hostname: "manager1"
+    command: manager
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.crond.rule=Host(`crond.yourhost.com`)"
+        - "traefik.http.routers.crond.entrypoints=web"
+        - "traefik.http.services.crond.loadbalancer.server.port=3012"
+        - "traefik.http.services.crond.loadbalancer.sticky.cookie=true"
+    environment:
+    - "CRONICLE_manager=1"
+
+# ---------- workers --------------
+
+  worker0:
+    <<: *node
+    hostname: "worker0"
+    command: worker
+
+  worker2:
+    <<: *node
+    hostname: "worker2"
+    command: worker
+
+  worker3:
+    <<: *node
+    hostname: "worker3"
+    command: worker
+
+  worker4:
+    <<: *node
+    hostname: "worker4"
+    command: worker
+
+
+#-----------------------
+
+networks:
+  default:
+    external:
+      name: cron
+
+secrets:
+  cron_secret_key:
+    external: true
