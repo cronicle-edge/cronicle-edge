@@ -62,7 +62,7 @@ onmessage = function(e) {
 			item.ticks.toString().trim().replace(/\s+/g, ' ').split(/[\,\|]/).forEach(e => {
 				if(!e) return
 				let format = e.trim().length > 8 ? 'YYYY-MM-DD HH:mm A' : 'HH:mm A'
-				let actual = moment.tz(e, format, tz).unix()
+				let actual = moment(e, format).tz(tz).unix()
 				if(dupCheck[actual]) return
 				dupCheck[actual] = true;
 				if (actual && (actual >= min_epoch) && (actual < max_epoch)) {
