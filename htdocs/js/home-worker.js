@@ -61,15 +61,19 @@ onmessage = function(e) {
 			let dupCheck = {} // tick string might contain dups, ignore them
 			item.ticks.toString().trim().replace(/\s+/g, ' ').split(/[\,\|]/).forEach(e => {
 				if(!e) return
-				let format = e.trim().length > 8 ? 'YYYY-MM-DD HH:mm A' : 'HH:mm A'
-				let actual = moment(e, format).tz(tz).unix()
+				let isRecurring = false;
+				if(e.trim().length < 9) { // expecting HH:mm A
+					isRecurring = true
+					e = moment().tz(tz).format('YYYY-MM-DD') + ' ' + e
+				}
+				let actual = moment.tz(e, 'YYYY-MM-DD HH:mm A', tz).unix()
 				if(dupCheck[actual]) return
 				dupCheck[actual] = true;
 				if (actual && (actual >= min_epoch) && (actual < max_epoch)) {
 					events.push({ epoch: actual, id: item.id });
 				}
 				// for HH:mm (recurring) ticks also check next day
-				if(format === 'HH:mm A' && (actual + 60*60*24 >= min_epoch) && (actual + 60*60*24 < max_epoch)) {
+				if(isRecurring && (actual + 60*60*24 >= min_epoch) && (actual + 60*60*24 < max_epoch)) {
                      events.push({ epoch: actual + 60*60*24, id: item.id });
 				}
 			});
