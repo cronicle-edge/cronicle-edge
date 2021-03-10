@@ -19,14 +19,15 @@ For actual use:
 - for persistant volume you only need to map *data* folder
 - to run cronicle "as a service" use *restart=always* option
 - you may optionally use *--net=host* parameter if interacting with cronicle nodes on other machines (in this case don't use hostname parameter, it should be the same as your host)
+- you can specify secret_key via env variable. CRONICLE_manager=1 will start up cronicle right away (only use on single manager node/cluster)
 
 ```bash
-docker run -it --hostname manager1 --restart always \
+docker run -d --hostname manager1 --restart=always \
   -e CRONICLE_manager=1 \
   -e CRONICLE_secret_key=123456 \
-  -p 3017:3012 \
+  -p 3012:3012 \
   -v $HOME/data:/opt/cronicle/data \
-  cronicle:pwsh manager
+  cronicle/cronicle:edge manager
 ```
 
 # Running cronicle in swarm mode (as service)
