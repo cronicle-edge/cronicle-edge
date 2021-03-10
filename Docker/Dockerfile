@@ -1,4 +1,4 @@
-# build: docker build -t cronicle:edge -f Dockerfile --build-arg branch=main --build-arg echo=1 .
+# build: docker build -t cronicle:edge -f Dockerfile --build-arg branch=main --build-arg echo=1 --build-arg bldonly=1 .
 # test run: docker run -it -v $HOME/data:/opt/cronicle/data -p 3012:3012 cronicle:edge manager
 
 FROM node:14-alpine3.12
@@ -51,7 +51,10 @@ RUN echo $echo
 ARG branch=main
 RUN git clone https://github.com/cronicle-edge/cronicle-edge.git /opt/cronicle
 RUN git checkout ${branch}
-RUN npm audit fix --force; npm install; node bin/build dist
+RUN npm audit fix --force; npm install
+ARG bldonly
+RUN echo $bldonly
+RUN git pull && node bin/build dist
 
 # protect sensitive folders
 RUN  mkdir -p /opt/cronicle/data /opt/cronicle/conf && chmod 0700 /opt/cronicle/data /opt/cronicle/conf

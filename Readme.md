@@ -6,8 +6,7 @@ You can quickly try it using Docker:
 ```bash
  docker run -it  -p 3012:3012 -e CRONICLE_manager=1 cronicle/cronicle:edge manager 
 ```
-You can import some demo jobs from sample_conf/backup file. This can be done via UI (see below)
-Docker folder contains Dockerfile and several other examples for real life use. 
+You can import some demo jobs from sample_conf/backup file. This can be done via UI (see below). Check [Docker](https://github.com/cronicle-edge/cronicle-edge/tree/main/Docker) section for Dockerfile and other examples for real life use. 
 
  ### Shell Plugin Improvement:
 
