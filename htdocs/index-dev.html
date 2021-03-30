@@ -163,7 +163,8 @@
 			$.widget("ui.tooltip", $.ui.tooltip, {
 				options: {
 					content: function () {
-						return $(this).prop('title');
+						let title = $(this).prop('title');
+						return `${title}`.replace(/script/ig, 'scrpt'); // prevent xss
 					}
 				}
 			});
