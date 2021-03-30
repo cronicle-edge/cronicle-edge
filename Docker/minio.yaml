@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+
+  minio:
+    image: minio/minio
+    hostname: minio
+    ports:
+      - "5000:9000"
+    volumes:
+      - cron_drive:/data
+    networks:
+      - cron
+    deploy:
+      replicas: 1
+    command: server /data
+    environment:
+      - "MINIO_ROOT_PASSWORD=admin_secret"
+      - "MINIO_ROOT_USER=admin"
+
+networks:
+  cron:
+    external: true
+
+
+volumes:
+  cron_drive:

@@ -1,0 +1,64 @@
+version: '3.8'
+services:
+
+# multi-manager cluster with s3
+# create minio service first (can use mini.yaml), using same network as this clustr (create overlay network called "cron")
+# use config.s3.json to create cron_s3 config
+
+  manager1:
+    image: cronicle:s3
+    hostname: manager1
+    depends_on:
+      - minio
+    ports:
+      - "3012:3012"
+    networks:
+      - cron
+    deploy:
+      replicas: 1
+    entrypoint: manager
+    configs:
+     - source: cron_s3
+       target: /opt/cronicle/conf/config.json
+      
+
+
+  manager2:
+    image: cronicle:s3
+    hostname: manager2
+    ports:
+      - "3013:3012"
+    networks:
+      - cron
+    deploy:
+      replicas: 1
+    entrypoint: worker
+    configs:
+     - source: cron_s3
+       target: /opt/cronicle/conf/config.json
+
+
+  manager3:
+    image: cronicle:s3
+    hostname: manager3
+    ports:
+      - "3014:3012"
+    networks:
+      - cron
+    deploy:
+      replicas: 1
+    entrypoint: worker
+    configs:
+     - source: cron_s3
+       target: /opt/cronicle/conf/config.json
+
+
+networks:
+  cron:
+    external:
+      true
+      
+configs:
+  cron_s3:
+    external:
+      true
