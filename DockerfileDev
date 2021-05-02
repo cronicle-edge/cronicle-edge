@@ -1,0 +1,34 @@
+# build: docker build -t cronicle:dev -f DockerfileDev --build-arg echo=1  .
+# test run: docker run --rm -it  -p 3019:3012 cronicle:dev bash
+
+FROM node:14-alpine3.12
+RUN apk add --no-cache git tini util-linux bash openssl procps coreutils curl acl jq
+# required: all: tini; alpine: util-linux procps coreutils
+
+# optional lolcat for tty/color debugging
+RUN apk add lolcat --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+
+
+ENV CRONICLE_foreground=1
+ENV CRONICLE_echo=1
+ENV TZ=America/New_York 
+ENV EDITOR=nvim
+
+ENV PATH "/opt/cronicle/bin:${PATH}"
+
+# non root user for shell plugin
+ARG CRONICLE_UID=1007
+ARG CRONICLE_GID=1099
+RUN  addgroup cronicle --gid $CRONICLE_GID && adduser -D -h /opt/cronicle -u $CRONICLE_UID -G cronicle cronicle
+
+COPY . /opt/cronicle
+WORKDIR /opt/cronicle
+ARG echo
+RUN echo $echo
+RUN npm audit fix --force; npm install
+RUN node bin/build dist
+
+# protect sensitive folders
+RUN  mkdir -p /opt/cronicle/data /opt/cronicle/conf && chmod 0700 /opt/cronicle/data /opt/cronicle/conf
+
+ENTRYPOINT ["/sbin/tini", "--"]
