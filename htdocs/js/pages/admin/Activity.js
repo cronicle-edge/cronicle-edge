@@ -287,7 +287,7 @@ Class.add( Page.Admin, {
 			var tds = [
 				'<div style="white-space:nowrap;">' + get_nice_date_time( item.epoch || 0, false, true ) + '</div>',
 				'<div class="td_big" style="white-space:nowrap; font-size:12px; font-weight:normal;">' + item_type + '</div>',
-				'<div class="activity_desc">' + desc + '</div>',
+				'<div class="activity_desc">' + filterXSS(desc) + '</div>',
 				'<div style="white-space:nowrap;">' + self.getNiceUsername(item, true) + '</div>',
 				(item.ip || 'n/a').replace(/^\:\:ffff\:(\d+\.\d+\.\d+\.\d+)$/, '$1'),
 				'<div style="white-space:nowrap;">' + actions.join(' | ') + '</div>'

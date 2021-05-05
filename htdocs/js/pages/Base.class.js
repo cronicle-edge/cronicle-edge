@@ -67,7 +67,7 @@ Class.subclass(Page, "Page.Base", {
 		if (!extra) extra = '';
 		let icon_class = 'fa fa-clock-o';
 		if(title.plugin == 'workflow') icon_class = 'fa fa-folder';
-		let notes = title.notes ? title.notes : ""
+		let notes = title.notes ? title.notes.replace(/\"/g, "&quot;") : ""
 		if (typeof (title) == 'object') {
 			title = title.title
         }

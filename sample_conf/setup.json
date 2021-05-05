@@ -401,6 +401,7 @@
 			[ "symlinkCompress", "node_modules/zxcvbn/dist/zxcvbn.js", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/zxcvbn/dist/zxcvbn.js.map", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/chart.js/dist/Chart.min.js", "htdocs/js/external/" ],
+			[ "symlinkCompress", "node_modules/xss/dist/xss.min.js", "htdocs/js/external/" ],
 		
 			
 			[ "symlinkCompress", "node_modules/font-awesome/css/font-awesome.min.css", "htdocs/css/" ],

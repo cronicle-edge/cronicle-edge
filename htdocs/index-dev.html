@@ -23,6 +23,7 @@
 	<link rel="stylesheet" href="codemirror/addon/scroll/simplescrollbars.css">
 	<link rel="stylesheet" href="codemirror/addon/display/fullscreen.css">
 	<link rel="stylesheet" href="codemirror/addon/lint/lint.css">
+	<script src="js/external/xss.min.js"></script>
 	<script src="js/external/ansi_up.js"></script>
 	<script src="js/external/graphlib.min.js"></script>
 	<script src="js/external/vis-network.min.js"></script>
@@ -163,8 +164,7 @@
 			$.widget("ui.tooltip", $.ui.tooltip, {
 				options: {
 					content: function () {
-						let title = $(this).prop('title');
-						return `${title}`.replace(/script/ig, 'scrpt'); // prevent xss
+						return filterXSS($(this).prop('title'));
 					}
 				}
 			});

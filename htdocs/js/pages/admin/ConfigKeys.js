@@ -110,8 +110,8 @@ Class.add( Page.Admin, {
 			if(item.type == "bool" && !item.key) key_disp = "☐"
 
 			return [
-				`<div style="white-space:nowrap;" title="${item.description}" ><i class="fa fa-wrench">&nbsp;&nbsp;</i><b>${item.title}<b></div>`
-				, `<div class="activity_desc">${key_disp}</div>`
+				`<div style="white-space:nowrap;" title="${(item.description || '').replace(/\"/g, "&quot;")}" ><i class="fa fa-wrench">&nbsp;&nbsp;</i><b>${item.title}<b></div>`
+				, `<div class="activity_desc">${encode_entities(key_disp)}</div>`
 				, '<div style="white-space:nowrap;">' + actions.join(' | ') + '</div>'
 			];
 		});

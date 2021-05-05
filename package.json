@@ -60,6 +60,7 @@
 		"socket.io-client": "1.7.3",
 		"uglify-js": "2.8.22",
 		"uncatch": "^1.0.0",
+		"xss": "^1.0.8",
 		"zxcvbn": "3.5.0"
 	},
 	"devDependencies": {
