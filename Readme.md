@@ -2,10 +2,15 @@
 
 This is a fork of [jhuckaby/Cronicle](https://github.com/jhuckaby/Cronicle) with quite a few new features and APIs. The main purpose of this fork is to make Cronicle work better with Docker, and add some experimental features that are only expected in Cronincle 2.0 (a.k.a. Orchestra)
 
-You can quickly try it using Docker:
+You can quickly try it using Docker using image from docker hub:
 ```bash
  docker run -it  -p 3012:3012 -e CRONICLE_manager=1 cronicle/cronicle:edge manager 
 ```
+Or build the image locally - clone or download the latest release and run command below from project root
+```
+docker build -t cronicle:local -f DockerfileDev --build-arg echo=1  .
+```
+
 You can import some demo jobs from sample_conf/backup file. This can be done via UI (see below). Check [Docker](https://github.com/cronicle-edge/cronicle-edge/tree/main/Docker) section for Dockerfile and other examples for real life use. 
 
  ### Shell Plugin Improvement:
