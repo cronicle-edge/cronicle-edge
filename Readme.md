@@ -31,8 +31,8 @@ You can import some demo jobs from sample_conf/backup file. This can be done via
 ### Config tab
 You can now set any config right from GUI and without restarting cronicle. You can set custom configuration keys that would override values you have set in config.json. You can set nested keys via dot notation  (e.g. params.sql.query). You can also use multi-line values as config value. Please note - that does not apply to storage and webserver config. You also cannot get or set secret key.
 
-### Global Env
-On Config Tab you can also specify environment variable using "KEY = VALUE" syntax (dotenv style). Those variables will be available from shell plug scripts. You can optionally encrypt it (need to generate pem key with openssl). This repo contain helper script to generate the key: ``` bin/cms new cronicle > /path/to/key.pem ```. Default key location is /run/secrets/cronicle.key, but could be set via CMS_KEY variable or config.
+### Global Env / Secrets
+On Config Tab you can also specify environment variables using "KEY = VALUE" syntax (dotenv style). Those variables will be available while executing shellplug events. You can also encrypt this data turning this feature into "secret management". Data is encrypted using AES256 and cronicle secret key. For the best result set secret_key as docker secret, use https proxy between clients and manager nodes and set log level config to be <= 6.
 
 ### Config Viewer
 Config tab also contains a link to a config viewer. It will list all actual config values (besides secret_key)
