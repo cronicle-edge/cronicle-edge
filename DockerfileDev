@@ -1,5 +1,6 @@
 # build: docker build -t cronicle:dev -f DockerfileDev --build-arg echo=1  .
-# test run: docker run --rm -it  -p 3019:3012 cronicle:dev bash
+# test run: docker run --rm -it  -p 3019:3012 cronicle:edge bash
+# then type manager or worker
 
 FROM node:14-alpine3.12
 RUN apk add --no-cache git tini util-linux bash openssl procps coreutils curl acl jq
@@ -27,12 +28,12 @@ COPY . /opt/cronicle
 WORKDIR /opt/cronicle
 
 #optional  step to fix vulnerabilities reported by npm
-RUN npm audit fix --force
+#RUN npm audit fix --force
 
 RUN npm install
 
 # if you run "audit fix" then you need to downgrade chart.js back to v2 (from v3)
-RUN npm i chart.js@2.7.1 
+#RUN npm i chart.js@2.7.1 
 
 RUN node bin/build dist
 

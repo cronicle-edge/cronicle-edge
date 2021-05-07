@@ -185,7 +185,7 @@
 			"encrypted": false,
 			"target": null,
 			"form": "props",
-			"data": "# dotenv style key/value pairs representing env variables\n# to generate encryption key:\n# openssl req -x509 -sha256 -nodes -newkey rsa:4096 -keyout conf/cronicle.key -out conf/cronicle.key -subj '/CN=cronicle'\nmyvar = some_value"
+			"data": "# dotenv style key/value pairs representing env variables\nmyvar = some_value"
 		} ],
 		
 		[ "listCreate", "global/server_groups", {} ],
@@ -357,7 +357,7 @@
 			"title": "params.sql.demo",
 			"key": "SELECT * FROM\nSOMETABLE s \nWHERE s.col = 30",
 			"type": "text/x-sql",
-			"description": "If resolve parameters is checked, these params will be injected into script as job parameters.\nIn shell plug you can use placeholder (e.g. [/demo]) or env variable (e.g. $JOB_DEMO)"
+			"description": " params config (object) can be used to set placeholders in shell scripts. You need to check 'resolve parameters' box in event parameters. To set placeholder use square braket syntax, e.g. for this parameter you should use [/sql/demo]"
 		}]
 
 		,[ "listPush", "global/conf_keys", {

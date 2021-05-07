@@ -7,8 +7,14 @@ You can quickly try it using Docker using image from docker hub:
  docker run -it  -p 3012:3012 -e CRONICLE_manager=1 cronicle/cronicle:edge manager 
 ```
 Or build the image locally - clone or download the latest release and run command below from project root
+```bash
+docker build -t cronicle:edge -f DockerfileDev --build-arg echo=1  .
 ```
-docker build -t cronicle:local -f DockerfileDev --build-arg echo=1  .
+
+To test multi-node set up (in swarm mode)
+```bash
+docker stack deploy --compose-file  Docker/LocalCluster.yaml cron_stack
+# then go to admin/servers and add nodes called worker1 and worker2 manually
 ```
 
 You can import some demo jobs from sample_conf/backup file. This can be done via UI (see below). Check [Docker](https://github.com/cronicle-edge/cronicle-edge/tree/main/Docker) section for Dockerfile and other examples for real life use. 
