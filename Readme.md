@@ -13,6 +13,8 @@ docker build -t cronicle:edge -f DockerfileDev --build-arg echo=1  .
 
 To test multi-node set up (in swarm mode)
 ```bash
+# before deploying stack, set up a secret_key as docker secret, e.g.:
+# echo 123456 | docker secret create secret_key -
 docker stack deploy --compose-file  Docker/LocalCluster.yaml cron_stack
 # then go to admin/servers and add nodes called worker1 and worker2 manually
 ```
