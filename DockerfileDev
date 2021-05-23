@@ -28,12 +28,9 @@ COPY . /opt/cronicle
 WORKDIR /opt/cronicle
 
 #optional  step to fix vulnerabilities reported by npm
-#RUN npm audit fix --force
+RUN npm audit fix --force
 
 RUN npm install
-
-# if you run "audit fix" then you need to downgrade chart.js back to v2 (from v3)
-#RUN npm i chart.js@2.7.1 
 
 RUN node bin/build dist
 
