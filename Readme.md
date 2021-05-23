@@ -21,6 +21,14 @@ docker stack deploy --compose-file  Docker/LocalCluster.yaml cron_stack
 
 You can import some demo jobs from sample_conf/backup file. This can be done via UI (see below). Check [Docker](https://github.com/cronicle-edge/cronicle-edge/tree/main/Docker) section for Dockerfile and other examples for real life use. 
 
+To try/test/compare original cronicle (jhuckaby/Cronicle) use tags below. You can keep using manager/worker commands as entry point
+- cronicle/cronicle  ```latest version```
+- cronicle/cronicle:0.8.61 ``` specific version```
+
+or build custom verision using [DockerfileClassic](https://github.com/cronicle-edge/cronicle-edge/blob/main/DockerfileClassic) dockerfile 
+
+# New Features
+
  ### Shell Plugin Improvement:
 
 - Syntax highlighting with editor themes and full-screen mode (F11)
