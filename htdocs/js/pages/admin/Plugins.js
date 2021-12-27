@@ -7,7 +7,8 @@ Class.add( Page.Admin, {
 		textarea: "Text Box",
 		checkbox: "Checkbox",
 		hidden: "Hidden",
-		select: "Menu"
+		select: "Menu",
+		eventlist: "Event List"
 	},
 	
 	gosub_plugins: function(args) {
