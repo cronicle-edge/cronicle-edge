@@ -501,7 +501,8 @@ Class.add( Page.Admin, {
 			['textarea', ctype_labels.textarea],
 			['checkbox', ctype_labels.checkbox],
 			['select', ctype_labels.select],
-			['hidden', ctype_labels.hidden]
+			['hidden', ctype_labels.hidden],
+			['eventlist', ctype_labels.eventlist]
 		];
 		
 		html += '<table>' + 
