@@ -80,7 +80,132 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		});
 	},
 
-	toggle_token: function () { //zzz
+	//// workflow 
+
+/**
+ * @typedef {Object} WFEvent
+ * @property {string} id
+ * @property {string} title
+ * @property {string} arg
+ * @property {boolean} wait
+ */
+	
+ render_wf_event_list: function () {
+	let cols = ['#', 'Id', 'Title', 'Argument', ' '];
+	let table = '<table class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
+	let wf_events = this.wf || [] 
+		
+	if (wf_events.length === 0) {
+		table += '<tr><td></td><td></td><td><b>No event found</b></td><td></td></tr>'
+	}
+
+	let schedTitles = {};
+	(app.schedule || []).forEach(e => {
+		schedTitles[e.id] = e.title
+	});
+
+	for (var idx = 0, len = wf_events.length; idx < len; idx++) {
+		let actions = `<span class="link" onMouseUp="$P().wf_event_up(${idx})"><b>Up</b></span> | 
+			<span class="link" onMouseUp = "$P().wf_event_down(${idx})" > <b>Down</b></span> | 
+			<span class="link" onMouseUp = "$P().wf_event_delete(${idx})" > <b>Delete</b></span>
+			`
+		let wfe = wf_events[idx]
+		let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;" onmouseup="$P().wf_event_edit(${idx})">${wfe.id}</span>`
+		let title = `${schedTitles[wfe.id] || '<span style="color:red">[Unknown]</span>'}`.substring(0, 40)
+		let arg = `${encode_entities(wfe.arg)}`
+		if(arg.length > 40)  arg = arg.substring(0,37) + '...'
+		table += `<tr>
+		 <td>${idx + 1}</td><td>${eventId}</td><td>${title}</td><td>${arg}</td><td>${actions}</td>
+		</tr>`
+	}
+	table += '</table>'	
+	document.getElementById('fe_ee_pp_evt_list').innerHTML = table
+},
+
+wf_event_down: function (/** @type {number} */ i) {
+	let arr = this.wf // ;  this.event.params['wf_events']
+	if(!Array.isArray(arr) || typeof i !=='number' || i >= arr.length - 1) return
+	[arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+	this.render_wf_event_list()
+},
+
+wf_event_up: function ( /** @type {number} */ i) {
+	let arr = this.wf // this.event.params['wf_events'] || []
+	if(!Array.isArray(arr) || typeof i !=='number' || i === 0 || i >= arr.length) return
+	[arr[i], arr[i-1]] = [arr[i-1], arr[i]];
+	this.render_wf_event_list()
+},
+wf_event_delete: function ( /** @type {number} */ i) {
+	let arr = this.wf  // this.event.params['wf_events'] || [] 
+	if (!Array.isArray(arr)) return
+	arr.splice(i, 1)
+	this.render_wf_event_list()
+},
+
+wf_event_add: function () {
+	let self = this;
+	let all_events = (app.schedule || []).map(e => { return { id: e.id, title: e.title, arg: "", wait: false } }).filter(e => e.id != self.event.id)
+	
+	if(!self.wf) self.wf = []
+	
+	/** @type {[WFEvent]}*/
+	let curr =  self.wf
+	let event_menu = render_menu_options(all_events, curr.length > 0 ? curr[curr.length - 1].id : all_events[0].id)
+
+	let el_style = 'width: 240px; font-size:16px;'
+	let html = '<table>' +  //<option value="">(Select Event)</option>
+	get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}">${event_menu}</select>`) + 
+	get_form_table_spacer() +
+	get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="" spellcheck="false"/>`) +
+	'</table>'
+	
+		app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i> Add Event', html, "Add", function (result) {
+			app.clearError();
+
+			if (result) {
+
+				let evt = find_object(all_events, {id: $('#fe_ee_pp_wf_select_event').find(":selected").val()})
+				if (!evt) { app.showMessage('error', "Please select valid event") }
+				else {
+					evt.arg = $('#fe_ee_pp_wf_evt_arg').val()
+					self.wf.push(evt)
+				}
+				Dialog.hide();
+					
+				self.render_wf_event_list() // refresh event list
+
+			} // user clicked add
+		}); // app.confirm
+},
+
+wf_event_edit: function (idx) {
+	// show dialog to edit or add wf event
+	let self = this;
+	let evt = self.wf[idx] //self.wf.event_list[idx]
+	let event_list = render_menu_options([evt], evt.id)
+	let el_style = 'width: 240px;  font-size:16px;'
+	let html = '<table>' +
+		get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}" disabled>${event_list}</select>`) + 
+		get_form_table_spacer() +
+		get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="${evt.arg}" spellcheck="false"/>`) +
+        '</table>'	
+
+	app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i>Edit Event Options', html, "OK", function (result) {
+		app.clearError();
+
+		if (result) {
+				let evt = self.wf[idx]
+				evt.arg = $('#fe_ee_pp_wf_evt_arg').val()		
+			
+			Dialog.hide();		
+			self.render_wf_event_list() // refresh event list
+
+		} // user clicked add
+	}); // app.confirm
+
+},
+
+toggle_token: function () {
 		if ($('#fe_ee_token').is(':checked')) {
 			$('#fe_ee_token_label').text("")
 			if(!this.event.salt) this.event.salt = hex_md5(get_unique_id()).substring(0, 8)
@@ -610,6 +735,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		app.setWindowTitle("Add New Event");
 		this.div.removeClass('loading');
 
+		this.wf = [] // wf placeholder
+
 		html += this.getSidebarTabs('new_event',
 			[
 				['events', "Schedule"],
@@ -721,6 +848,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// edit event subpage
 		var event = find_object(app.schedule, { id: args.id });
 		if (!event) return app.doError("Could not locate Event with ID: " + args.id);
+
+		this.wf = event.workflow || []
 
 		// check for autosave recovery
 		if (app.autosave_event) {
@@ -1937,29 +2066,12 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				html += '<div style="font-size:13px; margin-top:7px; display:none;"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Plugin Parameters</span></div>';
 				html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px; width: 55rem;"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Plugin Parameters</legend>';
 
-				// html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px;"><legend>Plugin Parameters</legend>';
-
 				for (var idx = 0, len = plugin.params.length; idx < len; idx++) {
 					var param = plugin.params[idx];
 					var value = (param.id in params) ? params[param.id] : param.value;
 					switch (param.type) {
 
 						case 'text':
-							if (param.id == 'wf_args') {
-								html += `
-								<div hidden id="wf_args_div">
-								<div class="plugin_params_content">Target event will be spawned for each valid argument<br>Refer to argument as JOB_ARG env variable</div>
-								</div>
-								`
-								break;
-							}
-
-							if(param.id == 'wf_prefix') {
-								html += `
-								  <div id="wf_prefix_box" class="plugin_params_content"><input style="" type="text" size="12" id="fe_ee_pp_wf_prefix" value="${escape_text_field_value(value)}"></input><br><span>Run only events with specific prefix in title<br>E.g. prefix "sql" would trigger event sql_step1</span><br></div>
-								  `
-								break;
-							}
 
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
 							html += '<div class="plugin_params_content" style="width: 54rem"><input type="text" id="fe_ee_pp_' + param.id + '" size="' + param.size + '" value="' + escape_text_field_value(value) + '" spellcheck="false"/></div>';
@@ -2019,43 +2131,16 @@ Class.subclass(Page.Base, "Page.Schedule", {
 							}
 							break;
 
-						case 'select':
-							if (param.id == 'wf_event') {
-								let wf_events = render_menu_options(app.schedule.filter(e => e.plugin != 'workflow' && e.id != this.event.id), value, true).trim()
-								html += `
-								  <div class="plugin_params_content"><select hidden id="fe_ee_pp_wf_event" style="margin-left:10px; font-size:12px;"><option value="">(None)</option> ${wf_events}</select></div>
-								`
-								break;
-							}
-							if (param.id == 'wf_type') {
-								html += `
-								<script>
-								function toggleWFType() {
-									let tp = $('#fe_ee_pp_wf_type').val()
-									if(tp === 'event') {
-									 $('#fe_ee_pp_wf_event').show()
-									 $('#wf_args_div').show()
-									 $('#wf_prefix_box').hide()
-									 }
-									 else if (tp == 'prefix') {
-										$('#fe_ee_pp_wf_event').hide()
-										$('#wf_prefix_box').show()
-										$('#wf_args_div').hide()
-									 }
-									 else {
-										$('#fe_ee_pp_wf_event').hide()
-										$('#wf_args_div').hide()
-										$('#wf_prefix_box').hide()
-									 }
-									}
-									toggleWFType()
-								</script>
-								`
-								html += '<div class="plugin_params_label">' + param.title + '</div>';
-								html += '<div class="plugin_params_content" style="width:55rem;"><select onchange="toggleWFType()" id="fe_ee_pp_' + param.id + '">' + render_menu_options(param.items, value, true) + '</select></div>';
-								break;
-							}
+						case 'eventlist':
+					      html += `<div class="plugin_params_label">${param.title}</div>
+					      <div id="fe_ee_pp_evt_list"></div>
+					      <script>$P().render_wf_event_list()</script>
+					      <div class="button mini" style="width:110px; margin:10px 0 0 0" onMouseUp="$P().wf_event_add()">Add Event</div>
+					      <br>
+					      `	
+						break;							
 
+						case 'select':
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
 							html += '<div class="plugin_params_content"><select id="fe_ee_pp_' + param.id + '">' + render_menu_options(param.items, value, true) + '</select></div>';
 
@@ -2095,14 +2180,6 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 				html += '</fieldset>';
 				html += '<div class="caption" style="margin-top:6px;">Select the plugin parameters for the event.</div>';
-				html += `
-				    <script>								
-				        if($('#fe_ee_pp_wf_type').val() == 'event') {
-					        $('#fe_ee_pp_wf_event').show()
-					        $('#wf_args_div').show()
-				        }
-				    </script>
-				`
 
 			} // plugin params
 			else {
@@ -2189,6 +2266,14 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		event.plugin = $('#fe_ee_plugin').val();
 		if (!event.plugin) return quiet ? false : app.badField('fe_ee_plugin', "Please select a Plugin for the event.");
 
+		// workflow 
+		if (event.plugin == 'workflow' && Array.isArray(this.wf)) {
+			event.workflow = this.wf || []
+		} 
+		else {
+			event.workflow = undefined // erase wf info if event plugin is not workflow anymore
+		}
+		
 		// plugin params
 		event.params = {};
 		var plugin = find_object(app.plugins, { id: event.plugin });

@@ -53,47 +53,13 @@
 
 		[ "listPush", "global/plugins", {
 			"params": [
-				{
-					"type": "select",
-					"id": "wf_type",
-					"title": "Workflow Type",
-					"items": [
-						"category",
-						"event",
-						"prefix"
-					],
-					"value": "category"
-				},
-				{
-					"type": "select",
-					"id": "wf_event",
-					"title": "Event",
-					"items": [
-						"(none)"
-					],
-					"value": ""
-				},
-				{
-					"type": "text",
-					"id": "wf_prefix",
-					"title": "Prefix",
-					"size": 8,
-					"value": ""
-				},
-				{
-					"type": "text",
-					"id": "wf_args",
-					"title": "Event workflow arguments",
-					"size": 40,
-					"value": ""
-				},
+
 				{
 					"type": "select",
 					"id": "wf_concur",
 					"title": "Concurrency level",
 					"items": [
-						"(default)",
-						"1",
+						"(sync)",
 						"2",
 						"3",
 						"4",
@@ -110,7 +76,7 @@
 						"15",
 						"16"
 					],
-					"value": "(default)"
+					"value": "(sync)"
 				},
 
 				{
@@ -132,7 +98,8 @@
 					],
 					"value": "(None)"
 				},
-				{ "type":"checkbox", "id":"wf_strict", "title":"Report error on any job failure", "value":0 }
+				{ "type":"checkbox", "id":"wf_strict", "title":"Report error on any job failure", "value":0 },
+				{ "type": "eventlist", "id": "wf_events", "title": "Workflow Events"}
 			],
 			"enabled": 1,
 			"title": "Workflow",
