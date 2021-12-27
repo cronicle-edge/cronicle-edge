@@ -12,7 +12,7 @@ var util = require('util');
 var os = require('os');
 var cp = require('child_process');
 
-var mkdirp = require('mkdirp');
+var mkdirp = Tools.mkdirp;
 var async = require('async');
 var glob = require('glob');
 var UglifyJS = require("uglify-js");
