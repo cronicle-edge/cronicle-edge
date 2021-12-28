@@ -2,8 +2,8 @@
 # test run: docker run --rm -it  -p 3019:3012 -e CRONICLE_manager=1 cronicle:edge bash
 # then type manager or worker
 
-FROM node:14-alpine3.12
-RUN apk add --no-cache git tini util-linux bash openssl procps coreutils curl acl jq
+FROM alpine:3.15
+RUN apk add --no-cache git nodejs npm tini util-linux bash openssl procps coreutils curl tar acl jq
 # required: all: tini; alpine: util-linux procps coreutils
 
 # optional lolcat for tty/color debugging
@@ -27,8 +27,8 @@ RUN echo $echo
 COPY . /opt/cronicle
 WORKDIR /opt/cronicle
 
-#optional  step to fix vulnerabilities reported by npm
-RUN npm audit fix --force
+# optional  step to fix vulnerabilities reported by npm
+# RUN npm audit fix --force
 
 RUN npm install
 

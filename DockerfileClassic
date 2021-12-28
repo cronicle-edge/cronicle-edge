@@ -1,13 +1,10 @@
-# build: docker build -t cronicle:classic -f DockerfileClassic --build-arg version=0.8.61  .
+# build: docker build -t cronicle:0.9.2 -f DockerfileClassic --build-arg version=0.9.2  .
 # test run: docker run --rm -it  -p 3020:3012 -e CRONICLE_master=1 cronicle:classic bash
 # then type manager or worker
 
-FROM node:14-alpine3.12
-RUN apk add --no-cache git tini util-linux bash openssl procps coreutils curl acl jq
+FROM alpine:3.15
+RUN apk add --no-cache git nodejs npm tini util-linux bash openssl procps coreutils curl tar acl jq
 # required: all: tini; alpine: util-linux procps coreutils
-
-# optional lolcat for tty/color debugging
-RUN apk add lolcat --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
 
 
 ENV CRONICLE_foreground=1

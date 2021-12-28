@@ -1,8 +1,8 @@
 # build: docker build -t cronicle:edge2 -f Dockerfile --build-arg branch=main --build-arg echo=1 --build-arg bldonly=1 .
 # test run: docker run -it -v $HOME/data:/opt/cronicle/data -p 3012:3012 cronicle:edge manager
 
-FROM node:14-alpine3.12
-RUN apk add --no-cache git tini util-linux bash openssl procps coreutils curl acl jq
+FROM alpine:3.15
+RUN apk add --no-cache git nodejs npm tini util-linux bash openssl procps coreutils curl tar acl jq
 # required: all: tini; alpine: util-linux procps coreutils
 
 # optional lolcat for tty/color debugging
@@ -36,7 +36,7 @@ RUN apk add lolcat --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testin
 ENV CRONICLE_foreground=1
 ENV CRONICLE_echo=1
 ENV TZ=America/New_York 
-ENV EDITOR=nvim
+ENV EDITOR=vi
 
 ENV PATH "/opt/cronicle/bin:${PATH}"
 
@@ -51,7 +51,7 @@ RUN echo $echo
 ARG branch=main
 RUN git clone https://github.com/cronicle-edge/cronicle-edge.git /opt/cronicle
 RUN git checkout ${branch}
-RUN npm audit fix --force; npm install
+RUN npm install
 RUN node bin/build dist
 # ARG bldonly
 # RUN echo $bldonly
