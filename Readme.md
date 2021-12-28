@@ -19,11 +19,14 @@ docker stack deploy --compose-file  Docker/LocalCluster.yaml cron_stack
 # then go to admin/servers and add nodes called worker1 and worker2 manually
 ```
 
-You can import some demo jobs from sample_conf/backup file. This can be done via UI (see below). Check [Docker](https://github.com/cronicle-edge/cronicle-edge/tree/main/Docker) section for Dockerfile and other examples for real life use. 
+You can import some demo jobs from **sample_conf/backup** file. This can be done via UI (see below). Check [Docker](https://github.com/cronicle-edge/cronicle-edge/tree/main/Docker) section for Dockerfile and other examples for real life use. 
 
 To try/test/compare original cronicle (jhuckaby/Cronicle) use tags below. You can keep using manager/worker commands as entry point
 - cronicle/cronicle  ```latest version```
-- cronicle/cronicle:0.8.61 ``` specific version```
+- cronicle/cronicle:0.9.2 ``` specific version```
+```bash
+ docker run -it  -p 3012:3012 -e CRONICLE_master=1 cronicle/cronicle manager 
+```
 
 or build custom verision using [DockerfileClassic](https://github.com/cronicle-edge/cronicle-edge/blob/main/DockerfileClassic) dockerfile 
 
@@ -116,7 +119,7 @@ There are several other minor UI improvements. E.g. tooltips or extra filters. S
 ## Graph View:
 ![image](https://user-images.githubusercontent.com/31977106/109408861-8711af00-795b-11eb-8b19-d660692ed7f9.png)
 ## Workflow Plugin:
-![image](https://user-images.githubusercontent.com/31977106/109408895-d2c45880-795b-11eb-8c19-70bfd90dadd3.png)
+![image](https://user-images.githubusercontent.com/31977106/147597982-1ddfc918-a03a-4e82-9fa9-479c8145df99.png)
 ## Import/Backup 
 ![image](https://user-images.githubusercontent.com/31977106/109408915-1a4ae480-795c-11eb-861c-e6f19cec2858.png)
 ## Config Tab:
