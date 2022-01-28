@@ -276,7 +276,7 @@ rl.on('line', function (line) {
 			rows: Object.keys(jobStatus).map(key=> [
 				jobStatus[key].seq,
 				`<span style="${jobStatus[key].code % 255 ? 'color:red' : ''}"><b>${he.encode(jobStatus[key].title) || '[Unknown]'}</b></span>` + (jobStatus[key].arg ? ': ' + he.encode(jobStatus[key].arg) : ''),
-				`<a href="/#JobDetails?id=${key}" target="_blank">${key}</a>`,
+				key === jobStatus[key].event ? '' : `<a href="/#JobDetails?id=${key}" target="_blank">${key}</a>`,
 				jobStatus[key].start,
 				niceInterval(jobStatus[key].elapsed),
 				jobStatus[key].code ? (jobStatus[key].code == 255 ? '<span style="color:orange"><b>⚠️</b></span>' : '<span style="color:red"><b>✗</b></span>') : '<span style="color:green"><b>✔</b></span>',
