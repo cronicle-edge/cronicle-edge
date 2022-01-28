@@ -35,7 +35,7 @@ RUN npm install
 RUN node bin/build dist
 
 #remove unnecessary file to reduce image size
-RUN rm -rf node_modules/vis-network/  node_modules/graphlib/  node_modules/jsonlint-mod/ node_modules/ansi_up/ node_modules/font-awesome node_modules/mdi \
+RUN rm -rf node_modules/vis-network/  node_modules/graphlib/  node_modules/jsonlint-mod/ node_modules/font-awesome node_modules/mdi \
     && find . -name "*.map" -type f -delete
 
 # protect sensitive folders
