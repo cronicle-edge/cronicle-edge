@@ -21,7 +21,6 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		this.div.addClass('loading');
 		this['gosub_' + args.sub](args);
-
 		return true;
 	},
 
@@ -32,8 +31,6 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			   <span > Back Up Scheduler<br><br></span><textarea id="conf_export" rows="22" cols="80">${resp.data}</textarea><br>
 			   <div class="caption"> Use this output to restore scheduler data later using Import API or storage-cli.js import command</div>
 			   `, '', function (result) {
-
-				console.log(result)
 
 			});
 			//app.showMessage('success', resp.data);
@@ -135,11 +132,22 @@ wf_event_up: function ( /** @type {number} */ i) {
 	[arr[i], arr[i-1]] = [arr[i-1], arr[i]];
 	this.render_wf_event_list()
 },
+
 wf_event_delete: function ( /** @type {number} */ i) {
 	let arr = this.wf  // this.event.params['wf_events'] || [] 
 	if (!Array.isArray(arr)) return
 	arr.splice(i, 1)
 	this.render_wf_event_list()
+},
+
+wf_event_add_cat: function () {
+	let self = this;
+	self.wf = (app.schedule || [])
+	    .filter(e => e.id != self.event.id && e.category === self.event.category)
+		.map(e => { return { id: e.id, title: e.title, arg: "", wait: false } })
+	
+	self.render_wf_event_list()
+
 },
 
 wf_event_add: function () {
@@ -223,20 +231,24 @@ toggle_token: function () {
 	},
 
 	toggle_schedule_view: function () { //show/hide event graph
-
+		// initial app.network generation
+		if (!app.network) this.render_schedule_graph()
+		
 		setTimeout(function () { app.network.moveTo({ scale: 1.2 }); }, 20);
 
 		if ($('#fe_sch_graph').is(':checked') && !app.scheduleAsGraph) {
 			$('#schedule_table').hide()
 			$('#schedule_graph').show()
 			$('#graph_fit_button').show()
+			this.render_schedule_graph() 
 			app.scheduleAsGraph = true
 		} else {
 			$('#schedule_table').show()
 			$('#schedule_graph').hide()
 			$('#graph_fit_button').hide()
 			app.scheduleAsGraph = false;
-			if(app.network) app.network.unselectAll();
+			if (app.network) app.network.unselectAll();
+			this.gosub_events(this.args) // redraw page on graph=>table
 		}
 
 		app.network.fit()
@@ -311,6 +323,7 @@ toggle_token: function () {
 		// render table of events with filters and search
 		this.div.removeClass('loading');
 		app.setWindowTitle("Scheduled Events");
+		
 
 		var size = get_inner_window_size();
 		var col_width = Math.floor(((size.width * 0.9) + 200) / 8);
@@ -551,8 +564,8 @@ toggle_token: function () {
 		html += `
 		  <div id="schedule_table" style="${app.scheduleAsGraph ? 'display:none' : ''}"> ${htmlTab} </div>
 		  <div  id="schedule_graph" style="${app.scheduleAsGraph ? '' : 'display:none'}"></div>
-		  <script> $P().render_schedule_graph();  </script>
 		`
+		//<script> $P().render_schedule_graph();  </script>
 
 		html += '<div style="height:30px;"></div>';
 		html += '<center><table><tr>';
@@ -725,8 +738,14 @@ toggle_token: function () {
 
 		args.enabled = $('#fe_sch_enabled').val();
 		if (!args.enabled) delete args.enabled;
-
+        
+		let self = this;
+		if ($('#fe_sch_graph').is(':checked')) setTimeout(function () { self.render_schedule_graph() }, 20);
+	
 		Nav.go('Schedule' + compose_query_string(args));
+       
+		
+		
 	},
 
 	gosub_new_event: function (args) {
@@ -2135,7 +2154,8 @@ toggle_token: function () {
 					      html += `<div class="plugin_params_label">${param.title}</div>
 					      <div id="fe_ee_pp_evt_list"></div>
 					      <script>$P().render_wf_event_list()</script>
-					      <div class="button mini" style="width:110px; margin:10px 0 0 0" onMouseUp="$P().wf_event_add()">Add Event</div>
+					      <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 0px" onMouseUp="$P().wf_event_add()">Add Event</div>
+						  <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 8px" onMouseUp="$P().wf_event_add_cat()">Add Category</div>
 					      <br>
 					      `	
 						break;							
@@ -2153,7 +2173,6 @@ toggle_token: function () {
 									if(ln == 'scala') {ln = 'text/x-scala'}
 									if(ln == 'csharp') {ln = 'text/x-csharp'}
 									editor.setOption("mode", ln);
-									//console.log(ln);
 								});
 								</script>
 							  `
@@ -2400,18 +2419,18 @@ toggle_token: function () {
 		// recieved data update (websocket), see if sub-page cares about it
 		switch (key) {
 			case 'schedule':
-				if (this.args.sub == 'events') this.gosub_events(this.args);
+				if (this.args.sub == 'events' && !app.scheduleAsGraph) this.gosub_events(this.args);
 				break;
 
 			case 'state':
-				if (this.args.sub == 'edit_event') this.update_rc_value();
+				if (this.args.sub == 'edit_event' && !app.scheduleAsGraph ) this.update_rc_value();
 				break;
 		}
 	},
 
 	onStatusUpdate: function (data) {
 		// received status update (websocket), update sub-page if needed
-		if (data.jobs_changed && (this.args.sub == 'events')) this.gosub_events(this.args);
+		if (data.jobs_changed && (this.args.sub == 'events') && !app.scheduleAsGraph) this.gosub_events(this.args);
 	},
 
 	onResizeDelay: function (size) {
