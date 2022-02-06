@@ -166,6 +166,16 @@ wf_update_start: function () {
    this.render_wf_event_list()
 },
 
+wf_event_add_cat: function () {
+	let self = this;
+	self.wf = (app.schedule || [])
+	    .filter(e => e.id != self.event.id && e.category === self.event.category)
+		.map(e => { return { id: e.id, title: e.title, arg: "", wait: false } })
+	
+	self.render_wf_event_list()
+
+},
+
 wf_event_add: function () {
    let self = this;
    let all_events = (app.schedule || []).map(e => { return { id: e.id, title: e.title, arg: "", wait: false } }).filter(e => e.id != self.event.id)
@@ -2175,17 +2185,16 @@ toggle_token: function () {
 							break;
 
 						case 'eventlist':
-					      html += `<div class="plugin_params_label">${param.title}</div>
-					      <div id="fe_ee_pp_evt_list"></div>
-					      <script>$P().render_wf_event_list()</script>
-					      <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 0px" onMouseUp="$P().wf_event_add()">Add Event</div>
-						  <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 8px" onMouseUp="$P().wf_event_add_cat()">Add Category</div><br>
+						html += `<div class="plugin_params_label">${param.title}</div>
 						  <div class="plugin_params_content" style="margin:10px 10px 10px 10px"> <span> Start From Step: </span>
 						    <select onChange="$P().wf_update_start()" id="wf_start_from_step" style="margin:5px" >
 							  ${render_menu_options(this.wf.map((e, i) => i + 1), this.opts.wf_start_from_step || 1)}
 						    </select>
 					      </div>
-					      <br>
+					      <div id="fe_ee_pp_evt_list"></div>
+					      <script>$P().render_wf_event_list()</script>
+					      <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 0px" onMouseUp="$P().wf_event_add()">Add Event</div>
+						  <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 8px" onMouseUp="$P().wf_event_add_cat()">Add Category</div><br>
 					      `	
 						break;							
 
