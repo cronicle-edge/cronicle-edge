@@ -172,7 +172,9 @@ wf_event_add_cat: function () {
 	    .filter(e => e.id != self.event.id && e.category === self.event.category)
 		.map(e => { return { id: e.id, title: e.title, arg: "", wait: false } })
 	
-	self.render_wf_event_list()
+	// update startFrom menu
+	$('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+	self.render_wf_event_list() // refresh event list
 
 },
 
@@ -207,11 +209,11 @@ wf_event_add: function () {
 				   self.wf.push(evt)
 			   }
 			   Dialog.hide();
-				   
-			   self.render_wf_event_list() // refresh event list
 
-			   // update options
-			   $('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+			// update startFrom menu
+			$('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+			self.render_wf_event_list() // refresh event list
+
 			   
 
 		   } // user clicked add

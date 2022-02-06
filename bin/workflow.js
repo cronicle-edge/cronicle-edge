@@ -111,7 +111,7 @@ rl.on('line', function (line) {
 		for (let id in r.data.jobs) { currActive.push(r.data.jobs[id].event) }
 
 		console.log(`	\u001b[1mJob Schedule [Concurrency: ${concur}, From Step: ${startFrom}]\u001b[22m`);
-		console.log("\n RUNNING: ")
+		console.log(`\n RUNNING(${taskList.length}): `)
 
 		let lineLen = 0;
 		taskList.forEach(e => {
@@ -124,7 +124,7 @@ rl.on('line', function (line) {
 		console.log(' ' + '─'.repeat(lineLen))
 
 		if (skip.length > 0) {
-			console.log(" SKIPPING:\n" + skip.map(e => " " + e).join("\n"))
+			console.log(` SKIPPING(${skip.length}):\n` + skip.map(e => " " + e).join("\n"))
 			console.log(' ' + '─'.repeat(lineLen))
 		} 
 
