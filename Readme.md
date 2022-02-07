@@ -119,7 +119,7 @@ There are several other minor UI improvements. E.g. tooltips or extra filters. S
 ## Graph View:
 ![image](https://user-images.githubusercontent.com/31977106/109408861-8711af00-795b-11eb-8b19-d660692ed7f9.png)
 ## Workflow Plugin:
-![image](https://user-images.githubusercontent.com/31977106/147597982-1ddfc918-a03a-4e82-9fa9-479c8145df99.png)
+![image](https://user-images.githubusercontent.com/31977106/152707347-1b0f25e0-d0a6-4ef1-99e0-be6fc14e20d9.png)
 ## Import/Backup 
 ![image](https://user-images.githubusercontent.com/31977106/109408915-1a4ae480-795c-11eb-861c-e6f19cec2858.png)
 ## Config Tab:
