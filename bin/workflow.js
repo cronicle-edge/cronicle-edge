@@ -76,7 +76,22 @@ rl.on('line', function (line) {
 
 	let wf_strict = parseInt(process.env['WF_STRICT']) || 0 // report error on any job failure (warning is default)
 
-	taskList = input.workflow || []
+	taskList = (input.workflow || []).map((e, i) => { e.stepId = i + 1; return e})
+
+	let opts = input.options || {}
+
+	let startFrom = opts.wf_start_from_step || 1
+	if ( startFrom > taskList.length) throw new Error('"Start From" parameter cannot exceed event list length')
+
+	let skip = taskList
+	    .filter((e, i) => (i + 1 < startFrom ) || !!e.disabled)
+	    .map(e => `[${e.stepId}] ${e.title} ${e.arg ? '@' + e.arg : ''}`)
+    
+    // exclude disabled/skipped jobs, form final task list
+	taskList = taskList.filter((e, i) => i + 1 >= startFrom && !e.disabled)
+    // adjust concurrency level if needed
+	if(concur > taskList.length) concur = taskList.length
+
 	/// sanity check
 	if (taskList.length == 0) throw new Error('At least one workflow event is required');
 	if (taskList.filter(e => e.id == process.env['JOB_EVENT']).length > 0) throw new Error("Workflow refers to itself");
@@ -95,17 +110,24 @@ rl.on('line', function (line) {
 		let currActive = []
 		for (let id in r.data.jobs) { currActive.push(r.data.jobs[id].event) }
 
-		console.log(`	\u001b[1mJob Schedule [Concurrency: ${concur}]\u001b[22m`);
-		let s = 1;
+		console.log(`	\u001b[1mJob Schedule [Concurrency: ${concur}, From Step: ${startFrom}]\u001b[22m`);
+		console.log(`\n RUNNING(${taskList.length}): `)
+
 		let lineLen = 0;
 		taskList.forEach(e => {
-			let msg = ` ${s})  ${e.title} (${e.id}) ${e.arg ? ('@' + e.arg) : ''}` 
+			let msg = ` [${e.stepId}] ${e.title} (${e.id}) ${e.arg ? ('@' + e.arg) : ''}` 
 			if ( currActive.includes(e.id)) msg += `⚠️ already in progress  `
 			lineLen = lineLen > msg.length ? lineLen : msg.length
-			console.log(msg);
-			s += 1;
+			console.log(msg)
 		});
-		console.log(' ' + '─'.repeat(lineLen));
+
+		console.log(' ' + '─'.repeat(lineLen))
+
+		if (skip.length > 0) {
+			console.log(` SKIPPING(${skip.length}):\n` + skip.map(e => " " + e).join("\n"))
+			console.log(' ' + '─'.repeat(lineLen))
+		} 
+
 		console.log(`\n\n\u001b[1m\u001b[32mWorkflow Started\u001b[39m\u001b[22m @ ${(new Date()).toLocaleString()}\n │  `)
 
 		let pendingJobs = taskList.length

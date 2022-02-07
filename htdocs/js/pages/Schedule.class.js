@@ -85,59 +85,85 @@ Class.subclass(Page.Base, "Page.Schedule", {
  * @property {string} title
  * @property {string} arg
  * @property {boolean} wait
+ * @property {boolean} disabled
  */
 	
- render_wf_event_list: function () {
-	let cols = ['#', 'Id', 'Title', 'Argument', ' '];
-	let table = '<table class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
+render_wf_event_list: function () {
+	let cols = ['#', "Run", '@', 'Id', 'Title', 'Argument', ' '];
 	let wf_events = this.wf || [] 
-		
-	if (wf_events.length === 0) {
-		table += '<tr><td></td><td></td><td><b>No event found</b></td><td></td></tr>'
-	}
 
-	let schedTitles = {};
-	(app.schedule || []).forEach(e => {
-		schedTitles[e.id] = e.title
-	});
+	let table = '<table id="wf_event_list_table" class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
+	   
+   if (wf_events.length === 0) {
+	   table += '<tr><td></td><td></td><td></td><td></td><td><b>No event found</b></td><td></td></tr>'
+   }
+// '<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
+   let schedTitles = {};
+   (app.schedule || []).forEach(e => {
+	   schedTitles[e.id] = e.title
+   });
+	
+   let startFrom = parseInt($("#wf_start_from_step :selected").val());
 
-	for (var idx = 0, len = wf_events.length; idx < len; idx++) {
-		let actions = `<span class="link" onMouseUp="$P().wf_event_up(${idx})"><b>Up</b></span> | 
-			<span class="link" onMouseUp = "$P().wf_event_down(${idx})" > <b>Down</b></span> | 
-			<span class="link" onMouseUp = "$P().wf_event_delete(${idx})" > <b>Delete</b></span>
-			`
-		let wfe = wf_events[idx]
-		let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;" onmouseup="$P().wf_event_edit(${idx})">${wfe.id}</span>`
-		let title = `${schedTitles[wfe.id] || '<span style="color:red">[Unknown]</span>'}`.substring(0, 40)
-		let arg = `${encode_entities(wfe.arg)}`
-		if(arg.length > 40)  arg = arg.substring(0,37) + '...'
-		table += `<tr>
-		 <td>${idx + 1}</td><td>${eventId}</td><td>${title}</td><td>${arg}</td><td>${actions}</td>
-		</tr>`
-	}
-	table += '</table>'	
+   for (var idx = 0, len = wf_events.length; idx < len; idx++) {
+	   let actions = `<span class="link" onMouseUp="$P().wf_event_up(${idx})"><b>Up</b></span> | 
+		   <span class="link" onMouseUp = "$P().wf_event_down(${idx})" > <b>Down</b></span> | 
+		   <span class="link" onMouseUp = "$P().wf_event_delete(${idx})" > <b>Delete</b></span>
+		   `
+	   
+	   let wfe = wf_events[idx]
+	   let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;" onmouseup="$P().wf_event_edit(${idx})">${wfe.id}</span>`
+	   let title = `${schedTitles[wfe.id] || '<span style="color:red">[Unknown]</span>'}`.substring(0, 40)
+	   let arg = `${encode_entities(wfe.arg)}`
+	   if (arg.length > 40) arg = arg.substring(0, 37) + '...'
+
+	   table += `<tr class="${wfe.disabled ? 'disabled' : ''}">
+		<td>${idx + 1}</td>
+		<td><input type="checkbox" onChange="$P().wf_toggle_event_state(${idx})" ${wfe.disabled ? '' : 'checked="checked"'} /></td>
+		<td>${(idx + 1 == startFrom || startFrom > len && idx == 0 )  ? '<span style="color:green">▶</span>' : ''}</td>
+		<td> ${eventId}</td><td>${title}</td><td>${arg}</td><td>${actions}</td>
+	   </tr>`
+   }
+	table += `</table>`
+	
 	document.getElementById('fe_ee_pp_evt_list').innerHTML = table
-},
+   },
+
+	// xxxxxx
+   // '<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
 
 wf_event_down: function (/** @type {number} */ i) {
-	let arr = this.wf // ;  this.event.params['wf_events']
-	if(!Array.isArray(arr) || typeof i !=='number' || i >= arr.length - 1) return
-	[arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
-	this.render_wf_event_list()
+   let arr = this.wf // ;  this.event.params['wf_events']
+   if(!Array.isArray(arr) || typeof i !=='number' || i >= arr.length - 1) return
+   [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+   this.render_wf_event_list()
 },
 
 wf_event_up: function ( /** @type {number} */ i) {
-	let arr = this.wf // this.event.params['wf_events'] || []
-	if(!Array.isArray(arr) || typeof i !=='number' || i === 0 || i >= arr.length) return
-	[arr[i], arr[i-1]] = [arr[i-1], arr[i]];
-	this.render_wf_event_list()
+   let arr = this.wf // this.event.params['wf_events'] || []
+   if(!Array.isArray(arr) || typeof i !=='number' || i === 0 || i >= arr.length) return
+   [arr[i], arr[i-1]] = [arr[i-1], arr[i]];
+   this.render_wf_event_list()
 },
+   wf_event_delete: function ( /** @type {number} */ i) {
+   let self = this
+   let arr = self.wf  // this.event.params['wf_events'] || [] 
+   if (!Array.isArray(arr)) return
+   arr.splice(i, 1)
+   self.render_wf_event_list()
+   $('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+   },
 
-wf_event_delete: function ( /** @type {number} */ i) {
-	let arr = this.wf  // this.event.params['wf_events'] || [] 
-	if (!Array.isArray(arr)) return
-	arr.splice(i, 1)
-	this.render_wf_event_list()
+wf_toggle_event_state: function (idx) {
+   let self = this
+   let evt = self.wf[idx]
+   evt.disabled = !evt.disabled
+   this.render_wf_event_list()
+   },
+
+wf_update_start: function () {
+   this.opts.wf_start_from_step = parseInt($("#wf_start_from_step :selected").text()) || 1
+   this.render_wf_event_list()
 },
 
 wf_event_add_cat: function () {
@@ -146,72 +172,80 @@ wf_event_add_cat: function () {
 	    .filter(e => e.id != self.event.id && e.category === self.event.category)
 		.map(e => { return { id: e.id, title: e.title, arg: "", wait: false } })
 	
-	self.render_wf_event_list()
+	// update startFrom menu
+	$('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+	self.render_wf_event_list() // refresh event list
 
 },
 
 wf_event_add: function () {
-	let self = this;
-	let all_events = (app.schedule || []).map(e => { return { id: e.id, title: e.title, arg: "", wait: false } }).filter(e => e.id != self.event.id)
-	
-	if(!self.wf) self.wf = []
-	
-	/** @type {[WFEvent]}*/
-	let curr =  self.wf
-	let event_menu = render_menu_options(all_events, curr.length > 0 ? curr[curr.length - 1].id : all_events[0].id)
+   let self = this;
+   let all_events = (app.schedule || []).map(e => { return { id: e.id, title: e.title, arg: "", wait: false } }).filter(e => e.id != self.event.id)
+   
+   if(!self.wf) self.wf = []
+   
+   /** @type {[WFEvent]}*/
+   let curr =  self.wf
+   let event_menu = render_menu_options(all_events, curr.length > 0 ? curr[curr.length - 1].id : all_events[0].id)
 
-	let el_style = 'width: 240px; font-size:16px;'
-	let html = '<table>' +  //<option value="">(Select Event)</option>
-	get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}">${event_menu}</select>`) + 
-	get_form_table_spacer() +
-	get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="" spellcheck="false"/>`) +
-	'</table>'
-	
-		app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i> Add Event', html, "Add", function (result) {
-			app.clearError();
+   let el_style = 'width: 240px; font-size:16px;'
+   let html = '<table>' +  //<option value="">(Select Event)</option>
+   get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}">${event_menu}</select>`) + 
+   get_form_table_spacer() +
+   get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="" spellcheck="false"/>`) +
+   get_form_table_spacer() +
+   get_form_table_row('Skip', `<input type="checkbox" style="cursor:pointer" id="fe_ee_pp_wf_evt_skip" />`) +
+	   '</table>'
+ 
+	   app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i> Add Event', html, "Add", function (result) {
+		   app.clearError();
 
-			if (result) {
+		   if (result) {
 
-				let evt = find_object(all_events, {id: $('#fe_ee_pp_wf_select_event').find(":selected").val()})
-				if (!evt) { app.showMessage('error', "Please select valid event") }
-				else {
-					evt.arg = $('#fe_ee_pp_wf_evt_arg').val()
-					self.wf.push(evt)
-				}
-				Dialog.hide();
-					
-				self.render_wf_event_list() // refresh event list
+			   let evt = find_object(all_events, {id: $('#fe_ee_pp_wf_select_event').find(":selected").val()})
+			   if (!evt) { app.showMessage('error', "Please select valid event") }
+			   else {
+				   evt.arg = $('#fe_ee_pp_wf_evt_arg').val()
+				   self.wf.push(evt)
+			   }
+			   Dialog.hide();
 
-			} // user clicked add
-		}); // app.confirm
+			// update startFrom menu
+			$('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+			self.render_wf_event_list() // refresh event list
+
+			   
+
+		   } // user clicked add
+	   }); // app.confirm
 },
 
 wf_event_edit: function (idx) {
-	// show dialog to edit or add wf event
-	let self = this;
-	let evt = self.wf[idx] //self.wf.event_list[idx]
-	let event_list = render_menu_options([evt], evt.id)
-	let el_style = 'width: 240px;  font-size:16px;'
-	let html = '<table>' +
-		get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}" disabled>${event_list}</select>`) + 
-		get_form_table_spacer() +
-		get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="${evt.arg}" spellcheck="false"/>`) +
-        '</table>'	
+   // show dialog to edit or add wf event
+   let self = this;
+   let evt = self.wf[idx] //self.wf.event_list[idx]
+   let event_list = render_menu_options([evt], evt.id)
+   let el_style = 'width: 240px;  font-size:16px;'
+   let html = '<table>' +
+	   get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}" disabled>${event_list}</select>`) + 
+	   get_form_table_spacer() +
+	   get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="${evt.arg}" spellcheck="false"/>`) +
+	   '</table>'	
 
-	app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i>Edit Event Options', html, "OK", function (result) {
-		app.clearError();
+   app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i>Edit Event Options', html, "OK", function (result) {
+	   app.clearError();
 
-		if (result) {
-				let evt = self.wf[idx]
-				evt.arg = $('#fe_ee_pp_wf_evt_arg').val()		
-			
-			Dialog.hide();		
-			self.render_wf_event_list() // refresh event list
+	   if (result) {
+			   let evt = self.wf[idx]
+			   evt.arg = $('#fe_ee_pp_wf_evt_arg').val()		
+		   
+		   Dialog.hide();		
+		   self.render_wf_event_list() // refresh event list
 
-		} // user clicked add
-	}); // app.confirm
+	   } // user clicked add
+   }); // app.confirm
 
-},
+}, 
 
 toggle_token: function () {
 		if ($('#fe_ee_token').is(':checked')) {
@@ -755,6 +789,7 @@ toggle_token: function () {
 		this.div.removeClass('loading');
 
 		this.wf = [] // wf placeholder
+		this.opts = {}
 
 		html += this.getSidebarTabs('new_event',
 			[
@@ -869,6 +904,7 @@ toggle_token: function () {
 		if (!event) return app.doError("Could not locate Event with ID: " + args.id);
 
 		this.wf = event.workflow || []
+		this.opts = event.options || {}
 
 		// check for autosave recovery
 		if (app.autosave_event) {
@@ -2151,12 +2187,16 @@ toggle_token: function () {
 							break;
 
 						case 'eventlist':
-					      html += `<div class="plugin_params_label">${param.title}</div>
+						html += `<div class="plugin_params_label">${param.title}</div>
+						  <div class="plugin_params_content" style="margin:10px 10px 10px 10px"> <span> Start From Step: </span>
+						    <select onChange="$P().wf_update_start()" id="wf_start_from_step" style="margin:5px" >
+							  ${render_menu_options(this.wf.map((e, i) => i + 1), this.opts.wf_start_from_step || 1)}
+						    </select>
+					      </div>
 					      <div id="fe_ee_pp_evt_list"></div>
 					      <script>$P().render_wf_event_list()</script>
 					      <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 0px" onMouseUp="$P().wf_event_add()">Add Event</div>
-						  <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 8px" onMouseUp="$P().wf_event_add_cat()">Add Category</div>
-					      <br>
+						  <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 8px" onMouseUp="$P().wf_event_add_cat()">Add Category</div><br>
 					      `	
 						break;							
 
@@ -2280,6 +2320,9 @@ toggle_token: function () {
 		else {
 			event.stagger = 0;
 		}
+
+		// opts
+		event.options = this.opts || {}
 
 		// plugin
 		event.plugin = $('#fe_ee_plugin').val();
