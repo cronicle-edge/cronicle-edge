@@ -3,7 +3,7 @@
 # Before you start:
 # make sure your docker engine is in swarm mode
 # build a local cronicle-edge image: docker build -t cronicle:edge -f Dockerfile .
-# create cronicle secret: echo 123456 | docker secret create secret_key -
+# create cronicle secret: echo myPassword123 | docker secret create secret_key -
 
 # start cluster:         docker stack deploy --compose-file  LocalCluster.yaml cron_stack
 # check status:          docker stack ps cron_stack
