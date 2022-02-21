@@ -203,8 +203,26 @@ rl.on('line', function (line) {
 						// check job status
 						let jstat = "";
 						let desc = "  ";
-						await sleep(30); // a little lag to avoid "job not found" error
-						let jd = await getJson(baseUrl + '/api/app/get_job_details', { id: j })
+						
+						// retrieve completed job details. API call may fail due to network lag/error, WF will try it few more times before crashing.
+						let lag = 30
+						let jd = {}
+						while (!jd.data) {
+							try {
+								await sleep(lag);
+								jd = await getJson(baseUrl + '/api/app/get_job_details', { id: j })
+							}
+							catch {
+								if (lag > 100) {
+									console.log("Failed to retreive data from get_job_details, stopping WF... ")
+									wfStatus = 'abort';
+									await abortPending();
+									throw new Error("get_job_details not responding")
+								}
+								lag = lag*3								
+							}
+						}	
+						
 						let compl = jd.data.job;
 						if (compl) {
 							if (compl.code == 0) { jstat = '\u001b[32m⬤\u001b[39m' }
