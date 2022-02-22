@@ -359,6 +359,11 @@ Class.add( Page.Admin, {
 		html += get_form_table_row( 'Active', '<input type="checkbox" id="fe_ep_enabled" value="1" ' + (plugin.enabled ? 'checked="checked"' : '') + '/><label for="fe_ep_enabled">Plugin Enabled</label>' );
 		html += get_form_table_caption( "Select whether events using this Plugin should be enabled or disabled in the schedule." );
 		html += get_form_table_spacer();
+
+		// allow workflow
+		html += get_form_table_row( 'Workflow', '<input type="checkbox" id="fe_wf_enabled" value="1" ' + (plugin.wf ? 'checked="checked"' : '') + '/><label for="fe_ep_enabled">Workflow Enabled</label>' );
+		html += get_form_table_caption( "Generate WF_SIGNATURE variable as a temp api key to run/abort jobs" );
+		html += get_form_table_spacer();
 		
 		// command
 		html += get_form_table_row('Executable:', '<textarea id="fe_ep_command" style="width:550px; height:50px; resize:vertical;" spellcheck="false" onkeydown="return $P().stopEnter(this,event)">'+escape_text_field_value(plugin.command)+'</textarea>');
@@ -679,6 +684,7 @@ Class.add( Page.Admin, {
 		if (!plugin.title) return app.badField('fe_ep_title', "Please enter a title for the Plugin.");
 		
 		plugin.enabled = $('#fe_ep_enabled').is(':checked') ? 1 : 0;
+		plugin.wf = $('#fe_wf_enabled').is(':checked') ? 1 : 0;
 		
 		plugin.command = trim( $('#fe_ep_command').val() );
 		if (!plugin.command) return app.badField('fe_ep_command', "Please enter a filesystem path to the executable command for the Plugin.");
