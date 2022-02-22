@@ -1,5 +1,6 @@
 # build: docker build -t cronicle:dev -f DockerfileDev --build-arg echo=1  .
-# test run: docker run --rm -it  -p 3019:3012 -e CRONICLE_manager=1 cronicle:edge bash
+# docker tag cronicle:dev cronicle/cronicle:edge
+# test run: docker run --rm -it  -p 3019:3012 -e CRONICLE_manager=1 cronicle:dev bash
 # then type manager or worker
 
 FROM alpine:3.15

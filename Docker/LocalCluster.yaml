@@ -3,9 +3,10 @@
 # Before you start:
 # make sure your docker engine is in swarm mode
 # build a local cronicle-edge image: docker build -t cronicle:edge -f Dockerfile .
-# create cronicle secret: echo 123456 | docker secret create secret_key -
+# create cronicle secret: echo myPassword123 | docker secret create secret_key -
+# make sure secret_key is not numeric (e.g. 123456), it should contain at least 1 letter or special character
 
-# start cluster:         docker stack deploy --compose-file  LocalCluster.yaml cron_stack
+# start cluster:         docker stack deploy --compose-file  Docker/LocalCluster.yaml cron_stack
 # check status:          docker stack ps cron_stack
 # check logs on error:   docker service logs cron_stack_manager1
 # remove cluster:        docker stack rm cron_stack
@@ -13,7 +14,7 @@
 version: '3.8'
 services:
   worker1:
-    image: cronicle:edge
+    image: cronicle/cronicle:edge
     hostname: worker1
     ports: 
       - "3013:3012"
@@ -30,7 +31,7 @@ services:
         mode: 0400
 
   worker2:
-    image: cronicle:edge
+    image: cronicle/cronicle:edge
     hostname: worker2
     ports: 
       - "3014:3012"
@@ -47,7 +48,7 @@ services:
         mode: 0400
  
   manager1:
-    image: cronicle:edge
+    image: cronicle/cronicle:edge
     hostname: manager1
     ports: 
       - "3012:3012"
