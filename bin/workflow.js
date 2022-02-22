@@ -213,11 +213,19 @@ rl.on('line', function (line) {
 								jd = await getJson(baseUrl + '/api/app/get_job_details', { id: j })
 							}
 							catch {
-								if (lag > 100) {
-									console.log("Failed to retreive data from get_job_details, stopping WF... ")
-									wfStatus = 'abort';
-									await abortPending();
-									throw new Error("get_job_details not responding")
+								if (lag > 500) {
+									console.log(" │ ⚠️ Failed to retreive data from get_job_details")
+									jd = {
+										data: {
+											job: {
+												code: 1,
+												description: "failed to retreive job state (check job logs)",
+												elapsed: 0
+											}
+										}
+									}
+									break
+
 								}
 								lag = lag*3								
 							}
