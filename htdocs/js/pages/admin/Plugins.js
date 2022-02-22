@@ -361,7 +361,7 @@ Class.add( Page.Admin, {
 		html += get_form_table_spacer();
 
 		// allow workflow
-		html += get_form_table_row( 'Workflow', '<input type="checkbox" id="fe_wf_enabled" value="1" ' + (plugin.wf ? 'checked="checked"' : '') + '/><label for="fe_ep_enabled">Workflow Enabled</label>' );
+		html += get_form_table_row( 'Workflow', '<input type="checkbox" id="fe_wf_enabled" value="1" ' + (plugin.wf ? 'checked="checked"' : '') + '/><label for="fe_wf_enabled">Workflow Enabled</label>' );
 		html += get_form_table_caption( "Generate WF_SIGNATURE variable as a temp api key to run/abort jobs" );
 		html += get_form_table_spacer();
 		
