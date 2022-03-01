@@ -15,9 +15,9 @@ var installer_version = '1.3';
 var base_dir = '/opt/cronicle';
 var log_dir = base_dir + '/logs';
 var log_file = '';
-var gh_repo_url = 'http://github.com/jhuckaby/Cronicle';
-var gh_releases_url = 'https://api.github.com/repos/jhuckaby/Cronicle/releases';
-var gh_head_tarball_url = 'https://github.com/jhuckaby/Cronicle/archive/manager.tar.gz';
+var gh_repo_url = 'http://github.com/cronicle-edge/cronicle-edge';
+var gh_releases_url = 'https://api.github.com/repos/cronicle-edge/cronicle-edge/releases';
+var gh_head_tarball_url = 'https://github.com/cronicle-edge/cronicle-edge/archive/manager.tar.gz';
 
 // don't allow npm to delete these (ugh)
 var packages_to_check = ['couchbase', 'aws-sdk', 'redis'];
