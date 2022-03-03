@@ -28,6 +28,7 @@
 		"bcrypt-node": "0.1.0",
 		"chart.js": "^2.9.4",
 		"codemirror": "^5.65.1",
+		"diff": "^5.0.0",
 		"dotenv": "^8.2.0",
 		"font-awesome": "4.7.0",
 		"glob": "5.0.15",

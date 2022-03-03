@@ -1063,7 +1063,12 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		if(app.config.ui.live_log_ws) { 
 			this.start_live_log_watcher_ws(job) // use classic websocket live log
 		}
-		else {this.start_live_log_watcher_poll(job)}
+		else if (app.config.ui.live_log_poll) {
+			this.start_live_log_watcher_poll(job)
+		}
+		else {
+			this.start_live_log_watcher_diff(job)
+		}
 
 	},
 
@@ -1083,6 +1088,61 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 					pollInterval = parseInt(app.config.ui.live_log)
 					if(!pollInterval || pollInterval < 1000) pollInterval = 1000;
 					setTimeout(refresh,  1000);
+				}
+				// stop polling on error, report unexpected errors
+				, (e) => {			
+					if(e.code != 'job') console.error('Live log poll error: ', e)
+					return
+				}
+			)
+		}
+
+		refresh();
+
+	},
+
+	start_live_log_watcher_diff: function (job) { // better version of start_live_log_watcher_poll
+		let self = this;
+		self.curr_live_log_job = job.id;
+
+		let ansi_up = new AnsiUp;
+
+		let oldChunk = ''
+		let lag = 800
+		const minLag = 800
+		const maxLag = 2000
+		const maxLogSize = 30000
+
+		function refresh() {
+			if(self.curr_live_log_job != job.id) return; // prevent double logging
+			app.api.post('/api/app/get_live_console', { id: job.id, tail: parseInt(app.config.ui.live_log_tail_size) || 80 }
+				, (data) => {  // success callback
+					if (!data.data) return; // stop polling if no data
+					
+					let newChunk = (Diff.diffTrimmedLines(oldChunk, data.data).filter(e=>e.added)[0] || {}).value
+
+					if(newChunk) {
+
+ 				      oldChunk += newChunk 
+					  $('#d_live_job_log').append(
+					  	`<pre class="log_chunk" style="color:#888">${ansi_up.ansi_to_html(newChunk.replace(/\u001B=/g, ''))}</pre>`
+					  );
+
+					  if(oldChunk.length > maxLogSize) {
+						$('#d_live_job_log').append(
+							'<pre class="log_chunk" style="color:red">Log size reached max size. Refresh page to continue...</pre>'
+						)
+						return
+					  }
+					  
+					  lag = minLag
+					  
+					}
+					else {
+						if(lag > maxLag) lag = minLag
+						lag = lag*1.2
+					}
+					setTimeout(refresh,  lag);
 				}
 				// stop polling on error, report unexpected errors
 				, (e) => {			

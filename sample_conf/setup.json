@@ -374,6 +374,7 @@
 			[ "copyFiles", "node_modules/ansi_up/ansi_up.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/graphlib/dist/graphlib.min.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/jsonlint-mod/lib/jsonlint.js", "htdocs/js/external/" ],
+			[ "copyFiles", "node_modules/diff/dist/diff.js", "htdocs/js/external/" ],
 		
 			
 			[ "symlinkCompress", "node_modules/font-awesome/css/font-awesome.min.css", "htdocs/css/" ],

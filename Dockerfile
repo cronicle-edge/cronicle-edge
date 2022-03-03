@@ -1,9 +1,10 @@
-# build: docker build -t cronicle:dev -f DockerfileDev --build-arg echo=1  .
+# build: docker build -t cronicle:dev -f Dockerfile --build-arg echo=1  .
+# docker tag cronicle:dev cronicle/cronicle:edge
 # test run: docker run --rm -it  -p 3019:3012 -e CRONICLE_manager=1 cronicle:dev bash
 # then type manager or worker
 
 FROM alpine:3.15
-RUN apk add --no-cache git nodejs npm tini util-linux bash openssl procps coreutils curl tar acl jq dust exa vim
+RUN apk add --no-cache git nodejs npm tini util-linux bash openssl procps coreutils curl tar acl jq
 # required: all: tini; alpine: util-linux procps coreutils
 
 # optional lolcat for tty/color debugging
@@ -30,7 +31,9 @@ WORKDIR /opt/cronicle
 # optional  step to fix vulnerabilities reported by npm
 # RUN npm audit fix --force
 
-RUN npm install && node bin/build dev
+RUN npm install && node bin/build dist \
+    && rm -rf node_modules/vis-*  node_modules/graphlib/  node_modules/jsonlint-mod/ node_modules/font-awesome node_modules/mdi \
+    && find . -name "*.map" -type f -delete
 
 # protect sensitive folders
 RUN  mkdir -p /opt/cronicle/data /opt/cronicle/conf && chmod 0700 /opt/cronicle/data /opt/cronicle/conf

@@ -38,7 +38,10 @@ Class.subclass( Page.Base, "Page.Home", {
 			  <option value="10">Last 10</option>
 			  <option value="25">Last 25</option>
 			  <option value="35">Last 35</option>
-			  <option value="100">Last 100</option></select>	  
+			  <option value="100">Last 100</option>
+			  <option value="120">Last 120</option>
+			  <option value="150">Last 150</option>
+			  </select>	  
 		  </div>
 		  <div class="subtitle_widget"><span id="chart_times" ></span></div>
 		  <div class="clear"></div>
@@ -51,8 +54,10 @@ Class.subclass( Page.Base, "Page.Home", {
 		<script>
 		let ui = app.config.ui
 		if(ui) {
+		let lmt = ui.job_chart_limit || 50 
+		let lmtActual = [10, 25, 35, 50, 100, 120, 150].includes(lmt) ? lmt : 50
 		  $('#fe_cmp_job_chart_scale').val(ui.job_chart_scale === 'logarithmic' ? 'logarithmic' : 'linear')
-		  $('#fe_cmp_job_chart_limit').val(([10, 25, 35, 50, 100]).includes(ui.job_chart_limit) ? ui.job_chart_limit : 50)
+		  $('#fe_cmp_job_chart_limit').val(lmtActual )
 		}
 	   </script>
 		`
