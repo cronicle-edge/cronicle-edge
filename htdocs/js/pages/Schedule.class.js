@@ -298,7 +298,7 @@ toggle_token: function () {
 		this.events.forEach((job, index) => {
 			let jobGroup = job.enabled ? job.category : 'disabled';
 			let jobCat = catMap[job.category] || {} ;
-			
+
 			if(Array.isArray(job.workflow)) job.graph_icon = 'f07b' 
 			let jobIcon = String.fromCharCode(parseInt(job.graph_icon || 'f111', 16));
 
@@ -332,12 +332,11 @@ toggle_token: function () {
 					if(wfMap[e.id]) continue
 					wfMap[e.id] = true
 
-					if(e.disabled || startFrom  > i+1) continue
 					sEdges.push({
 						 from: job.id,
 						 to: e.id,
 						 arrows: "to",
-						 color: "orange",
+						 color: e.disabled || startFrom  > i+1 ? "gray" : "orange",
 						 length: 200,
 						 label: edgeWidth[e.id] > 1 ? `X${edgeWidth[e.id]}` : `${i+1}`,
 						 width: edgeWidth[e.id] > 4 ? 4 : edgeWidth[e.id]
