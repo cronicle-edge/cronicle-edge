@@ -1,6 +1,6 @@
 {
 	"name": "Cronicle",
-	"version": "1.5.6",
+	"version": "1.5.7",
 	"description": "A simple, distributed task scheduler and runner with a web based UI.",
 	"author": "Joseph Huckaby <jhuckaby@gmail.com>",
 	"homepage": "https://github.com/jhuckaby/Cronicle",
@@ -28,6 +28,7 @@
 		"bcrypt-node": "0.1.0",
 		"chart.js": "^2.9.4",
 		"codemirror": "^5.65.1",
+		"diff": "^5.0.0",
 		"dotenv": "^8.2.0",
 		"font-awesome": "4.7.0",
 		"glob": "5.0.15",

@@ -38,7 +38,10 @@ Class.subclass( Page.Base, "Page.Home", {
 			  <option value="10">Last 10</option>
 			  <option value="25">Last 25</option>
 			  <option value="35">Last 35</option>
-			  <option value="100">Last 100</option></select>	  
+			  <option value="100">Last 100</option>
+			  <option value="120">Last 120</option>
+			  <option value="150">Last 150</option>
+			  </select>	  
 		  </div>
 		  <div class="subtitle_widget"><span id="chart_times" ></span></div>
 		  <div class="clear"></div>
@@ -51,8 +54,10 @@ Class.subclass( Page.Base, "Page.Home", {
 		<script>
 		let ui = app.config.ui
 		if(ui) {
+		let lmt = ui.job_chart_limit || 50 
+		let lmtActual = [10, 25, 35, 50, 100, 120, 150].includes(lmt) ? lmt : 50
 		  $('#fe_cmp_job_chart_scale').val(ui.job_chart_scale === 'logarithmic' ? 'logarithmic' : 'linear')
-		  $('#fe_cmp_job_chart_limit').val(([10, 25, 35, 50, 100]).includes(ui.job_chart_limit) ? ui.job_chart_limit : 50)
+		  $('#fe_cmp_job_chart_limit').val(lmtActual )
 		}
 	   </script>
 		`
@@ -346,19 +351,23 @@ Class.subclass( Page.Base, "Page.Home", {
 
 	refresh_completed_job_chart: function () {
 	
-		var statusMap = { 0: 'lightgreen', 255: 'orange' }
+		let statusMap = { 0: 'lightgreen', 255: 'orange' }
 
-		app.api.post('app/get_history', { offset: 0, limit: ($('#fe_cmp_job_chart_limit').val() || 50) }, function (d) {
+		let jobLimit = $('#fe_cmp_job_chart_limit').val() || 50
+
+		app.api.post('app/get_history', { offset: 0, limit: jobLimit }, function (d) {
 			
-			var jobs = d.rows.reverse().filter(e=>e.event_title);
+			let jobs = d.rows.reverse().filter(e=>e.event_title);
 
 			if(jobs.length > 1) {
 				let jFrom =  moment.unix(jobs[0].time_start).format('MMM DD, HH:mm:ss');
 				let jTo =  moment.unix(jobs[jobs.length-1].time_start + (jobs[jobs.length-1].elapsed || 0)).format('MMM DD, HH:mm:ss');
 				$("#chart_times").text(` from ${jFrom} | to ${jTo}`);
 			}
-			var labels = jobs.map((j, i) => i == 0 ? j.event_title.substring(0, 4) : j.event_title);
-			var datasets = [{
+
+			let labels = jobs.map(e => '')
+			if(jobLimit < 100) labels = jobs.map((j, i) => i == 0 ? j.event_title.substring(0, 4) : j.event_title);
+			let datasets = [{
 				label: 'Completed Jobs',
 				// data: jobs.map(j => Math.ceil(j.elapsed/60)),
 				data: jobs.map(j => Math.ceil(j.elapsed) + 1),
@@ -366,7 +375,7 @@ Class.subclass( Page.Base, "Page.Home", {
 				jobs: jobs
 				// borderWidth: 0.3
 			}];
-			var scaleType = $('#fe_cmp_job_chart_scale').val() || 'logarithmic';
+			let scaleType = $('#fe_cmp_job_chart_scale').val() || 'logarithmic';
 
 			// if chart is already generated only update data
 			if(this.jobHistoryChart) { 
@@ -377,8 +386,8 @@ Class.subclass( Page.Base, "Page.Home", {
 				return
 			} 
 
-			var ctx = document.getElementById('d_home_completed_jobs');
-            var self = this;
+			let ctx = document.getElementById('d_home_completed_jobs');
+            let self = this;
 			jobHistoryChart = new Chart(ctx, {
 				type: 'bar',
 				data: {
@@ -398,7 +407,7 @@ Class.subclass( Page.Base, "Page.Home", {
 							title: function (ti, dt) { return dt.datasets[0].jobs[ti[0].index].event_title },
 							label: function (ti, dt) {
 								//var job = jobs[ti.index]
-								var job = dt.datasets[0].jobs[ti.index] ;
+								let job = dt.datasets[0].jobs[ti.index] ;
 								return [
 									"Started on " + job.hostname + ' @ ' + moment.unix(job.time_start).format('HH:mm:ss, MMM D'),
 									"plugin: " + job.plugin_title,
@@ -425,9 +434,9 @@ Class.subclass( Page.Base, "Page.Home", {
 			});
 
 			ctx.ondblclick = function(evt){
-				var activePoints = jobHistoryChart.getElementsAtEvent(evt);
-				var firstPoint = activePoints[0];
-				var job = jobHistoryChart.data.datasets[firstPoint._datasetIndex].jobs[firstPoint._index]
+				let activePoints = jobHistoryChart.getElementsAtEvent(evt);
+				let firstPoint = activePoints[0];
+				let job = jobHistoryChart.data.datasets[firstPoint._datasetIndex].jobs[firstPoint._index]
 				window.open("#JobDetails?id=" + job.id, "_blank");
 			};
 			

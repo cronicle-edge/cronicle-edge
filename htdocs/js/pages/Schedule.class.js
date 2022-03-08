@@ -298,7 +298,10 @@ toggle_token: function () {
 		this.events.forEach((job, index) => {
 			let jobGroup = job.enabled ? job.category : 'disabled';
 			let jobCat = catMap[job.category] || {} ;
+
+			if(Array.isArray(job.workflow)) job.graph_icon = 'f07b' 
 			let jobIcon = String.fromCharCode(parseInt(job.graph_icon || 'f111', 16));
+
 			let jobColor = job.enabled ? (jobCat.gcolor || "#3498DB" ) : "lightgray" // #3f7ed5
 			sNodes.push({ 
 				id: job.id,
@@ -311,6 +314,36 @@ toggle_token: function () {
 			 })
 			if (job.chain) sEdges.push({ from: job.id, to: job.chain, arrows: "to", color: "green", length: 160 })
 			if (job.chain_error) sEdges.push({ from: job.id, to: job.chain_error, arrows: "to", color: "red", length: 160 })
+            
+			// workflow plugin edges
+			if(Array.isArray(job.workflow)) {
+                let startFrom = (job.options || {}).wf_start_from_step || 1
+
+				let edgeWidth = {};
+				for( e of job.workflow) {
+					edgeWidth [e.id] = (edgeWidth [e.id] || 0) + 1
+				}
+
+				let wfMap = {}
+
+				for(let i = 0; i < job.workflow.length; i++) {
+                    let e = job.workflow[i]
+
+					if(wfMap[e.id]) continue
+					wfMap[e.id] = true
+
+					sEdges.push({
+						 from: job.id,
+						 to: e.id,
+						 arrows: "to",
+						 color: e.disabled || startFrom  > i+1 ? "gray" : "orange",
+						 length: 200,
+						 label: edgeWidth[e.id] > 1 ? `X${edgeWidth[e.id]}` : `${i+1}`,
+						 width: edgeWidth[e.id] > 4 ? 4 : edgeWidth[e.id]
+						 })
+				}
+
+			}
 		});
 
 		var sGraph = { nodes: new vis.DataSet(sNodes), edges: new vis.DataSet(sEdges) }
@@ -348,6 +381,14 @@ toggle_token: function () {
 			}
 		});
 
+		app.network.on("stabilizationProgress", function (params) {
+			app.showProgress(1.0, "Rendering, please wait...");
+		});
+
+		app.network.on("stabilizationIterationsDone", function () {
+            app.hideProgress();
+		});
+
 		// select nodes on graph on event filtering
 		// if(app.schedule.length !== this.events.length) app.network.selectNodes(this.events.map(e=>e.id));
 
@@ -357,7 +398,7 @@ toggle_token: function () {
 		// render table of events with filters and search
 		this.div.removeClass('loading');
 		app.setWindowTitle("Scheduled Events");
-		
+		app.scheduleAsGraph = false		
 
 		var size = get_inner_window_size();
 		var col_width = Math.floor(((size.width * 0.9) + 200) / 8);
@@ -1477,12 +1518,12 @@ toggle_token: function () {
 
 		// debugging options (avoid emails/webhooks/history), existing events only
 		if (event.id) {
-			let sudo = app.isAdmin() ? '<input type="checkbox" id="fe_ee_debug_sudo" class="debug_options" value="1"><label title="This will ignore plugin UID setting and run the job using main process UID"> Sudo </label><br>' : "";
+			let sudo = app.isAdmin() ? '<input type="checkbox" id="fe_ee_debug_sudo" class="debug_options" value="1"><label for="fe_ee_debug_sudo" title="This will ignore plugin UID setting and run the job using main process UID"> Sudo </label><br>' : "";
 			let ttyTitle = "This option let you capture colorized terminal output using /usr/bin/script tool (typically in the box, on alpine install util-linux). Please note - it will supress stdin/stderr sent to/from job and will also hang on interactive prompts"
 			html += get_form_table_row('Debug Opts', `				
-				  <input type="checkbox" id="fe_ee_debug_chain"  value="1"><label> Omit chaining</label><br>
-				  <input type="checkbox" id="fe_ee_debug_notify"  value="1"><label> Omit notification </label><br>
-				  <input type="checkbox" id="fe_ee_debug_tty" value="1"><label title="${ttyTitle}"> Use terminal emulator</label><br>
+				  <input type="checkbox" id="fe_ee_debug_chain"  value="1"><label for="fe_ee_debug_chain"> Omit chaining</label><br>
+				  <input type="checkbox" id="fe_ee_debug_notify"  value="1"><label for="fe_ee_debug_notify"> Omit notification </label><br>
+				  <input type="checkbox" id="fe_ee_debug_tty" value="1"><label for="fe_ee_debug_tty" title="${ttyTitle}"> Use terminal emulator</label><br>
 				  ${sudo}
 				  `);
 			html += get_form_table_caption("Debugging options. Applies only to manual execution (not stored with event)");
