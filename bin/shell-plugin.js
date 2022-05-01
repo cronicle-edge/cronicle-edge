@@ -59,6 +59,14 @@ stream.on('json', function (job) {
 				progress: progress
 			});
 		}
+		else if(line.match(/^\s*\#(.{1,40})\#\s*$/)){
+			//let memo = RegExp.$1
+			stream.write({
+				memo: xss.filterXSS(RegExp.$1),
+				update_event: {memo: RegExp.$1}
+
+			});	
+		}
 		else {
 			// otherwise just log it
 			if (job.params.annotate) {

@@ -461,11 +461,11 @@ Class.subclass( Page.Base, "Page.Home", {
 			return (a.time_start < b.time_start) ? 1 : -1;
 		} );
 		
-		var cols = ['Job ID', 'Event Name', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Actions'];
+		var cols = ['Job ID', 'Event Name', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Memo', 'Actions'];
 		
 		// render table
 		var self = this;
-		html += this.getBasicTable( this.jobs, cols, 'active job', function(job, idx) {
+		html += this.getBasicTable2( this.jobs, cols, 'active job', function(job, idx) {
 			var actions = [
 				// '<span class="link" onMouseUp="$P().go_job_details('+idx+')"><b>Details</b></span>',
 				'<span class="link" onMouseUp="$P().abort_job('+idx+')"><b>Abort Job</b></span>'
@@ -515,6 +515,7 @@ Class.subclass( Page.Base, "Page.Home", {
 					'<div id="d_home_jt_elapsed_'+job.id+'">' + self.getNiceJobElapsedTime(job) + '</div>',
 					'<div id="d_home_jt_progress_'+job.id+'">' + self.getNiceJobProgressBar(job) + '</div>',
 					'<div id="d_home_jt_remaining_'+job.id+'">' + self.getNiceJobRemainingTime(job) + '</div>',
+					'<div style="width:100px;max-width:100px;" id="d_home_jt_memo_'+job.id+'">' + '</div>',
 					actions.join(' | ')
 				];
 			} // active job
@@ -703,6 +704,7 @@ Class.subclass( Page.Base, "Page.Home", {
 				else {
 					$('#d_home_jt_elapsed_' + job.id).html( this.getNiceJobElapsedTime(job) );
 					$('#d_home_jt_remaining_' + job.id).html( this.getNiceJobRemainingTime(job) );
+					$('#d_home_jt_memo_' + job.id).html(job.memo );
 					
 					// update progress bar without redrawing it (so animation doesn't jitter)
 					var counter = job.progress || 1;
