@@ -288,7 +288,56 @@ toggle_token: function () {
 		app.network.fit()
 	},
 
-
+	getBasicTable2: function(rows, cols, data_type, callback) {
+		// get html for sorted table (fake pagination, for looks only)
+		var html = '';
+		
+		// pagination
+		html += '<div class="pagination">';
+		html += '<table cellspacing="0" cellpadding="0" border="0" width="100%" style="table-layout:fixed;"><tr>';
+		
+		html += '<td align="left" width="33%">';
+		if (cols.headerLeft) html += cols.headerLeft;
+		else html += commify(rows.length) + ' ' + pluralize(data_type, rows.length) + '';
+		html += '</td>';
+		
+		html += '<td align="center" width="34%">';
+			html += cols.headerCenter || '&nbsp;';
+		html += '</td>';
+		
+		html += '<td align="right" width="33%">';
+			html += cols.headerRight || 'Page 1 of 1';
+		html += '</td>';
+		
+		html += '</tr></table>';
+		html += '</div>';
+		
+		html += '<div style="margin-top:5px;">';
+		html += '<table class="data_table" width="100%">';
+		html += '<tr><th style="white-space:nowrap;">' + cols.join('</th><th style="white-space:nowrap;">') + '</th></tr>';
+		
+		for (var idx = 0, len = rows.length; idx < len; idx++) {
+			var row = rows[idx];
+			var tds = callback(row, idx);
+			if (tds.insertAbove) html += tds.insertAbove;
+			//if(tds.hide) continue;
+			//continue
+			html += `<tr ${tds.className ? ' class="' + tds.className + '"' : ''} ${tds.hide ? 'style="display:none"' : ""} >`;
+			html += '<td>' + tds.join('</td><td>') + '</td>';
+			html += '</tr>';
+		} // foreach row
+		
+		if (!rows.length) {
+			html += '<tr class="nohighlight"><td colspan="'+cols.length+'" align="center" style="padding-top:10px; padding-bottom:10px; font-weight:bold;">';
+			html += 'No '+pluralize(data_type)+' found.';
+			html += '</td></tr>';
+		}
+		
+		html += '</table>';
+		html += '</div>';
+		
+		return html;
+	},
 
 	render_schedule_graph: function () {
 		var sNodes = []
@@ -550,6 +599,8 @@ toggle_token: function () {
 		chtml += '<i class="fa fa-folder-open-o ' + ((group_by == 'category') ? 'selected' : '') + '" title="Group by Category" onMouseUp="$P().change_group_by(\'category\')"></i>';
 		chtml += '<i class="fa fa-plug ' + ((group_by == 'plugin') ? 'selected' : '') + '" title="Group by Plugin" onMouseUp="$P().change_group_by(\'plugin\')"></i>';
 		chtml += '<i class="mdi mdi-server-network ' + ((group_by == 'group') ? 'selected' : '') + '" title="Group by Target" onMouseUp="$P().change_group_by(\'group\')"></i>';
+		chtml += '<i > </i>'
+		chtml += `<i class="${args.collapse ? 'fa fa-arrow-circle-right' : 'fa fa-arrow-circle-up'}" title="${args.collapse ? 'Expand' : 'Collapse'}" onclick="$P().toggle_group_by()"></i>`;
 		chtml += '</div>';
 		cols.headerRight = chtml;
 
@@ -557,7 +608,7 @@ toggle_token: function () {
 		var self = this;
 		var last_group = '';
 
-		var htmlTab = this.getBasicTable(this.events, cols, 'event', function (item, idx) {
+		var htmlTab = this.getBasicTable2(this.events, cols, 'event', function (item, idx) {
 			var actions = [
 				'<span class="link" onMouseUp="$P().run_event(' + idx + ',event)"><b>Run</b></span>',
 				'<span class="link" onMouseUp="$P().edit_event(' + idx + ')"><b>Edit</b></span>',
@@ -618,18 +669,21 @@ toggle_token: function () {
 
 			// group by
 			if (group_by) {
-				var cur_group = item[group_by + '_title'];
+				let cur_group = item[group_by + '_title'];
+				tds.className = 'event_group_' + (group_by == 'group' ? item['target'] || 'allgrp' : item[group_by])
+
 				if (cur_group != last_group) {
 					last_group = cur_group;
-					var insert_html = '<tr><td colspan="' + cols.length + '"><div class="schedule_group_header">';
+					var insert_html = '<tr class="nohighlight"><td colspan="' + cols.length + '"><div class="schedule_group_header">';
 					switch (group_by) {
-						case 'category': insert_html += self.getNiceCategory(cat); break;
-						case 'plugin': insert_html += self.getNicePlugin(plugin); break;
-						case 'group': insert_html += self.getNiceGroup(group, item.target); break;
+						case 'category': insert_html += self.getNiceCategory(cat, 500, args.collapse); break;
+						case 'plugin': insert_html += self.getNicePlugin(plugin, 500, args.collapse); break;
+						case 'group': insert_html += self.getNiceGroup(group, item.target, 500, args.collapse); break;
 					}
 					insert_html += '</div></td></tr>';
 					tds.insertAbove = insert_html;
 				} // group changed
+				if( args.collapse) tds.hide = true
 			} // group_by
 
 			return tds;
@@ -685,6 +739,12 @@ toggle_token: function () {
 		// change grop by setting and refresh schedule display
 		app.setPref('schedule_group_by', group_by);
 		this.gosub_events(this.args);
+	},
+
+	toggle_group_by: function() {
+		let args = this.args 
+		args.collapse ^= true 
+		this.change_group_by(app.getPref('schedule_group_by'))
 	},
 
 	change_event_enabled: function (idx) {

@@ -74,33 +74,53 @@ Class.subclass(Page, "Page.Base", {
 		return `<div class="ellip" style="max-width:${width}px;${style}"><i title="${notes}" class="${icon_class}">&nbsp;</i>${title}${extra}</div>`;
 	},
 
-	getNiceCategory: function (cat, width) {
-		if (!width) width = 500;
+	getNiceCategory: function (cat, width, collapse) {
+
 		if (!cat) return '(None)';
+
+		if (!width) width = 500;
+		let icon = 'fa fa-folder-open-o'
+		let iconClosed = 'fa fa-folder'
+
 		let title = cat.title;
 		if (!cat.enabled) title += ' (Disabled)';
-		return '<div class="ellip" style="max-width:' + width + 'px;"><i class="fa fa-folder-open-o">&nbsp;</i>' + title + '</div>';
+		let onClick = arguments.length > 2 ? `onclick="this.className = this.className == '${icon}' ? '${iconClosed}' : '${icon}' ;$('.event_group_${cat.id}').toggle()"` : ''
+		return `<div class="ellip" style="max-width:${width}px;"><i class="${collapse ? iconClosed : icon}" ${onClick}>&nbsp;</i>${title}</div>`;
 	},
 
-	getNiceGroup: function (group, target, width) {
-		if (!width) width = 500;
+	getNiceGroup: function (group, target, width, collapse) {
+		
 		if (!group && !target) return '(None)';
+
+        if (!width) width = 500;
+
+
 		if (group) {
+
+			let icon = 'mdi mdi-server-network'
+			let iconClosed = 'fa fa-plus-square'
+			let onClick = arguments.length > 3 ? `onclick="this.className = this.className == '${icon}' ? '${iconClosed}' : '${icon}' ;$('.event_group_${group.id}').toggle()"` : ''
+
 			var title = group.title;
 			if (group.multiplex) title += '&nbsp;(<i class="fa fa-bolt" title="Multiplexed"></i>)';
-			return '<div class="ellip" style="max-width:' + width + 'px;"><i class="mdi mdi-server-network">&nbsp;</i>' + title + '</div>';
+			return `<div class="ellip" style="max-width:${width}px;"><i class="${collapse ? iconClosed : icon}" ${onClick}>&nbsp;</i>${title}</div>`;
 		}
 		else {
 			return '<div class="ellip" style="max-width:' + width + 'px;" title=""><i class="mdi mdi-desktop-tower mdi-lg">&nbsp;</i>' + target.replace(/\.[\w\-]+\.\w+$/, '') + '</div>';
 		}
 	},
 
-	getNicePlugin: function (plugin, width) {
-		if (!width) width = 500;
+	getNicePlugin: function (plugin, width, collapse) {
+
 		if (!plugin) return '(None)';
+		if (!width) width = 500;
+		let icon = 'fa fa fa-plug'
+		let iconClosed = 'fa fa-plus-square'
+
 		var title = plugin.title;
 		if (!plugin.enabled) title += ' (Disabled)';
-		return '<div class="ellip" style="max-width:' + width + 'px;"><i class="fa fa-plug">&nbsp;</i>' + title + '</div>';
+		let onClick = arguments.length > 2 ? `onclick="this.className = this.className == '${icon}' ? '${iconClosed}' : '${icon}' ;$('.event_group_${plugin.id}').toggle()"` : ''
+		return `<div class="ellip" style="max-width:${width}px;"><i class="${collapse ? iconClosed : icon}" ${onClick}>&nbsp;</i>${title}</div>`;
 	},
 
 	getNiceAPIKey: function (item, link, width) {
