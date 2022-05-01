@@ -654,7 +654,7 @@ toggle_token: function () {
 				self.getNicePlugin(plugin, col_width),
 				self.getNiceGroup(group, item.target, col_width),
 				summarize_event_timing(item.timing, item.timezone, item.ticks) + chainInfo,
-				status_html,
+				'<span id="ss_' + item.id + '">' + status_html + '</span>',
 				actions.join('&nbsp;|&nbsp;')
 			];
 
@@ -2574,7 +2574,14 @@ toggle_token: function () {
 
 	onStatusUpdate: function (data) {
 		// received status update (websocket), update sub-page if needed
-		if (data.jobs_changed && (this.args.sub == 'events') && !app.scheduleAsGraph) this.gosub_events(this.args);
+		if (data.jobs_changed && (this.args.sub == 'events') && !app.scheduleAsGraph) {
+			for (var idx = 0, len = app.schedule.length; idx < len; idx++) {
+				var item = app.schedule[idx];
+				var jobs = find_objects( app.activeJobs, { event: item.id } );
+				var status_html = jobs.length ? ('<b>Running (' + jobs.length + ')</b>') : 'Idle';
+				$('#ss_' + item.id).html( status_html );
+			}
+		}
 	},
 
 	onResizeDelay: function (size) {
