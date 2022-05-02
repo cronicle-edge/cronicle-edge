@@ -704,7 +704,13 @@ Class.subclass( Page.Base, "Page.Home", {
 				else {
 					$('#d_home_jt_elapsed_' + job.id).html( this.getNiceJobElapsedTime(job) );
 					$('#d_home_jt_remaining_' + job.id).html( this.getNiceJobRemainingTime(job) );
-					$('#d_home_jt_memo_' + job.id).html(encode_entities(job.memo));
+					
+					if(job.memo) {
+						let memoClass = String(job.memo).startsWith('OK:') ? 'color_label green' : ''
+						if(String(job.memo).startsWith('WARN:')) memoClass = 'color_label yellow'
+						if(String(job.memo).startsWith('ERR:')) memoClass = 'color_label red'
+						$('#d_home_jt_memo_' + job.id).html(`<span class="${memoClass}">${encode_entities(job.memo)}</span>`);
+					}
 					
 					// update progress bar without redrawing it (so animation doesn't jitter)
 					var counter = job.progress || 1;
