@@ -47,7 +47,8 @@
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala"],"value":"shell"},
 				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
-				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0}				
+				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0},
+				{"type":"checkbox","id":"logmemo","title":"Log Memo","value":0}			
 			]
 		} ],
 
