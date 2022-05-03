@@ -476,6 +476,7 @@ toggle_token: function () {
 		// render table
 		var cols = [
 			'<i class="fa fa-check-square-o"></i>',
+			'🌤',
 			'Event Name',
 			'Category',
 			'Plugin',
@@ -528,6 +529,11 @@ toggle_token: function () {
 			// server group filter
 			if (args.target && (item.target != args.target)) continue;
 
+			// health filter
+			let itemHealth = item.last_exit_code > 0 ? 2 : 1
+			if(item.last_exit_code == 255) itemHealth = 3
+			if (args.health && (itemHealth != args.health)) continue;
+
 			// keyword filter
 			var words = [item.title, item.username, item.notes, item.target].join(' ').toLowerCase();
 			if (args.keywords && words.indexOf(args.keywords.toLowerCase()) == -1) continue;
@@ -566,6 +572,7 @@ toggle_token: function () {
 		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>' + render_menu_options(app.plugins, args.plugin, false) + '</select></div>';
 		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>' + render_menu_options(app.categories, args.category, false) + '</select></div>';
 
+		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_health" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Health</option>' + render_menu_options([[1, 'Success'], [2, 'Failed'], [3, 'Warning']], args.health, false) + '</select></div>';
 		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>' + render_menu_options([[1, 'Enabled'], [-1, 'Disabled']], args.enabled, false) + '</select></div>';
 		html += `<div class="subtitle_widget" ><input ${graphChecked} id="fe_sch_graph" onclick="$P().toggle_schedule_view()" type="checkbox"></input><label for="fe_sch_graph">Graph View</label></div>`
 
@@ -647,8 +654,13 @@ toggle_token: function () {
 			var evt_name = self.getNiceEvent(item, col_width, 'float:left', '<span>&nbsp;&nbsp;</span>');
 			if (chain_tooltip.length > 0) evt_name += `<i  title="${chain_tooltip.join('<br>')}" class="fa fa-arrow-right">&nbsp;&nbsp;</i>${chain_error_msg}</span>`;
 
+			let health = '🟢'
+			if(item.last_exit_code > 0) health = '🔴'
+			if(item.last_exit_code == 255) health = '🟡'
+
 			var tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
+				health,
 				'<div class="td_big"><span class="link" onMouseUp="$P().edit_event(' + idx + ')">' + evt_name + '</span></div>',
 				self.getNiceCategory(cat, col_width),
 				self.getNicePlugin(plugin, col_width),
@@ -873,6 +885,9 @@ toggle_token: function () {
 
 		args.enabled = $('#fe_sch_enabled').val();
 		if (!args.enabled) delete args.enabled;
+
+		args.health = $('#fe_sch_health').val();
+		if (!args.health) delete args.health;
         
 		let self = this;
 		if ($('#fe_sch_graph').is(':checked')) setTimeout(function () { self.render_schedule_graph() }, 20);
