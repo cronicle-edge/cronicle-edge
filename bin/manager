@@ -2,9 +2,9 @@
 HOMEDIR="$(dirname "$(cd -- "$(dirname "$(readlink -f "$0")")" && (pwd -P 2>/dev/null || pwd))")"
 
 # pull data from git if needed
-if [ ! -d data/global ] && [ -v GIT_REPO ]; then
-        git clone $GIT_REPO $HOMEDIR/data
-fi
+# if [ ! -d data/global ] && [ -v GIT_REPO ]; then
+#         git clone $GIT_REPO $HOMEDIR/data
+# fi
 
 $HOMEDIR/bin/control.sh setup
 

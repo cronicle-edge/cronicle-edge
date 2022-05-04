@@ -48,7 +48,7 @@
 	<script src="codemirror/addon/lint/json-lint.js"></script>
 	<script src="js/external/jsonlint.js"></script>
 	<style>
-		.data_table tr:hover td {
+		.data_table tr:not(.nohighlight):hover td {
 			background-color: #f0f0f0 !important;
 			transition-delay: 30ms;
 		}
@@ -194,8 +194,8 @@
 	</div>
 
 	<script src="js/external/jquery.min.js"></script>
-	<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.min.css">
-	<script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+	<link rel="stylesheet" href="css/jquery-ui.min.css">
+	<script src="js/external/jquery-ui.min.js"></script>
 	<script>
 		//$(function () { $(document).tooltip({ show: null }); });
 		// allow html in tooltips:

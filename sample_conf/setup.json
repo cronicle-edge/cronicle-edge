@@ -47,7 +47,8 @@
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala"],"value":"shell"},
 				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
-				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0}				
+				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0},
+				{"type":"checkbox","id":"logmemo","title":"Log Memo","value":0}			
 			]
 		} ],
 
@@ -328,29 +329,6 @@
 		}]
 
 		,[ "listPush", "global/conf_keys", {
-			"id": "git_enabled", 
-			"title": "git.enabled",
-			"type": "bool",
-			"key": false,
-			"description": "Sync up data folder with remote git repository. To push data press backup button on scheduled event page.\n Should init git repo in data folder first. You can also set remote, branch and user via config (default is origin/master/cronicle)"
-		}]
-
-		,[ "listPush", "global/conf_keys", {
-			"id": "git_auto", 
-			"title": "git.auto",
-			"type": "bool",
-			"key": false,
-			"description": "If git is enabled this option will trigger git sync on each metadata update (e.g. on event change)"
-		}]
-
-		,[ "listPush", "global/conf_keys", {
-			"id": "git_add", 
-			"title": "git.add",
-			"key": "global,users",
-			"description": "List of folders/files to sync via git sync. Global and user folders are default (covers metadata).\n Add 'logs' folder to keep trends/activity logs and 'jobs' for entire job logs"
-		}]
-
-		,[ "listPush", "global/conf_keys", {
 			"id": "_read_me_", 
 			"title": "_read_me_",
 			"key": "please read",
@@ -364,9 +342,9 @@
 	"build": {
 		"common": [
 			[ "symlinkCompress", "node_modules/jquery/dist/jquery.min.js", "htdocs/js/external/" ],
-			[ "symlinkCompress", "node_modules/jquery/dist/jquery.min.map", "htdocs/js/external/" ],
+			[ "symlinkCompress", "node_modules/jquery-ui-dist/jquery-ui.min.js", "htdocs/js/external/" ],
+			[ "symlinkCompress", "node_modules/jquery-ui-dist/jquery-ui.min.css", "htdocs/css/" ],
 			[ "symlinkCompress", "node_modules/zxcvbn/dist/zxcvbn.js", "htdocs/js/external/" ],
-			[ "symlinkCompress", "node_modules/zxcvbn/dist/zxcvbn.js.map", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/chart.js/dist/Chart.min.js", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/xss/dist/xss.min.js", "htdocs/js/external/" ],
 

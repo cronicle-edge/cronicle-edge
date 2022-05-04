@@ -11,12 +11,15 @@ const cp = require('child_process');
 const path = require('path');
 const JSONStream = require('pixl-json-stream');
 const Tools = require('pixl-tools');
+const moment = require('moment')
 
 if(process.env['ENV_FILE']) {
  try { 
 	 require('dotenv').config({path: process.env['ENV_FILE']})
   } catch { }
 }
+
+let start = moment();
 
 // setup stdin / stdout streams 
 process.stdin.setEncoding('utf8');
@@ -58,6 +61,20 @@ stream.on('json', function (job) {
 			stream.write({
 				progress: progress
 			});
+		}
+		else if(line.match(/^\s*\#(.{1,60})\#\s*$/)){
+			let memoText = RegExp.$1
+			stream.write({
+				memo: memoText,
+				update_event: {last_memo: memoText}
+
+			});	
+			if(job.params.logmemo) { 
+				let dint = moment().diff(start) > 999000 ? 'm' : 's'
+				let diff = String(moment().diff(start, dint)).padStart(2, ' ')
+				start = moment()
+				console.log(`[${start.format('yyyy-MM-DD HH:mm:ss')}][${diff}${dint}]: ${memoText}`);
+			}
 		}
 		else {
 			// otherwise just log it
