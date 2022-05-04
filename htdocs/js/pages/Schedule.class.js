@@ -654,9 +654,10 @@ toggle_token: function () {
 			var evt_name = self.getNiceEvent(item, col_width, 'float:left', '<span>&nbsp;&nbsp;</span>');
 			if (chain_tooltip.length > 0) evt_name += `<i  title="${chain_tooltip.join('<br>')}" class="fa fa-arrow-right">&nbsp;&nbsp;</i>${chain_error_msg}</span>`;
 
-			let health = '🟢'
-			if(item.last_exit_code > 0) health = '🔴'
-			if(item.last_exit_code == 255) health = '🟡'
+			let health = ''
+			if(item.last_exit_code === 0) health = '<span style="color:#44bb44">⬤</span>'
+			if(item.last_exit_code > 0) health = '<span style="color:#bb4444">⬤</span>'
+			if(item.last_exit_code == 255) health = '<span style="color:orange">⬤</span>'
 
 			var tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',

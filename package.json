@@ -34,6 +34,7 @@
 		"glob": "5.0.15",
 		"graphlib": "^2.1.8",
 		"jquery": "^3.6.0",
+		"jquery-ui-dist": "^1.13.1",
 		"jsonlint-mod": "^1.7.6",
 		"jstimezonedetect": "1.0.6",
 		"mdi": "1.9.33",

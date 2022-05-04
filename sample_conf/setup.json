@@ -342,9 +342,9 @@
 	"build": {
 		"common": [
 			[ "symlinkCompress", "node_modules/jquery/dist/jquery.min.js", "htdocs/js/external/" ],
-			[ "symlinkCompress", "node_modules/jquery/dist/jquery.min.map", "htdocs/js/external/" ],
+			[ "symlinkCompress", "node_modules/jquery-ui-dist/jquery-ui.min.js", "htdocs/js/external/" ],
+			[ "symlinkCompress", "node_modules/jquery-ui-dist/jquery-ui.min.css", "htdocs/css/" ],
 			[ "symlinkCompress", "node_modules/zxcvbn/dist/zxcvbn.js", "htdocs/js/external/" ],
-			[ "symlinkCompress", "node_modules/zxcvbn/dist/zxcvbn.js.map", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/chart.js/dist/Chart.min.js", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/xss/dist/xss.min.js", "htdocs/js/external/" ],
 
