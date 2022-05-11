@@ -16,6 +16,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		if (!args.sub) args.sub = this.default_sub;
 		this.args = args;
 
+		args.eventCount = app.schedule.length;
+
 		app.showTabBar(true);
 		// this.tab[0]._page_id = Nav.currentAnchor();
 
@@ -322,7 +324,7 @@ toggle_token: function () {
 			if (tds.insertAbove) html += tds.insertAbove;
 			//if(tds.hide) continue;
 			//continue
-			html += `<tr ${tds.className ? ' class="' + tds.className + '"' : ''} ${tds.hide ? 'style="display:none"' : ""} >`;
+			html += `<tr ${tds.id ? 'id=' + tds.id : ''} ${tds.className ? ' class="' + tds.className + '"' : ''} ${tds.hide ? 'style="display:none"' : ""} >`;
 			html += '<td>' + tds.join('</td><td>') + '</td>';
 			html += '</tr>';
 		} // foreach row
@@ -476,13 +478,12 @@ toggle_token: function () {
 		// render table
 		var cols = [
 			'<i class="fa fa-check-square-o"></i>',
-			'🌤',
 			'Event Name',
 			'Category',
 			'Plugin',
 			'Target',
 			'Timing',
-			'Status',
+			'Last Run',
 			'Actions'
 		];
 
@@ -529,18 +530,23 @@ toggle_token: function () {
 			// server group filter
 			if (args.target && (item.target != args.target)) continue;
 
-			// health filter
-			let itemHealth = item.last_exit_code > 0 ? 2 : 1
-			if(item.last_exit_code == 255) itemHealth = 3
-			if (args.health && (itemHealth != args.health)) continue;
-
 			// keyword filter
 			var words = [item.title, item.username, item.notes, item.target].join(' ').toLowerCase();
 			if (args.keywords && words.indexOf(args.keywords.toLowerCase()) == -1) continue;
 
 			// enabled filter
 			if ((args.enabled == 1) && !item.enabled) continue;
-			if ((args.enabled == -1) && item.enabled) continue;
+			else if ((args.enabled == -1) && item.enabled) continue;
+
+			// last success/fail filter
+			else if (args.enabled == 'success') {
+				if (!app.state.jobCodes || !(item.id in app.state.jobCodes)) continue; // n/a
+				if (app.state.jobCodes[item.id]) continue; // error
+			}
+			else if (args.enabled == 'error') {
+				if (!app.state.jobCodes || !(item.id in app.state.jobCodes)) continue; // n/a
+				if (!app.state.jobCodes[item.id]) continue; // success
+			}
 
 			this.events.push(copy_object(item));
 		} // foreach item in schedule
@@ -572,8 +578,7 @@ toggle_token: function () {
 		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>' + render_menu_options(app.plugins, args.plugin, false) + '</select></div>';
 		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>' + render_menu_options(app.categories, args.category, false) + '</select></div>';
 
-		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_health" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Health</option>' + render_menu_options([[1, 'Success'], [2, 'Failed'], [3, 'Warning']], args.health, false) + '</select></div>';
-		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>' + render_menu_options([[1, 'Enabled'], [-1, 'Disabled']], args.enabled, false) + '</select></div>';
+		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>' + render_menu_options( [[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"]], args.enabled, false ) + '</select></div>';
 		html += `<div class="subtitle_widget" ><input ${graphChecked} id="fe_sch_graph" onclick="$P().toggle_schedule_view()" type="checkbox"></input><label for="fe_sch_graph">Graph View</label></div>`
 
 		html += '<div class="clear"></div>';
@@ -629,8 +634,13 @@ toggle_token: function () {
 			var group = item.target ? find_object(app.server_groups, { id: item.target }) : null;
 			var plugin = item.plugin ? find_object(app.plugins, { id: item.plugin }) : null;
 
-			var jobs = find_objects(app.activeJobs, { event: item.id });
-			var status_html = jobs.length ? ('<b>Running (' + jobs.length + ')</b>') : 'Idle';
+		// var jobs = find_objects( app.activeJobs, { event: item.id } );
+		var status_html = 'n/a';
+		if (app.state.jobCodes && (item.id in app.state.jobCodes)) {
+			var last_code = app.state.jobCodes[ item.id ];
+			status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
+			if(last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
+		}
 
 			if (group && item.multiplex) {
 				group = copy_object(group);
@@ -654,22 +664,18 @@ toggle_token: function () {
 			var evt_name = self.getNiceEvent(item, col_width, 'float:left', '<span>&nbsp;&nbsp;</span>');
 			if (chain_tooltip.length > 0) evt_name += `<i  title="${chain_tooltip.join('<br>')}" class="fa fa-arrow-right">&nbsp;&nbsp;</i>${chain_error_msg}</span>`;
 
-			let health = ''
-			if(item.last_exit_code === 0) health = '<span style="color:#44bb44">⬤</span>'
-			if(item.last_exit_code > 0) health = '<span style="color:#bb4444">⬤</span>'
-			if(item.last_exit_code == 255) health = '<span style="color:orange">⬤</span>'
-
 			var tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
-				health,
 				'<div class="td_big"><span class="link" onMouseUp="$P().edit_event(' + idx + ')">' + evt_name + '</span></div>',
 				self.getNiceCategory(cat, col_width),
 				self.getNicePlugin(plugin, col_width),
 				self.getNiceGroup(group, item.target, col_width),
 				summarize_event_timing(item.timing, item.timezone, item.ticks) + chainInfo,
-				'<span id="ss_' + item.id + '">' + status_html + '</span>',
+				'<span id="ss_' + item.id + '" onMouseUp="$P().jump_to_last_job('+idx+')">' + status_html + '</span>',
 				actions.join('&nbsp;|&nbsp;')
 			];
+
+			if(item.id) tds.id = item.id
 
 			if (!item.enabled) tds.className = 'disabled';
 			if (cat && !cat.enabled) tds.className = 'disabled';
@@ -746,6 +752,30 @@ toggle_token: function () {
 				}
 			});
 		}, 1);
+	},
+
+	update_job_last_runs: function() {
+		// update last run state for all jobs, called when state is updated
+		if (!app.state.jobCodes) return;
+
+		for (var event_id in app.state.jobCodes) {
+			var last_code = app.state.jobCodes[event_id];
+			var status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
+			if(last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
+			this.div.find('#ss_' + event_id).html( status_html );
+		}
+	},
+
+	jump_to_last_job: function(idx) {
+		// locate ID of latest completed job for event, and redirect to it
+		var event = this.events[idx];
+
+		app.api.post( 'app/get_event_history', { id: event.id, offset: 0, limit: 1 }, function(resp) {
+			if (resp && resp.rows && resp.rows[0]) {
+				var job = resp.rows[0];
+				Nav.go( 'JobDetails?id=' + job.id );
+			}
+		} );
 	},
 
 	change_group_by: function (group_by) {
@@ -886,17 +916,12 @@ toggle_token: function () {
 
 		args.enabled = $('#fe_sch_enabled').val();
 		if (!args.enabled) delete args.enabled;
-
-		args.health = $('#fe_sch_health').val();
-		if (!args.health) delete args.health;
         
 		let self = this;
 		if ($('#fe_sch_graph').is(':checked')) setTimeout(function () { self.render_schedule_graph() }, 20);
 	
-		Nav.go('Schedule' + compose_query_string(args));
-       
-		
-		
+		Nav.go('Schedule' + compose_query_string(args));    
+				
 	},
 
 	gosub_new_event: function (args) {
@@ -1012,6 +1037,15 @@ toggle_token: function () {
 
 		setTimeout(function () {
 			app.showMessage('success', "Event '" + self.event.title + "' was created successfully.");
+			let el = document.getElementById(resp.id)
+			if(el.scrollIntoViewIfNeeded) {
+				el.scrollIntoViewIfNeeded()
+			} else {
+				el.scrollIntoView({block:'center'})
+			}
+
+			$('#' + resp.id).addClass('focus')
+
 		}, 150);
 	},
 
@@ -2579,25 +2613,30 @@ toggle_token: function () {
 		// recieved data update (websocket), see if sub-page cares about it
 		switch (key) {
 			case 'schedule':
-				if (this.args.sub == 'events' && !app.scheduleAsGraph) this.gosub_events(this.args);
+				if (this.args.sub == 'events' && !app.scheduleAsGraph && value.length !== this.args.eventCount) {
+					 this.args.eventCount = value.length
+					 this.gosub_events(this.args); 
+					 console.log(value.length, app.schedule.length) 
+				}
 				break;
 
 			case 'state':
 				if (this.args.sub == 'edit_event' && !app.scheduleAsGraph ) this.update_rc_value();
+				else if (this.args.sub == 'events') this.update_job_last_runs();
 				break;
 		}
 	},
 
 	onStatusUpdate: function (data) {
 		// received status update (websocket), update sub-page if needed
-		if (data.jobs_changed && (this.args.sub == 'events') && !app.scheduleAsGraph) {
-			for (var idx = 0, len = app.schedule.length; idx < len; idx++) {
-				var item = app.schedule[idx];
-				var jobs = find_objects( app.activeJobs, { event: item.id } );
-				var status_html = jobs.length ? ('<b>Running (' + jobs.length + ')</b>') : 'Idle';
-				$('#ss_' + item.id).html( status_html );
-			}
-		}
+		// if (data.jobs_changed && (this.args.sub == 'events') && !app.scheduleAsGraph) {
+		// 	for (var idx = 0, len = app.schedule.length; idx < len; idx++) {
+		// 		var item = app.schedule[idx];
+		// 		var jobs = find_objects( app.activeJobs, { event: item.id } );
+		// 		var status_html = jobs.length ? ('<b>Running (' + jobs.length + ')</b>') : 'Idle';
+		// 		$('#ss_' + item.id).html( status_html );
+		// 	}
+		// }
 	},
 
 	onResizeDelay: function (size) {
