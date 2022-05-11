@@ -487,6 +487,7 @@ Class.subclass( Page.Base, "Page.Home", {
 					'<div id="d_home_jt_elapsed_'+job.id+'">' + self.getNiceJobElapsedTime(job) + '</div>',
 					'<div id="d_home_jt_progress_'+job.id+'">' + self.getNiceJobPendingText(job) + '</div>',
 					'n/a',
+					'',
 					actions.join(' | ')
 				];
 			}
@@ -501,6 +502,7 @@ Class.subclass( Page.Base, "Page.Home", {
 					'n/a',
 					'<div id="d_home_jt_progress_'+job.id+'">' + self.getNiceJobPendingText(job) + '</div>',
 					'n/a',
+					'',
 					actions.join(' | ')
 				];
 			} // pending job

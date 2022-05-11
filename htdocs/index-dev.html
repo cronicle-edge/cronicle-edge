@@ -60,6 +60,26 @@
 			border-bottom: 0.1px solid var(--border-color);
 		}
 
+		tr.focus td {
+			animation: 4s focus;
+
+		}
+
+		@keyframes focus {
+			0% {
+				background: initial;
+			}
+
+			50% {
+				background: #a2ffa9;
+			}
+
+			100% {
+				background: initial;
+			}
+			
+		}
+
 		.table_spacer {
 			height: 0.1px;
 		}
