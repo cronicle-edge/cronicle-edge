@@ -639,6 +639,7 @@ toggle_token: function () {
 		if (app.state.jobCodes && (item.id in app.state.jobCodes)) {
 			var last_code = app.state.jobCodes[ item.id ];
 			status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
+			if(last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
 		}
 
 			if (group && item.multiplex) {
@@ -760,6 +761,7 @@ toggle_token: function () {
 		for (var event_id in app.state.jobCodes) {
 			var last_code = app.state.jobCodes[event_id];
 			var status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
+			if(last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
 			this.div.find('#ss_' + event_id).html( status_html );
 		}
 	},
