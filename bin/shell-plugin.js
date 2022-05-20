@@ -65,10 +65,9 @@ stream.on('json', function (job) {
 		else if(line.match(/^\s*\#(.{1,60})\#\s*$/)){
 			let memoText = RegExp.$1
 			stream.write({
-				memo: memoText,
-				update_event: {last_memo: memoText}
-
+				memo: memoText
 			});	
+			
 			if(job.params.logmemo) { 
 				let dint = moment().diff(start) > 999000 ? 'm' : 's'
 				let diff = String(moment().diff(start, dint)).padStart(2, ' ')
