@@ -22,8 +22,8 @@ let wfStatus = 'running'
 let max_errors = parseInt(process.env['WF_MAXERR']);
 
 function niceInterval(s, asLocatTime) {
-	let date = new Date(0);
-	date.setSeconds(parseInt(s));
+	let date = new Date(s*1000);
+	//date.setSeconds(parseInt(s));
 	if (asLocatTime) return date.toLocaleTimeString();
 	return date.toISOString().substr(11, 8);
 }
@@ -147,7 +147,9 @@ rl.on('line', function (line) {
 					, completed: false
 					, code: 0
 					, seq: q+1
-					, start: (new Date()).toLocaleTimeString() }
+					, start: (new Date()).toLocaleTimeString()
+					, rerunid: ' '
+				}
 
 			}
 			catch (e) {
@@ -179,25 +181,34 @@ rl.on('line', function (line) {
 			let activeJobs = resp.data.jobs
 
 			let rerunList = {};
-			for (r in activeJobs) { if (activeJobs[r].when) { rerunList[activeJobs[r].id] = activeJobs[r].when } }
+			for (r in activeJobs) {
+				if (activeJobs[r].when) {
+					rerunList[activeJobs[r].id] = {id: r, when: activeJobs[r].when, retries: activeJobs[r].retries }
+				}
+			}
 
 			for (let j in jobStatus) {
 
 				if (jobStatus[j].completed) continue // do nothing if completed
 
-				if (!(resp.data.jobs[j])) {  // if job is not in active job list mark as completed
+				// in case job is waiting to rerun on failure, just report error and release it from WF
+				if (rerunList[j] && jobStatus[j].rerunid !== rerunList[j].id) {
+					jobStatus[j].rerunid = rerunList[j].id
+					let attLeft = rerunList[j].retries ? `retries left: ${rerunList[j].retries}` : 'last attempt'
+					console.log(` ├───── ⚠️ ${jobStatus[j].title} failed, will retry at ${niceInterval(rerunList[j].when, true)} [${attLeft}] \n │`)  //${niceInterval(rerunList[j].when, true)}
+					continue
+				}
+
+				if (!(resp.data.jobs[j]) && !(rerunList[j]) ) {  // if job is not in active job list or rerun queue - mark as completed
 					jobStatus[j].completed = true
 					pendingJobs -= 1
+					//if(rerunList[j]) console.log(`job ${j} is still running on background`)
 
 					let msg = '';
 
-					// in case job is waiting to rerun on failure, just report error and release it from WF
-					if (rerunList[j]) {
-						errorCount += 1
-						msg = `  \u001b[31m⬤\u001b[39m ${jobStatus[j].title} failed, but scheduled to rerun at ${niceInterval(rerunList[j], true)}. Releasing job ${j} from workflow`
-					}
+
 					// if job failed to start
-					else if (jobStatus[j].code) { msg = ` │ \u001b[31m⬤\u001b[39m ${jobStatus[j].title}: \u001b[31m${jobStatus[j].description}\u001b[39m` }
+					if (jobStatus[j].code) { msg = ` │ \u001b[31m⬤\u001b[39m ${jobStatus[j].title}: \u001b[31m${jobStatus[j].description}\u001b[39m` }
 					// normal handling - look up job stats in history
 					else {
 						// check job status
