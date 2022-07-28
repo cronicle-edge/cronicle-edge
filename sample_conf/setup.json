@@ -45,12 +45,32 @@
 				{ "id":"script", "type":"textarea", "rows":10, "title":"Script Source", "value": "#!/usr/bin/env bash\n\n# Enter your shell script code here\n# Press F11 to toggle full screen mode\n# To get workflow's job argument refer to $JOB_ARG env variable\necho \"print integer with % to report progress (e.g. 20%)\"\n sleep 2 && echo `date` && echo 10%\n sleep 2 && echo `date` && echo 40%\n sleep 2 && echo `date` && echo 90%\n sleep 2\necho '{\"perf\":{\"step3\":55,\"step2\":30,\"step1\":20}}'" },
 				{ "id":"annotate", "type":"checkbox", "title":"Add Date/Time Stamps to Log", "value": 0 },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
-				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala"],"value":"shell"},
+				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile"],"value":"shell"},
 				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
 				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0},
 				{"type":"checkbox","id":"logmemo","title":"Log Memo","value":0}			
 			]
 		} ],
+
+		[ "listPush", "global/plugins", {
+			"id": "sshplug",
+			"title": "SSH",
+			"enabled": 1,
+			"command": "bin/ssh-plugin.js",
+			"username": "admin",
+			"uid": "",
+			"modified": 1434125333,
+			"created": 1434125333,
+			"params": [
+				{ "id":"ssh_host", "type":"text", "size":40, "title":"HOST/URI", "value": "sftp://cronicle:Password@localhost:22" },
+				{ "id":"ssh_cmd", "type":"text", "size":40, "title":"Command", "value": "bash -" },
+				{ "id":"script", "type":"textarea", "rows":10, "title":"STDIN Script", "value": "\necho 'SUCCESS'\n\n# to specify host use full URI (sftp://user:Password@host:port\n# or keep that URI as env variable and specify variable name\n# if using ssh key\n# sftp://user@host:port?privateKey=/path/to/file&passphrase=Password\n# you can also keep ssh key in SSH Key parameter\n# if password contain special character use URI escape characters\n\n# many interpreters (besides sh/bash) will support execution from stdin\n# node -\n# python -\n# pwsh -c -\n# some will need a file to be created, if so try smth like\n# cat - > /tmp/myfile && groovy myfile\n\n# This should work same on Windows machines (if openssh installed)\n# powershell -\n" },
+				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile"],"value":"shell"},
+				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
+				{ "id":"ssh_key", "type":"textarea", "rows":5, "title":"SSH Key", "value": "" },
+				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 }		
+			]
+		} ],		
 
 		[ "listPush", "global/plugins", {
 			"params": [
