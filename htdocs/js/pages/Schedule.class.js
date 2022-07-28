@@ -2296,6 +2296,9 @@ toggle_token: function () {
 								if (lang == 'java') { lang = 'text/x-java' }
 								if (lang == 'scala') { lang = 'text/x-scala' }
 								if (lang == 'csharp') { lang = 'text/x-csharp' }
+								if (lang == 'sql') { lang = 'text/x-sql' }
+								if (lang == 'dockerfile') { lang = 'text/x-dockerfile' }
+								if (lang == 'yaml') { lang = 'text/x-yaml' }
 								let theme = params.theme || 'default';
 								html += `
 							<script>
@@ -2308,6 +2311,7 @@ toggle_token: function () {
 							  lineNumbers: true,
 							  theme: "${theme}",
 							  matchBrackets: true,
+							  lint:true,
 							  extraKeys: {
                                 "F11": function(cm) {
                                   cm.setOption("fullScreen", !cm.getOption("fullScreen"));
