@@ -65,7 +65,7 @@
 				{ "id":"ssh_host", "type":"text", "size":40, "title":"HOST/URI", "value": "sftp://cronicle:Password@localhost:22" },
 				{ "id":"ssh_cmd", "type":"text", "size":40, "title":"Command", "value": "bash -" },
 				{ "id":"script", "type":"textarea", "rows":10, "title":"STDIN Script", "value": "\necho 'SUCCESS'\n\n# to specify host use full URI (sftp://user:Password@host:port\n# or keep that URI as env variable and specify variable name\n# if using ssh key\n# sftp://user@host:port?privateKey=/path/to/file&passphrase=Password\n# you can also keep ssh key in SSH Key parameter\n# if password contains special character use URI escape characters (e.g. @ => %40)\n\n# many interpreters (besides sh/bash) will support execution from stdin\n# node -\n# python -\n# pwsh -c -\n# some will need a file to be created, if so try smth like\n# cat - > /tmp/myfile && groovy myfile\n\n# This should work the same way on Windows machines too (if openssh installed)\n# powershell -\n" },
-				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile"],"value":"shell"},
+				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
 				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
 				{ "id":"ssh_key", "type":"textarea", "rows":5, "title":"SSH Key", "value": "" },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 }		
@@ -372,6 +372,7 @@
 			[ "copyFiles", "node_modules/ansi_up/ansi_up.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/graphlib/dist/graphlib.min.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/jsonlint-mod/lib/jsonlint.js", "htdocs/js/external/" ],
+			[ "copyFiles", "node_modules/js-yaml/dist/js-yaml.min.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/diff/dist/diff.js", "htdocs/js/external/" ],
 		
 			

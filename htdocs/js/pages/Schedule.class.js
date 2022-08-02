@@ -2299,6 +2299,8 @@ toggle_token: function () {
 								if (lang == 'sql') { lang = 'text/x-sql' }
 								if (lang == 'dockerfile') { lang = 'text/x-dockerfile' }
 								if (lang == 'yaml') { lang = 'text/x-yaml' }
+								if (lang == 'json') { lang = 'application/json' }
+								if (lang == 'props') { lang = 'text/x-properties' }
 								let theme = params.theme || 'default';
 								html += `
 							<script>
