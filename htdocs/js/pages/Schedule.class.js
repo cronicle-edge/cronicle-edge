@@ -2315,7 +2315,7 @@ toggle_token: function () {
 							  lineNumbers: true,
 							  theme: "${theme}",
 							  matchBrackets: true,
-							  gutters: ['${gutter}']
+							  gutters: ['${gutter}'],
 							  lint:true,
 							  extraKeys: {
                                 "F11": function(cm) {
