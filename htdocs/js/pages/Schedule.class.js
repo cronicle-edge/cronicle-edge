@@ -2293,6 +2293,8 @@ toggle_token: function () {
 							// adding code eitor for script area
 							if (param.id == "script") {
 								let lang = params.lang || params.default_lang || 'shell';
+								// gutter for yaml linting
+								let gutter = lang == 'yaml' ? 'CodeMirror-lint-markers' : ''
 								if (lang == 'java') { lang = 'text/x-java' }
 								if (lang == 'scala') { lang = 'text/x-scala' }
 								if (lang == 'csharp') { lang = 'text/x-csharp' }
@@ -2313,6 +2315,7 @@ toggle_token: function () {
 							  lineNumbers: true,
 							  theme: "${theme}",
 							  matchBrackets: true,
+							  gutters: ['${gutter}']
 							  lint:true,
 							  extraKeys: {
                                 "F11": function(cm) {
@@ -2365,10 +2368,17 @@ toggle_token: function () {
 								html += `
 								<script>
 								document.getElementById("fe_ee_pp_lang").addEventListener("change", function(){
-									var ln = this.options[this.selectedIndex].value;
+									let ln = this.options[this.selectedIndex].value;
+									// add gutter for yaml linting
+									let gutter = ln == 'yaml' ? ['CodeMirror-lint-markers'] : ['']
 									if(ln == 'java') {ln = 'text/x-java'}
 									if(ln == 'scala') {ln = 'text/x-scala'}
 									if(ln == 'csharp') {ln = 'text/x-csharp'}
+									if (ln == 'sql') { ln = 'text/x-sql' }
+									if (ln == 'dockerfile') { ln = 'text/x-dockerfile' }
+									if (ln == 'yaml') { ln = 'text/x-yaml'}
+									if (ln == 'json') { ln = 'application/json' }
+									if (ln == 'props') { ln = 'text/x-properties' }
 									editor.setOption("mode", ln);
 								});
 								</script>

@@ -3,8 +3,19 @@
 # test run: docker run --rm -it  -p 3019:3012 -e CRONICLE_manager=1 cronicle:dev bash
 # then type manager or worker
 
+FROM alpine:3.15 as build
+RUN apk add --no-cache git nodejs npm 
+ARG echo
+RUN echo $echo
+COPY . /opt/cronicle
+WORKDIR /opt/cronicle
+RUN npm install && node bin/build dist \
+    && rm -rf node_modules/vis-*  node_modules/graphlib/  node_modules/jsonlint-mod/ node_modules/font-awesome node_modules/mdi \
+    && find . -name "*.map" -type f -delete
+
+
 FROM alpine:3.15
-RUN apk add --no-cache git nodejs npm tini util-linux bash openssl procps coreutils curl tar acl jq
+RUN apk add --no-cache git nodejs tini util-linux bash openssl procps coreutils curl tar acl jq
 # required: all: tini; alpine: util-linux procps coreutils
 
 # optional lolcat for tty/color debugging
@@ -23,17 +34,12 @@ ARG CRONICLE_UID=1007
 ARG CRONICLE_GID=1099
 RUN  addgroup cronicle --gid $CRONICLE_GID && adduser -D -h /opt/cronicle -u $CRONICLE_UID -G cronicle cronicle
 
-ARG echo
-RUN echo $echo
-COPY . /opt/cronicle
+COPY --from=build /opt/cronicle /opt/cronicle
 WORKDIR /opt/cronicle
 
 # optional  step to fix vulnerabilities reported by npm
 # RUN npm audit fix --force
 
-RUN npm install && node bin/build dist \
-    && rm -rf node_modules/vis-*  node_modules/graphlib/  node_modules/jsonlint-mod/ node_modules/font-awesome node_modules/mdi \
-    && find . -name "*.map" -type f -delete
 
 # protect sensitive folders
 RUN  mkdir -p /opt/cronicle/data /opt/cronicle/conf && chmod 0700 /opt/cronicle/data /opt/cronicle/conf
