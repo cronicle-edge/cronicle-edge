@@ -2380,6 +2380,7 @@ toggle_token: function () {
 									if (ln == 'json') { ln = 'application/json' }
 									if (ln == 'props') { ln = 'text/x-properties' }
 									editor.setOption("mode", ln);
+									editor.setOption("gutters", gutter);
 								});
 								</script>
 							  `
