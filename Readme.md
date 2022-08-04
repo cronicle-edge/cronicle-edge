@@ -61,13 +61,16 @@ When creating user check "external" checkbox and use samaccountname as username.
 In order to modify shell plug script and run it manually user should have Admin or Editor privilege. Run privilege only let user to invoke event by ID (on UI side editor will be locked). Run users will still be able to modify arguments. This way you can let external teams to run some jobs without allowing running arbitrary code
 
 ### Schedule - Graph View
-Scheduled event page can be viewed as  graph. It's useful to track chained jobs. Graph nodes are clickable. You can also delete event via graph (press del key). There is also  cycled chain auto-detection. E.g. if job is chaining itself, you'll see warning sign.
+Scheduled event page can be viewed as  graph. It's useful to track chained jobs. Graph nodes are clickable. You can also delete event via graph (press del key). There is also  cycled chain auto-detection. E.g. if job is chaining itself, you'll see warning sign
 
 ### Workflow Plugin
-Use this plugin to run multiple jobs in parallel, or invoke same event multiple times with different parameters. You can run group of jobs based on category or event title prefix. To run same event multiple times you can specify comma separated argument list (argument value will be available as JOB_ARG env variable).
+Use this plugin to run multiple jobs in parallel, or invoke same event multiple times with different parameters. You can run group of jobs based on category or event title prefix. To run same event multiple times you can specify comma separated argument list (argument value will be available as JOB_ARG env variable)
+
+### SSH Plugin
+Run you code snippets on remote machines over SSH. No cronicle agent or openssh installation needed! Can even run on Windows hosts (if openssh is configured). Use with WF plugin to run on multiple hosts
 
 ### Event History Chart
-Main page will include a bar  chart showing last N completed jobs. It will help to quickly catch failed or long running jobs. You can set default job count and scale (linear/logarithmic) via ui.job_chart_limit and ui.job_chart_scale configs.
+Main page will include a bar  chart showing last N completed jobs. It will help to quickly catch failed or long running jobs. You can set default job count and scale (linear/logarithmic) via ui.job_chart_limit and ui.job_chart_scale configs
 
 ### Webhooks 
  You can now set webhooks as an object in config under *web_hooks* property and then refer to it by key. This way you can specify custom headers and options. You can also rout "text" key (with cronicle message) to some other key, even if it's nested 
@@ -80,15 +83,15 @@ You can find detailed examples on default demo configs (on config tab)
 There are also few more options to set webhook notifications (on start, on completion and on error)
 
 ### Warning state
-Along with success and failure outcome, you can now use warning. Just exit with code -1 or 255. 
+Along with success and failure outcome, you can now use warning. Just exit with code -1 or 255
 
 ### Handling frequent jobs
 To reduce pressure from frequently running jobs you can now:
  - check "Silent" checkbox. This will prevent jobs to get into global run history ("Completed") and Activity log. It will keep producing records under Event History.
- - set "Log Expire" to some small value. This option just overrides job_data_expire_days for specific. If you set 1 it will only keep logs for current day. 2 - since yesterday, and so on.
+ - set "Log Expire" to some small value. This option just overrides job_data_expire_days for specific. If you set 1 it will only keep logs for current day. 2 - since yesterday, and so on
 
 ### Event token
-You can generate a token to run specific event instead of creating global API key. To reset token - disable and enable this option again.
+You can generate a token to run specific event instead of creating global API key. To reset token - disable and enable this option again
 
 ### Git integration
  - Github - HMAC signature check is supported. You can set git_hub_key config to verify signature.If not set cronicle will use secret_key (if x-signature-header is included in the request).
@@ -97,7 +100,7 @@ You can generate a token to run specific event instead of creating global API ke
  - Before starting new docker container you can also set GIT_REPO variable, so manager entrypoint  will attempt to use this repo to setup data folder (instead of running standard set up)
 
 ### Hybrid schedule
-You can extend cron schedule by specifying extra minute ticks. This is helpful for uneven/onetime schedules. If you just specify hours/minutes without the date (e.g. 16:45 or 3PM), it will trigger job to run every day at that time. You can use full timestamp to run the job at specific time just once (e.g. 2021-01-01  16:45).
+You can extend cron schedule by specifying extra minute ticks. This is helpful for uneven/onetime schedules. If you just specify hours/minutes without the date (e.g. 16:45 or 3PM), it will trigger job to run every day at that time. You can use full timestamp to run the job at specific time just once (e.g. 2021-01-01  16:45)
 
 ### Debug options
 When running event manually there are some one-time options you can set:
@@ -108,8 +111,8 @@ When running event manually there are some one-time options you can set:
 ### Terminology 
 master/slave renamed to manager/worker
 
-### minor UI and security improvements
-There are several other minor UI improvements. E.g. tooltips or extra filters. Some info is removed from public APIs to avoid exposing potentially sensitive data to everyone.
+### UI and security improvements
+There are several other UI improvements. E.g. tooltips or extra filters. Some info is removed from public APIs to avoid exposing potentially sensitive data to everyone
 
 # Just some demo  screenshots
 ## Main page with job chart:
@@ -120,6 +123,8 @@ There are several other minor UI improvements. E.g. tooltips or extra filters. S
 ![image](https://user-images.githubusercontent.com/31977106/109408861-8711af00-795b-11eb-8b19-d660692ed7f9.png)
 ## Workflow Plugin:
 ![image](https://user-images.githubusercontent.com/31977106/152707347-1b0f25e0-d0a6-4ef1-99e0-be6fc14e20d9.png)
+## SSH Plugin:
+![image](https://user-images.githubusercontent.com/31977106/182756155-d551f17b-9713-4b87-9bb9-2f6c62d207c3.png)
 ## Import/Backup 
 ![image](https://user-images.githubusercontent.com/31977106/109408915-1a4ae480-795c-11eb-861c-e6f19cec2858.png)
 ## Config Tab:
