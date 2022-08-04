@@ -2293,12 +2293,25 @@ toggle_token: function () {
 							// adding code eitor for script area
 							if (param.id == "script") {
 								let lang = params.lang || params.default_lang || 'shell';
+								// gutter for yaml linting
+								let gutter =  ''
+								let lint = 'false'
+
 								if (lang == 'java') { lang = 'text/x-java' }
 								if (lang == 'scala') { lang = 'text/x-scala' }
 								if (lang == 'csharp') { lang = 'text/x-csharp' }
 								if (lang == 'sql') { lang = 'text/x-sql' }
 								if (lang == 'dockerfile') { lang = 'text/x-dockerfile' }
-								if (lang == 'yaml') { lang = 'text/x-yaml' }
+								if (lang == 'yaml') {
+									 lang = 'text/x-yaml'
+									 gutter = 'CodeMirror-lint-markers'
+									 lint = 'CodeMirror.lint.yaml'
+									 }
+								if (lang == 'json') { 
+									lang = 'application/json'
+									lint = 'CodeMirror.lint.json'
+								 }
+								if (lang == 'props') { lang = 'text/x-properties' }
 								let theme = params.theme || 'default';
 								html += `
 							<script>
@@ -2311,7 +2324,8 @@ toggle_token: function () {
 							  lineNumbers: true,
 							  theme: "${theme}",
 							  matchBrackets: true,
-							  lint:true,
+							  gutters: ['${gutter}'],
+							  lint: ${lint},
 							  extraKeys: {
                                 "F11": function(cm) {
                                   cm.setOption("fullScreen", !cm.getOption("fullScreen"));
@@ -2363,11 +2377,28 @@ toggle_token: function () {
 								html += `
 								<script>
 								document.getElementById("fe_ee_pp_lang").addEventListener("change", function(){
-									var ln = this.options[this.selectedIndex].value;
+									let ln = this.options[this.selectedIndex].value;
+
+									editor.setOption("gutters", ['']);
+									editor.setOption("lint", false)
+
 									if(ln == 'java') {ln = 'text/x-java'}
 									if(ln == 'scala') {ln = 'text/x-scala'}
 									if(ln == 'csharp') {ln = 'text/x-csharp'}
+									if (ln == 'sql') { ln = 'text/x-sql' }
+									if (ln == 'dockerfile') { ln = 'text/x-dockerfile' }
+									if (ln == 'json') { 
+										ln = 'application/json'
+										editor.setOption("lint", CodeMirror.lint.json)
+									 }
+									if (ln == 'props') { ln = 'text/x-properties' }
+									if (ln == 'yaml') {
+										ln = 'text/x-yaml'
+										editor.setOption("gutters", ['CodeMirror-lint-markers']);
+										editor.setOption("lint", CodeMirror.lint.yaml)
+									}
 									editor.setOption("mode", ln);
+									
 								});
 								</script>
 							  `
