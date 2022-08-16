@@ -79,6 +79,185 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		});
 	},
 
+	///  filelist
+
+	extension_map: {
+		java: "text/x-java",
+		scala: "text/x-scala",
+		cs: "text/x-csharp",
+		sql: "text/x-sql",
+		dockerfile: "text/x-dockerfile",
+		yaml: "text/x-yaml",
+		json: "application/json",
+		conf: "text/x-properties",
+		sh: "shell",
+		groovy: "groovy",
+		ps1: "powershell",
+		js: "javascript",
+		pl: "perl",
+		py: "python"
+	},
+
+	render_file_list: function () {
+		let cols = ['File Name', ' '];
+		let files = this.files || []
+
+		let table = '<table id="wf_event_list_table" class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
+
+		if (files.length === 0) {
+			table += '<tr><td> </td><td></td></tr>'
+		}
+		else {
+			for (var idx = 0, len = files.length; idx < len; idx++) {
+				let actions = ` 
+			   <span class="link" onMouseUp = "$P().file_edit(${idx})" > <b>Edit</b></span> | 
+			   <span class="link" onMouseUp = "$P().file_delete(${idx})" > <b>Delete</b></span>
+			   `
+				let file = files[idx]
+
+				table += `<tr>
+			<td id><b>${encode_entities(file.name)}</b></td><td>${actions}</td>
+		   </tr>`
+			}
+	}
+
+		table += `</table>`
+
+		document.getElementById('fe_ee_pp_file_list').innerHTML = table
+	},
+
+	file_add: function () {
+
+		let self = this;
+
+		let files = self.files || []
+	
+		// let el_style = 'width: 240px; font-size:16px;'
+		let html = '<table>' + 
+		get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="" spellcheck="false"/>`) +
+		get_form_table_spacer() +
+		get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110"></textarea>`) +
+		`</table>
+		<script> 
+
+		  setTimeout(()=> {
+		  fileEditor = CodeMirror.fromTextArea(document.getElementById("fe_ee_pp_file_content"), {
+			mode: "text",
+			styleActiveLine: true,
+			lineWrapping: false,
+			scrollbarStyle: "overlay",
+			lineNumbers: true,
+			theme: "darcula",
+			matchBrackets: true,
+			gutters: [''],
+			lint: true
+		})
+
+		fileEditor.on('change', function(cm){
+			document.getElementById("fe_ee_pp_file_content").value = cm.getValue();
+		 });
+
+		fileEditor.setSize(1000, 618)
+
+	}, 30);
+		</script>`
+	  
+		app.confirm(html, '', "Save", function (result) {
+			
+			app.clearError();
+	 
+			if (result) {
+
+				let name = $("#fe_ee_pp_file_name").val()
+				
+				if (!name || files.map(e=>e.name).indexOf(name) > -1) {
+					app.showMessage('error', "Invalid Name")
+				}
+				else {
+					let content = $("#fe_ee_pp_file_content").val()
+					files.push({ name: name, content: content })
+				}
+
+
+				Dialog.hide();
+	 
+				 // update startFrom menu
+				 //$('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+				 self.render_file_list() // refresh file list
+	 
+					
+	 
+				} // user clicked add
+			}); // app.confirm
+	 },
+
+	 file_edit: function (/** @type  {number} */ i) {
+		
+		let self = this
+		if(!Array.isArray(self.files)) return // sanity check
+		let file = self.files[i]
+		if(!file) return // sanity check
+
+		let html = '<table>' + 
+		get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="${file.name}" spellcheck="false">`) +
+		get_form_table_spacer() +
+		get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110">${file.content}</textarea>`) +
+		`</table>
+		<script> 
+
+		  setTimeout(()=> {
+		  fileEditor = CodeMirror.fromTextArea(document.getElementById("fe_ee_pp_file_content"), {
+			mode: "${self.extension_map[file.name.split('.').pop()] || 'text'}",
+			styleActiveLine: true,
+			lineWrapping: false,
+			scrollbarStyle: "overlay",
+			lineNumbers: true,
+			theme: "${self.event.theme || 'default'}",
+			matchBrackets: true,
+			gutters: [''],
+			lint: true
+		})
+
+		fileEditor.on('change', function(cm){
+			document.getElementById("fe_ee_pp_file_content").value = cm.getValue();
+		 });
+
+		fileEditor.setSize(1000, 618)
+
+	}, 30);
+		</script>`
+	  
+		app.confirm(html, '', "Save", function (result) {
+			
+			app.clearError();
+	 
+			if (result) {
+
+				let name = $("#fe_ee_pp_file_name").val()
+				
+				if (!name.trim()) {
+					app.showMessage('error', "Invalid Name")
+				}
+				else {
+					file.name = name
+					file.content = $("#fe_ee_pp_file_content").val()
+				}
+
+				Dialog.hide();
+	    		 self.render_file_list() // refresh file list
+
+				} // user clicked add
+			}); // app.confirm
+	 },
+
+	 file_delete: function ( /** @type {number} */ i) {
+		let self = this
+		let arr = self.files  // this.event.params['wf_events'] || [] 
+		if (!Array.isArray(arr)) return
+		arr.splice(i, 1)
+		self.render_file_list()
+		},	
+
 	//// workflow 
 
 /**
@@ -108,22 +287,23 @@ render_wf_event_list: function () {
    let startFrom = parseInt($("#wf_start_from_step :selected").val());
 
    for (var idx = 0, len = wf_events.length; idx < len; idx++) {
-	   let actions = `<span class="link" onMouseUp="$P().wf_event_up(${idx})"><b>Up</b></span> | 
+	   let actions = `<span class="link" onMouseUp="$P().wf_event_edit(${idx})"><b>Edit</b></span> |
+	       <span class="link" onMouseUp="$P().wf_event_up(${idx})"><b>Up</b></span> | 
 		   <span class="link" onMouseUp = "$P().wf_event_down(${idx})" > <b>Down</b></span> | 
 		   <span class="link" onMouseUp = "$P().wf_event_delete(${idx})" > <b>Delete</b></span>
 		   `
 	   
 	   let wfe = wf_events[idx]
-	   let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;" onmouseup="$P().wf_event_edit(${idx})">${wfe.id}</span>`
+	   let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;"><a href="/#Schedule?sub=edit_event&id=${wfe.id}" target="_blank">${wfe.id}</a></span>`
 	   let title = `${schedTitles[wfe.id] || '<span style="color:red">[Unknown]</span>'}`.substring(0, 40)
-	   let arg = `${encode_entities(wfe.arg)}`
+	   let arg = wfe.arg ? `<u>${encode_entities(wfe.arg)}<u>` : '-'
 	   if (arg.length > 40) arg = arg.substring(0, 37) + '...'
 
 	   table += `<tr class="${wfe.disabled ? 'disabled' : ''}">
 		<td>${idx + 1}</td>
 		<td><input type="checkbox" onChange="$P().wf_toggle_event_state(${idx})" ${wfe.disabled ? '' : 'checked="checked"'} /></td>
 		<td>${(idx + 1 == startFrom || startFrom > len && idx == 0 )  ? '<span style="color:green">▶</span>' : ''}</td>
-		<td> ${eventId}</td><td>${title}</td><td>${arg}</td><td>${actions}</td>
+		<td> ${eventId}</td><td>${title}</td><td style="text-align:center">${arg}</td><td>${actions}</td>
 	   </tr>`
    }
 	table += `</table>`
@@ -931,6 +1111,7 @@ toggle_token: function () {
 		this.div.removeClass('loading');
 
 		this.wf = [] // wf placeholder
+		this.files = []
 		this.opts = {}
 
 		html += this.getSidebarTabs('new_event',
@@ -1055,6 +1236,7 @@ toggle_token: function () {
 		if (!event) return app.doError("Could not locate Event with ID: " + args.id);
 
 		this.wf = event.workflow || []
+		this.files = event.files || []
 		this.opts = event.options || {}
 
 		// check for autosave recovery
@@ -2367,7 +2549,19 @@ toggle_token: function () {
 					      <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 0px" onMouseUp="$P().wf_event_add()">Add Event</div>
 						  <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 8px" onMouseUp="$P().wf_event_add_cat()">Add Category</div><br>
 					      `	
-						break;							
+						break;		
+						
+						case 'filelist':
+							html += `
+							  <br>
+							  <div id="fe_ee_pp_file_list"></div>
+							  <script>$P().render_file_list()</script>
+							  <div class="caption" >Access files via env vars: FILE_NAME_EXT or files/name.ext</div>
+							  <div class="button mini" style="width:90px; margin:10px 10px 10px 0px" onMouseUp="$P().file_add()">Attach File</div>
+							<br>
+	 					    `
+							event.theme = param.theme
+						break;	
 
 						case 'select':
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
@@ -2521,7 +2715,10 @@ toggle_token: function () {
 		else {
 			event.workflow = undefined // erase wf info if event plugin is not workflow anymore
 		}
-		
+
+		// files 
+		event.files = Array.isArray(this.files) ? this.files : undefined
+
 		// plugin params
 		event.params = {};
 		var plugin = find_object(app.plugins, { id: event.plugin });
@@ -2651,7 +2848,6 @@ toggle_token: function () {
 				if (this.args.sub == 'events' && !app.scheduleAsGraph && value.length !== this.args.eventCount) {
 					 this.args.eventCount = value.length
 					 this.gosub_events(this.args); 
-					 console.log(value.length, app.schedule.length) 
 				}
 				break;
 

@@ -33,6 +33,16 @@ stream.on('json', function (job) {
 	let script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.sh');
 	fs.writeFileSync(script_file, job.params.script, { mode: "775" });
 
+	// attach "files" as env variables
+	if(Array.isArray(job.files)) {
+		job.files.forEach((e)=> {
+            if(e.name) { 
+				process.env['files/' + e.name] = (e.content || '')
+				process.env['FILE_' + String(e.name).toUpperCase().replace(/\./g,'_') ] = (e.content || '')
+			}
+		})
+	}
+
 	if (job.tty) process.env['TERM'] = 'xterm';
 	let child_exec = job.tty ? "/usr/bin/script" : script_file;
 	let child_args = job.tty ? ["-qec", script_file, "--flush", "/dev/null"] : [];

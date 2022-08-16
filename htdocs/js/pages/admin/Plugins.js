@@ -8,7 +8,8 @@ Class.add( Page.Admin, {
 		checkbox: "Checkbox",
 		hidden: "Hidden",
 		select: "Menu",
-		eventlist: "Event List"
+		eventlist: "Event List",
+		filelist: "File List"
 	},
 	
 	gosub_plugins: function(args) {
@@ -507,7 +508,8 @@ Class.add( Page.Admin, {
 			['checkbox', ctype_labels.checkbox],
 			['select', ctype_labels.select],
 			['hidden', ctype_labels.hidden],
-			['eventlist', ctype_labels.eventlist]
+			['eventlist', ctype_labels.eventlist],
+			['filelist', ctype_labels.filelist],
 		];
 		
 		html += '<table>' + 
@@ -598,6 +600,11 @@ Class.add( Page.Admin, {
 				html += get_form_table_row('Selected Item:', '<input type="text" id="fe_epp_select_value" size="20" value="'+escape_text_field_value(param.value)+'" spellcheck="false"/>');
 				html += get_form_table_caption("Optionally enter an item to be selected by default.");
 			break;
+
+			case 'filelist':
+				html += get_form_table_row('Theme:', '<select id="fe_epp_filelist_theme">' + render_menu_options(['default','darcula','gruvbox-dark', 'solarized light', 'solarized dark'], param.value, false) + '</select>');
+				html += get_form_table_caption("File editor theme");
+			break;
 		} // switch type
 		
 		html += '</table>';
@@ -647,6 +654,10 @@ Class.add( Page.Admin, {
 				param.items = trim( $('#fe_epp_select_items').val() ).split(/\,\s*/);
 				param.value = trim( $('#fe_epp_select_value').val() );
 				if (param.value && !find_in_array(param.items, param.value)) return app.badField('fe_epp_select_value', "The default value you entered was not found in the list of menu items.");
+			break;
+
+			case 'filelist':
+				param.theme = trim( $('#fe_epp_filelist_theme').val() );
 			break;
 		}
 		
