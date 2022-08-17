@@ -296,8 +296,9 @@ render_wf_event_list: function () {
 	   let wfe = wf_events[idx]
 	   let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;"><a href="/#Schedule?sub=edit_event&id=${wfe.id}" target="_blank">${wfe.id}</a></span>`
 	   let title = `${schedTitles[wfe.id] || '<span style="color:red">[Unknown]</span>'}`.substring(0, 40)
-	   let arg = wfe.arg ? `<u>${encode_entities(wfe.arg)}<u>` : '-'
+	   let arg = wfe.arg || ''
 	   if (arg.length > 40) arg = arg.substring(0, 37) + '...'
+	   let argInfo = wfe.arg ? `<span title="refer to JOB_ARG env variable"><u>${encode_entities(arg)}<u></span>` : '-'
 
 	   table += `<tr class="${wfe.disabled ? 'disabled' : ''}">
 	     <td>${idx + 1}</td>
