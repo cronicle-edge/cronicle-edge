@@ -254,7 +254,7 @@ rl.on('line', function (line) {
 
 							}
 							jobStatus[j].elapsed = compl.elapsed
-							jobStatus[j].description = compl.description
+							jobStatus[j].description = compl.description || compl.memo || ''
 							jobStatus[j].code = compl.code
 						}
 						let prog = `[${taskList.length - pendingJobs}/${taskList.length}]`
@@ -339,7 +339,8 @@ rl.on('line', function (line) {
 				jobStatus[key].start,
 				niceInterval(jobStatus[key].elapsed),
 				jobStatus[key].code ? (jobStatus[key].code == 255 ? '<span style="color:orange"><b>⚠️</b></span>' : '<span style="color:red"><b>✗</b></span>') : '<span style="color:green"><b>✔</b></span>',
-				jobStatus[key].code ? `${he.encode(jobStatus[key].description)}`.substring(0,120) : ''
+				//jobStatus[key].code ? `${he.encode(jobStatus[key].description)}`.substring(0,120) : ''
+				`${he.encode(jobStatus[key].description)}`.substring(0,120)
 
 			]),
 			caption: ""

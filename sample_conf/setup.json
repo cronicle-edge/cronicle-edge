@@ -48,7 +48,8 @@
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile"],"value":"shell"},
 				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
 				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0},
-				{"type":"checkbox","id":"logmemo","title":"Log Memo","value":0}			
+				{"type":"checkbox","id":"logmemo","title":"Log Memo","value":0},
+				{"type":"filelist","id":"files","title":"File List","theme":"default", "value":0}	
 			]
 		} ],
 
@@ -374,14 +375,15 @@
 			[ "copyFiles", "node_modules/jsonlint-mod/lib/jsonlint.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/js-yaml/dist/js-yaml.min.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/diff/dist/diff.js", "htdocs/js/external/" ],
-		
+
+			[ "symlinkFile", "node_modules/codemirror", "htdocs/codemirror" ],		
 			
 			[ "symlinkCompress", "node_modules/font-awesome/css/font-awesome.min.css", "htdocs/css/" ],
 			[ "symlinkCompress", "node_modules/font-awesome/css/font-awesome.css.map", "htdocs/css/" ],
 			[ "copyFiles", "node_modules/font-awesome/fonts/*", "htdocs/fonts/" ],
 			
-			[ "copyFiles", "node_modules/mdi/css/materialdesignicons.min.css", "htdocs/css/" ],
-			[ "copyFiles", "node_modules/mdi/fonts/*", "htdocs/fonts/" ],
+			[ "copyFiles", "node_modules/@mdi/font/css/materialdesignicons.min.css", "htdocs/css/" ],
+			[ "copyFiles", "node_modules/@mdi/font/fonts/*", "htdocs/fonts/" ],
 			
 			[ "symlinkCompress", "node_modules/moment/min/moment.min.js", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/moment-timezone/builds/moment-timezone-with-data.min.js", "htdocs/js/external/" ],
@@ -409,7 +411,7 @@
 			},
 			[ "copyDir", "sample_conf", "conf", true ],
 			[ "copyFile", "htdocs/index-dev.html", "htdocs/index.html" ],
-			[ "symlinkFile", "node_modules/codemirror", "htdocs/codemirror" ],
+			
 			{
 				"action": "bundleCompress",
 				"uglify": false,
