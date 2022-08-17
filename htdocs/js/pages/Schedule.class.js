@@ -300,11 +300,11 @@ render_wf_event_list: function () {
 	   if (arg.length > 40) arg = arg.substring(0, 37) + '...'
 
 	   table += `<tr class="${wfe.disabled ? 'disabled' : ''}">
-		<td>${idx + 1}</td>
-		<td><input type="checkbox" onChange="$P().wf_toggle_event_state(${idx})" ${wfe.disabled ? '' : 'checked="checked"'} /></td>
-		<td>${(idx + 1 == startFrom || startFrom > len && idx == 0 )  ? '<span style="color:green">▶</span>' : ''}</td>
-		<td> ${eventId}</td><td>${title}</td><td style="text-align:center">${arg}</td><td>${actions}</td>
-	   </tr>`
+	     <td>${idx + 1}</td>
+	     <td><input type="checkbox" onChange="$P().wf_toggle_event_state(${idx})" ${wfe.disabled ? '' : 'checked="checked"'} /></td>
+	     <td>${(idx + 1 == startFrom || startFrom > len && idx == 0) ? '<span style="color:green">▶</span>' : ''}</td>
+	     <td> ${eventId}</td><td>${title}</td><td style="text-align:center" >${argInfo}</td><td>${actions}</td>
+	     </tr>`
    }
 	table += `</table>`
 	

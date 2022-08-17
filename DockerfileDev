@@ -33,7 +33,7 @@ WORKDIR /opt/cronicle
 RUN npm install && node bin/build dev
 
 # just to keep track of changes
-RUN  git config --global --add safe.directory /opt/cronicle && git config user.email "cron@cron.com" && git config user.name "cron" && git add -u && git commit -m "demo"
+# RUN  git config --global --add safe.directory /opt/cronicle && git config user.email "cron@cron.com" && git config user.name "cron" && git add -u && git commit -m "demo"
 
 # protect sensitive folders
 RUN  mkdir -p /opt/cronicle/data /opt/cronicle/conf && chmod 0700 /opt/cronicle/data /opt/cronicle/conf
