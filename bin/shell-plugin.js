@@ -51,6 +51,7 @@ stream.on('json', function (job) {
 
 	let kill_timer = null;
 	let stderr_buffer = '';
+	let sent_html = false;
 
 	// if tty option is checked do not pass stdin (to avoid it popping up in the log)
 	const cstream = job.tty ? new JSONStream(child.stdout) : new JSONStream(child.stdout, child.stdin);
@@ -59,7 +60,10 @@ stream.on('json', function (job) {
 
 	cstream.on('json', function (data) {
 		// received JSON data from child, pass along to Cronicle or log
-		if (job.params.json) stream.write(data);
+		if (job.params.json) {
+			stream.write(data);
+			if (data.html) sent_html = true;
+		}
 		else cstream.emit('text', JSON.stringify(data) + "\n");
 	});
 
@@ -123,7 +127,8 @@ stream.on('json', function (job) {
 		};
 
 		if (stderr_buffer.length && stderr_buffer.match(/\S/)) {
-			data.html = {
+			// generate an HTML report showing the STDERR, but only if the script hasn't already populated the job `html`
+			if (!sent_html) data.html = {
 				title: "Error Output",
 				content: "<pre>" + stderr_buffer.replace(/</g, '&lt;').trim() + "</pre>"
 			};
