@@ -39,6 +39,9 @@ or build custom verision using [DockerfileClassic](https://github.com/cronicle-e
 - Parameters - you can define custom parameters in configuration under *params* property and inject it in your shell scripts.  E.g. if you have params.sql.query1 config you can refer to it in the script as [/sql/query1]
 - Arguments - similar to parameter, but those are defined in event properties and injected as env variables (e.g. $ARG1). Those also could be changed by non-editor users. Arguments could also be used with other plugins (HTTP and Workflow, see below)
 
+### S3 Storage in the box
+refer to [1.5.14 relase notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.5.14) for more details
+
 ### Config tab
 You can now set any config right from GUI and without restarting cronicle. You can set custom configuration keys that would override values you have set in config.json. You can set nested keys via dot notation  (e.g. params.sql.query). You can also use multi-line values as config value. Please note - that does not apply to storage and webserver config. You also cannot get or set secret key.
 
