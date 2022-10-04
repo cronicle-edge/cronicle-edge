@@ -21,7 +21,7 @@ if [ -f "$HOMEDIR/data/backup.json" ]; then
 fi
 
 #$HOMEDIR/bin/control.sh start
-exec node $HOMEDIR/lib/main.js
+exec node $HOMEDIR/lib/main.js --color 1
 
 
 

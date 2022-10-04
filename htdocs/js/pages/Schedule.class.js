@@ -701,21 +701,27 @@ toggle_token: function () {
 				}
 			}
 
+			let filter =  app.state.scheduleFilters || {} // persist schedule page filtering
 
 			// category filter
+			args.category = args.category || filter['category']
 			if (args.category && (item.category != args.category)) continue;
 
 			// plugin filter
+			args.plugin = args.plugin || filter['plugin']
 			if (args.plugin && (item.plugin != args.plugin)) continue;
 
 			// server group filter
+			args.target = args.target || filter['target']
 			if (args.target && (item.target != args.target)) continue;
 
 			// keyword filter
+			args.keywords = args.keywords || filter['keywords']
 			var words = [item.title, item.username, item.notes, item.target].join(' ').toLowerCase();
 			if (args.keywords && words.indexOf(args.keywords.toLowerCase()) == -1) continue;
 
 			// enabled filter
+			args.enabled = args.enabled || filter['enabled']
 			if ((args.enabled == 1) && !item.enabled) continue;
 			else if ((args.enabled == -1) && item.enabled) continue;
 
@@ -1083,19 +1089,21 @@ toggle_token: function () {
 		// grab values from search filters, and refresh
 		var args = this.args;
 
-		args.plugin = $('#fe_sch_plugin').val();
+		if(!app.state.scheduleFilters) app.state.scheduleFilters = {}
+
+		args.plugin = app.state.scheduleFilters['plugin'] = $('#fe_sch_plugin').val();
 		if (!args.plugin) delete args.plugin;
 
-		args.target = $('#fe_sch_target').val();
+		args.target = app.state.scheduleFilters['target'] =  $('#fe_sch_target').val();
 		if (!args.target) delete args.target;
 
-		args.category = $('#fe_sch_cat').val();
+		args.category = app.state.scheduleFilters['category'] = $('#fe_sch_cat').val();
 		if (!args.category) delete args.category;
 
-		args.keywords = $('#fe_sch_keywords').val();
+		args.keywords = app.state.scheduleFilters['keywords'] = $('#fe_sch_keywords').val();
 		if (!args.keywords) delete args.keywords;
 
-		args.enabled = $('#fe_sch_enabled').val();
+		args.enabled = app.state.scheduleFilters['enabled'] = $('#fe_sch_enabled').val();
 		if (!args.enabled) delete args.enabled;
         
 		let self = this;
@@ -2646,10 +2654,10 @@ toggle_token: function () {
 		return {
 			"enabled": 1,
 			params: {
-				"duration": Math.floor(Math.random() * 20),
+				"duration": "5-20",
 				"progress": 1,
 				"burn": tools.randArray([0, 1]),
-				"action": tools.randArray(["Success", "Success", "Success", "Success", "Failure", "Crash"]),
+				"action": "Random",
 				"secret": "Will not be shown in Event UI",
 			},
 			"timing": { "minutes": [Math.floor(Math.random() * 60)], "hours": [Math.floor(Math.random() * 24)] },

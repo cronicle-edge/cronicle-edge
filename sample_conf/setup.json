@@ -28,7 +28,7 @@
 				{ "id":"duration", "type":"text", "size":10, "title":"Test Duration (seconds)", "value": 60 },
 				{ "id":"progress", "type":"checkbox", "title":"Report Progress", "value": 1 },
 				{ "id":"burn", "type":"checkbox", "title":"Burn Memory/CPU", "value": 0 },
-				{ "id":"action", "type":"select", "title":"Simulate Action", "items":["Success","Failure","Crash"], "value": "Success" },
+				{ "id":"action", "type":"select", "title":"Simulate Action", "items":["Success","Failure","Crash","Random"], "value": "Success" },
 				{ "id":"secret", "type":"hidden", "value":"Will not be shown in Event UI" }
 			]
 		} ],
@@ -368,7 +368,8 @@
 			[ "symlinkCompress", "node_modules/zxcvbn/dist/zxcvbn.js", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/chart.js/dist/Chart.min.js", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/xss/dist/xss.min.js", "htdocs/js/external/" ],
-
+			[ "symlinkCompress", "node_modules/socket.io/client-dist/socket.io.min.js", "htdocs/js/external/" ],
+			
 			[ "copyFiles", "node_modules/vis-network/dist/vis-network.min.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/ansi_up/ansi_up.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/graphlib/dist/graphlib.min.js", "htdocs/js/external/" ],

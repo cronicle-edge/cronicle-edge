@@ -121,6 +121,8 @@ stream.on('json', function(job) {
 				content: "<pre>This is a sample text report you can generate from within your Plugin code (can be HTML too).\n\n-------------------------------------------------\n          Date/Time | 2015-10-01 6:28:38 AM      \n       Elapsed Time | 1 hour 15 minutes          \n     Total Log Rows | 4,313,619                  \n       Skipped Rows | 15                         \n  Pre-Filtered Rows | 16,847                     \n             Events | 4,296,757                  \n        Impressions | 4,287,421                  \n Backup Impressions | 4,000                      \n             Clicks | 5,309 (0.12%)              \n      Backup Clicks | 27 (0.00062%)              \n       Unique Users | 1,239,502                  \n      Flagged Users | 1,651                      \n      Ignored Users | 1,025,910                  \n        Other Users | 211,941                    \n     Flagged Events | 6,575 (0.15%)              \nFlagged Impressions | 6,327 (0.14%)              \n     Flagged Clicks | 241 (4.53%)                \n       Memory Usage | 7.38 GB                    \n-------------------------------------------------</pre>",
 				caption: ""
 			};
+
+			if(job.params.action == 'Random') job.params.action = ['Success', 'Success', 'Success', 'Failure', 'Success', 'Crash'][Math.round(Math.random()*5)]
 			
 			switch (job.params.action) {
 				case 'Success':
