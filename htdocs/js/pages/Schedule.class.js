@@ -87,6 +87,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		cs: "text/x-csharp",
 		sql: "text/x-sql",
 		dockerfile: "text/x-dockerfile",
+		toml: "text/x-toml",
 		yaml: "text/x-yaml",
 		json: "application/json",
 		conf: "text/x-properties",
@@ -2493,6 +2494,7 @@ toggle_token: function () {
 								if (lang == 'csharp') { lang = 'text/x-csharp' }
 								if (lang == 'sql') { lang = 'text/x-sql' }
 								if (lang == 'dockerfile') { lang = 'text/x-dockerfile' }
+								if (lang == 'toml') { lang = 'text/x-toml' }
 								if (lang == 'yaml') {
 									 lang = 'text/x-yaml'
 									 gutter = 'CodeMirror-lint-markers'
@@ -2590,6 +2592,7 @@ toggle_token: function () {
 									if(ln == 'csharp') {ln = 'text/x-csharp'}
 									if (ln == 'sql') { ln = 'text/x-sql' }
 									if (ln == 'dockerfile') { ln = 'text/x-dockerfile' }
+									if (ln == 'toml') { ln = 'text/x-toml' }
 									if (ln == 'json') { 
 										ln = 'application/json'
 										editor.setOption("lint", CodeMirror.lint.json)

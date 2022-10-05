@@ -10,8 +10,8 @@ RUN echo $echo
 COPY . /opt/cronicle
 WORKDIR /opt/cronicle
 RUN npm i && npm i modclean -g && node bin/build dist \
-    && rm -rf node_modules/vis-*  node_modules/graphlib/  node_modules/jsonlint-mod/ node_modules/font-awesome node_modules/mdi \
-    && find . -name "*.map" -type f -delete && modclean -r
+    && rm -rf node_modules/vis-*  node_modules/graphlib/  node_modules/jsonlint-mod/  node_modules/font-awesome node_modules/mdi \
+    && find . -name "*.map" -type f -delete && modclean
 
 # generate S3 storage engine bundle (should take ~ 700KB)
 FROM build as s3patch 
