@@ -16,7 +16,6 @@
 	<link rel="stylesheet" href="css/materialdesignicons.min.css">
 	<!-- BUILD: COMBINE_STYLE_END -->
 
-
 	<link rel="stylesheet" href="codemirror/lib/codemirror.css">
 	<link rel="stylesheet" href="codemirror/theme/darcula.css">
 	<link rel="stylesheet" href="codemirror/theme/solarized.css">
@@ -50,101 +49,10 @@
 	<script src="codemirror/addon/lint/yaml-lint.js"></script>
 	<script src="codemirror/addon/mode/simple.js"></script>
 	<script src="codemirror/mode/dockerfile/dockerfile.js"></script>
+	<script src="codemirror/mode/toml/toml.js"></script>
 	<script src="codemirror/mode/yaml/yaml.js"></script>
 	<script src="js/external/jsonlint.js"></script>
-	<style>
-		.data_table tr:not(.nohighlight):hover td {
-			background-color: #f0f0f0 !important;
-			transition-delay: 30ms;
-		}
 
-		/* chromium patch 1px=>0.1px */
-
-		.data_table tr td {
-
-			border-bottom: 0.1px solid var(--border-color);
-		}
-
-		tr.focus td {
-			animation: 4s focus;
-
-		}
-
-		@keyframes focus {
-			0% {
-				background: initial;
-			}
-
-			50% {
-				background: #a2ffa9;
-			}
-
-			100% {
-				background: initial;
-			}
-			
-		}
-
-		.table_spacer {
-			height: 0.1px;
-		}
-
-		.tab.side {
-			border-bottom: 0.1px solid var(--border-color);
-		}
-
-		div.subtitle {
-
-			border-bottom: 0.1px solid var(--border-color);
-		}
-
-		.tab.inactive {
-
-			border-bottom: 0.1px solid var(--border-color);
-		}
-
-		.tab.side.inactive {
-
-			border-bottom: 0.1px solid var(--border-color);
-		}
-
-		.CodeMirror {
-			border: 1px solid lightgray;
-			font-family: consolas, monaco, "Andale Mono", monospace;
-			font-style: normal;
-			font-weight: 400;
-			font-size: 14px;
-			height: 28rem;
-			resize: both;
-		}
-
-		#fe_ee_env .CodeMirror {
-			height: 16rem;
-		}
-
-		#conf_editor_div .CodeMirror {
-			height: 16rem;
-		}
-
-		.CodeMirror-gutter {
-			padding-right: 4px;
-			padding-left: 2px;
-		}
-
-		.ui-tooltip {
-			white-space: pre-line;
-		}
-
-		div.ui-tooltip {
-			max-width: 800px;
-		}
-
-		#schedule_graph {
-			width: 100%;
-			height: 450px;
-			border: solid 1px #ddd;
-		}
-	</style>
 </head>
 
 <body>
@@ -240,6 +148,7 @@
 	<script src="js/external/moment-timezone-with-data.min.js"></script>
 	<script src="js/external/Chart.min.js"></script>
 	<script src="js/external/jstz.min.js"></script>
+	<script src="js/external/socket.io.min.js"></script>
 
 	<!-- BUILD: COMBINE_SCRIPT_START -->
 	<script src="js/common/md5.js"></script>
@@ -269,7 +178,7 @@
 	<script src="js/pages/admin/ConfigKeys.js"></script>
 	<!-- BUILD: COMBINE_SCRIPT_END -->
 
-	<script src="/socket.io/socket.io.js"></script>
+	<!-- <script src="/socket.io/socket.io.js"></script> -->
 	<script src="/api/app/config?callback=app.receiveConfig"></script>
 
 </body>

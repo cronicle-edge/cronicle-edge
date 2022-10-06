@@ -597,3 +597,97 @@ td.table_label {
 #fe_eu_priv_grp_limit:checked + label:after {
 	content: ':'
 }
+
+/** cronicle-edge piece: 
+
+		.data_table tr:not(.nohighlight):hover td {
+			background-color: #f0f0f0 !important;
+			transition-delay: 30ms;
+		}
+
+		/* chromium patch 1px=>0.1px */
+
+		.data_table tr td {
+
+			border-bottom: 0.1px solid var(--border-color);
+		}
+
+		tr.focus td {
+			animation: 4s focus;
+
+		}
+
+		@keyframes focus {
+			0% {
+				background: initial;
+			}
+
+			50% {
+				background: #a2ffa9;
+			}
+
+			100% {
+				background: initial;
+			}
+			
+		}
+
+		.table_spacer {
+			height: 0.1px;
+		}
+
+		.tab.side {
+			border-bottom: 0.1px solid var(--border-color);
+		}
+
+		div.subtitle {
+
+			border-bottom: 0.1px solid var(--border-color);
+		}
+
+		.tab.inactive {
+
+			border-bottom: 0.1px solid var(--border-color);
+		}
+
+		.tab.side.inactive {
+
+			border-bottom: 0.1px solid var(--border-color);
+		}
+
+		.CodeMirror {
+			border: 1px solid lightgray;
+			font-family: consolas, monaco, "Andale Mono", monospace;
+			font-style: normal;
+			font-weight: 400;
+			font-size: 14px;
+			height: 28rem;
+			resize: both;
+		}
+
+		#fe_ee_env .CodeMirror {
+			height: 16rem;
+		}
+
+		#conf_editor_div .CodeMirror {
+			height: 16rem;
+		}
+
+		.CodeMirror-gutter {
+			padding-right: 4px;
+			padding-left: 2px;
+		}
+
+		.ui-tooltip {
+			white-space: pre-line;
+		}
+
+		div.ui-tooltip {
+			max-width: 800px;
+		}
+
+		#schedule_graph {
+			width: 100%;
+			height: 450px;
+			border: solid 1px #ddd;
+		}

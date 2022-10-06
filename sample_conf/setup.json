@@ -28,7 +28,7 @@
 				{ "id":"duration", "type":"text", "size":10, "title":"Test Duration (seconds)", "value": 60 },
 				{ "id":"progress", "type":"checkbox", "title":"Report Progress", "value": 1 },
 				{ "id":"burn", "type":"checkbox", "title":"Burn Memory/CPU", "value": 0 },
-				{ "id":"action", "type":"select", "title":"Simulate Action", "items":["Success","Failure","Crash"], "value": "Success" },
+				{ "id":"action", "type":"select", "title":"Simulate Action", "items":["Success","Failure","Crash","Random"], "value": "Success" },
 				{ "id":"secret", "type":"hidden", "value":"Will not be shown in Event UI" }
 			]
 		} ],
@@ -45,7 +45,7 @@
 				{ "id":"script", "type":"textarea", "rows":10, "title":"Script Source", "value": "#!/usr/bin/env bash\n\n# Enter your shell script code here\n# Press F11 to toggle full screen mode\n# To get workflow's job argument refer to $JOB_ARG env variable\necho \"print integer with % to report progress (e.g. 20%)\"\n sleep 2 && echo `date` && echo 10%\n sleep 2 && echo `date` && echo 40%\n sleep 2 && echo `date` && echo 90%\n sleep 2\necho '{\"perf\":{\"step3\":55,\"step2\":30,\"step1\":20}}'" },
 				{ "id":"annotate", "type":"checkbox", "title":"Add Date/Time Stamps to Log", "value": 0 },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
-				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile"],"value":"shell"},
+				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","toml","dockerfile"],"value":"shell"},
 				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
 				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0},
 				{"type":"checkbox","id":"logmemo","title":"Log Memo","value":0},
@@ -368,7 +368,8 @@
 			[ "symlinkCompress", "node_modules/zxcvbn/dist/zxcvbn.js", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/chart.js/dist/Chart.min.js", "htdocs/js/external/" ],
 			[ "symlinkCompress", "node_modules/xss/dist/xss.min.js", "htdocs/js/external/" ],
-
+			[ "symlinkCompress", "node_modules/socket.io/client-dist/socket.io.min.js", "htdocs/js/external/" ],
+			
 			[ "copyFiles", "node_modules/vis-network/dist/vis-network.min.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/ansi_up/ansi_up.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/graphlib/dist/graphlib.min.js", "htdocs/js/external/" ],

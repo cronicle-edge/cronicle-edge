@@ -11,6 +11,9 @@ app.extend({
 	activeJobs: {},
 	eventQueue: {},
 	state: null,
+	filter: {
+		schedule: {	}
+	},
 	plain_text_post: true,
 	clock_visible: false,
 	scroll_time_visible: false,

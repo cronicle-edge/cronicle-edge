@@ -717,7 +717,7 @@ Class.subclass( Page.Base, "Page.History", {
 		);
 		html += '<div style="padding:20px 20px 30px 20px">';
 		
-		var cols = ['Job ID', 'Hostname', 'Result', 'Start Date/Time', 'Elapsed Time', 'Avg CPU', 'Avg Mem'];
+		var cols = ['Job ID', 'Hostname', 'Result', 'Memo', 'Start Date/Time', 'Elapsed Time', 'Avg CPU', 'Avg Mem'];
 		
 		html += '<div class="subtitle">';
 			html += 'Event History: ' + event.title;
@@ -747,6 +747,7 @@ Class.subclass( Page.Base, "Page.History", {
 				`<div class="td_big" style="white-space:nowrap;">${href}<i class="fa fa-pie-chart">&nbsp;</i><b>${job.id.substring(0, 11)}</b></span></div>`,
 				self.getNiceGroup( null, job.hostname, col_width ),
 				jobStatusHist,
+				job.memo,
 				get_nice_date_time( job.time_start, false, true ),
 				get_text_from_seconds( job.elapsed, true, false ),
 				'' + cpu_avg + '%',

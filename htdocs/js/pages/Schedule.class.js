@@ -87,6 +87,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		cs: "text/x-csharp",
 		sql: "text/x-sql",
 		dockerfile: "text/x-dockerfile",
+		toml: "text/x-toml",
 		yaml: "text/x-yaml",
 		json: "application/json",
 		conf: "text/x-properties",
@@ -102,24 +103,21 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let cols = ['File Name', ' '];
 		let files = this.files || []
 
+		if (files.length === 0) {
+			document.getElementById('fe_ee_pp_file_list').innerHTML = ''
+			return
+		} 
+
 		let table = '<table id="wf_event_list_table" class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
 
-		if (files.length === 0) {
-			table += '<tr><td> </td><td></td></tr>'
-		}
-		else {
-			for (var idx = 0, len = files.length; idx < len; idx++) {
-				let actions = ` 
+		for (var idx = 0, len = files.length; idx < len; idx++) {
+			let actions = ` 
 			   <span class="link" onMouseUp = "$P().file_edit(${idx})" > <b>Edit</b></span> | 
 			   <span class="link" onMouseUp = "$P().file_delete(${idx})" > <b>Delete</b></span>
 			   `
-				let file = files[idx]
+			table += `<tr><td id><b>${encode_entities(files[idx].name)}</b></td><td>${actions}</td> </tr>`
 
-				table += `<tr>
-			<td id><b>${encode_entities(file.name)}</b></td><td>${actions}</td>
-		   </tr>`
-			}
-	}
+		}
 
 		table += `</table>`
 
@@ -147,7 +145,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			lineWrapping: false,
 			scrollbarStyle: "overlay",
 			lineNumbers: true,
-			theme: "darcula",
+			theme: "${self.event.theme || 'default'}",
 			matchBrackets: true,
 			gutters: [''],
 			lint: true
@@ -701,21 +699,27 @@ toggle_token: function () {
 				}
 			}
 
+			let filter =  app.filter.schedule || {} // persist schedule page filtering
 
 			// category filter
+			args.category = args.category || filter['category']
 			if (args.category && (item.category != args.category)) continue;
 
 			// plugin filter
+			args.plugin = args.plugin || filter['plugin']
 			if (args.plugin && (item.plugin != args.plugin)) continue;
 
 			// server group filter
+			args.target = args.target || filter['target']
 			if (args.target && (item.target != args.target)) continue;
 
 			// keyword filter
+			args.keywords = args.keywords || filter['keywords']
 			var words = [item.title, item.username, item.notes, item.target].join(' ').toLowerCase();
 			if (args.keywords && words.indexOf(args.keywords.toLowerCase()) == -1) continue;
 
 			// enabled filter
+			args.enabled = args.enabled || filter['enabled']
 			if ((args.enabled == 1) && !item.enabled) continue;
 			else if ((args.enabled == -1) && item.enabled) continue;
 
@@ -746,26 +750,19 @@ toggle_token: function () {
 
 		// Scheduled Event page:
 
-		html += '<div style="padding:20px 20px 20px 20px">';
-
-		html += '<div class="subtitle">';
-		html += `Scheduled Events ${cycleWarning}`;
-
-		var graphChecked = app.scheduleAsGraph ? 'checked' : ''
-
-		html += '<div class="subtitle_widget"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="10" placeholder="Find events..." style="border:0px;" value="' + escape_text_field_value(args.keywords) + '"/></div>';
-
-		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_target" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Servers</option>' + this.render_target_menu_options(args.target) + '</select></div>';
-		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>' + render_menu_options(app.plugins, args.plugin, false) + '</select></div>';
-		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>' + render_menu_options(app.categories, args.category, false) + '</select></div>';
-
-		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>' + render_menu_options( [[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"]], args.enabled, false ) + '</select></div>';
-		html += `<div class="subtitle_widget" ><input ${graphChecked} id="fe_sch_graph" onclick="$P().toggle_schedule_view()" type="checkbox"></input><label for="fe_sch_graph">Graph View</label></div>`
-
-		html += '<div class="clear"></div>';
-		html += '</div>';
-
-
+		html += `
+		<div style="padding:20px 20px 20px 20px">
+		<div class="subtitle">	Scheduled Events ${cycleWarning} </div>
+		<div class="subtitle_widget"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="10" placeholder="Find events..." style="border:0px;" value="${escape_text_field_value(args.keywords)}"/></div>
+		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_target" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Servers</option>${this.render_target_menu_options(args.target)}</select></div>
+		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>${render_menu_options(app.plugins, args.plugin, false)}</select></div>
+		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>${render_menu_options(app.categories, args.category, false)}</select>
+		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>${render_menu_options( [[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"]], args.enabled, false )}</select></div>
+		<div class="subtitle_widget" ><input ${app.scheduleAsGraph ? 'checked' : ''} id="fe_sch_graph" onclick="$P().toggle_schedule_view()" type="checkbox"></input><label for="fe_sch_graph">Graph View</label></div>
+		<div class="clear"></div>
+		</div>
+		</div>
+		`
 		// prep events for sort
 		this.events.forEach(function (item) {
 			var cat = item.category ? find_object(app.categories, { id: item.category }) : null;
@@ -786,17 +783,16 @@ toggle_token: function () {
 		});
 
 		// header center (group by buttons)
-		var chtml = '';
-		chtml += '<div class="schedule_group_button_container">';
-		chtml += '<i class="fa fa-clock-o ' + (group_by ? '' : 'selected') + '" title="Sort by Title" onMouseUp="$P().change_group_by(\'\')"></i>';
-		chtml += '<i class="fa fa-folder-open-o ' + ((group_by == 'category') ? 'selected' : '') + '" title="Group by Category" onMouseUp="$P().change_group_by(\'category\')"></i>';
-		chtml += '<i class="fa fa-plug ' + ((group_by == 'plugin') ? 'selected' : '') + '" title="Group by Plugin" onMouseUp="$P().change_group_by(\'plugin\')"></i>';
-		chtml += '<i class="mdi mdi-server-network ' + ((group_by == 'group') ? 'selected' : '') + '" title="Group by Target" onMouseUp="$P().change_group_by(\'group\')"></i>';
-		chtml += '<i > </i>'
-		chtml += `<i class="${args.collapse ? 'fa fa-arrow-circle-right' : 'fa fa-arrow-circle-up'}" title="${args.collapse ? 'Expand' : 'Collapse'}" onclick="$P().toggle_group_by()"></i>`;
-		chtml += '</div>';
-		cols.headerRight = chtml;
-
+		cols.headerRight = `
+		<div class="schedule_group_button_container">
+		<i class="fa fa-clock-o ${ group_by ? '' : 'selected' }" title="Sort by Title" onMouseUp="$P().change_group_by(\'\')"></i>
+		<i class="fa fa-folder-open-o ${group_by == 'category' ? 'selected' : ''}" title="Group by Category" onMouseUp="$P().change_group_by(\'category\')"></i>
+		<i class="fa fa-plug ${ group_by == 'plugin' ? 'selected' : ''}" title="Group by Plugin" onMouseUp="$P().change_group_by(\'plugin\')"></i>
+		<i class="mdi mdi-server-network ${((group_by == 'group') ? 'selected' : '')}" title="Group by Target" onMouseUp="$P().change_group_by(\'group\')"></i>
+		<i > </i>
+		<i class="${args.collapse ? 'fa fa-arrow-circle-right' : 'fa fa-arrow-circle-up'}" title="${args.collapse ? 'Expand' : 'Collapse'}" onclick="$P().toggle_group_by()"></i>
+		</div>
+		`
 		// render table
 		var self = this;
 		var last_group = '';
@@ -893,35 +889,31 @@ toggle_token: function () {
 		html += `
 		  <div id="schedule_table" style="${app.scheduleAsGraph ? 'display:none' : ''}"> ${htmlTab} </div>
 		  <div  id="schedule_graph" style="${app.scheduleAsGraph ? '' : 'display:none'}"></div>
+		  <div style="height:30px;"></div>
+		  <center><table><tr>
 		`
-		//<script> $P().render_schedule_graph();  </script>
-
-		html += '<div style="height:30px;"></div>';
-		html += '<center><table><tr>';
 		if (app.hasPrivilege('create_events')) {
-			html += '<td><div class="button" style="width:130px;" onMouseUp="$P().edit_event(-1)"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Add Event...</div></td>';
-			html += '<td width="40">&nbsp;</td>';
-			html += '<td><div class="button" style="width:130px;" onMouseUp="$P().do_random_event()"><i class="fa fa-random">&nbsp;&nbsp;</i>Random</div></td>';
-			html += '<td width="40">&nbsp;</td>';
+			html += `<td><div class="button" style="width:130px;" onMouseUp="$P().edit_event(-1)"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Add Event...</div></td>
+			<td width="40">&nbsp;</td>
+			<td><div class="button" style="width:130px;" onMouseUp="$P().do_random_event()"><i class="fa fa-random">&nbsp;&nbsp;</i>Random</div></td>
+			<td width="40">&nbsp;</td>
+			`
 		}
 
 		// backup/restore buttons - admin only
 		if (app.isAdmin()) {
-			html += '<td><div class="button" style="width:130px;" onMouseUp="$P().export_schedule()"><i class="fa fa-download">&nbsp;&nbsp;</i>Backup</div></td>';
-			html += '<td width="40">&nbsp;</td>';
+			html += '<td><div class="button" style="width:130px;" onMouseUp="$P().export_schedule()"><i class="fa fa-download">&nbsp;&nbsp;</i>Backup</div></td><td width="40">&nbsp;</td>';
 
 			if (app.schedule.length === 0) {  // only show import button if there are no scheduled jobs yet
-				html += '<td><div class="button" style="width:130px;" onMouseUp="$P().import_schedule()"><i class="fa fa-upload">&nbsp;&nbsp;</i>Import</div></td>';
-				html += '<td width="40">&nbsp;</td>';
+				html += '<td><div class="button" style="width:130px;" onMouseUp="$P().import_schedule()"><i class="fa fa-upload">&nbsp;&nbsp;</i>Import</div></td><td width="40">&nbsp;</td>';
 			}
 		}
 
-		html += '<td width="40">&nbsp;</td>';
-		html += `<td><div id="graph_fit_button" class="button" style="width:130px;${app.scheduleAsGraph ? '' : 'display:none'}" onMouseUp="app.network.fit()"><i class="fa fa-arrows">&nbsp;&nbsp;</i>Fit</div></td>`;
-		html += '</tr></table></center>';
-
-		html += '</div>'; // padding
-		// html += '</div>'; // sidebar tabs
+		html += `
+		<td width="40">&nbsp;</td>
+		<td><div id="graph_fit_button" class="button" style="width:130px;${app.scheduleAsGraph ? '' : 'display:none'}" onMouseUp="app.network.fit()"><i class="fa fa-arrows">&nbsp;&nbsp;</i>Fit</div></td>
+		</tr></table></center></div>
+		`
 
 		this.div.html(html);
 
@@ -1083,19 +1075,21 @@ toggle_token: function () {
 		// grab values from search filters, and refresh
 		var args = this.args;
 
-		args.plugin = $('#fe_sch_plugin').val();
+		if(!app.filter.schedule) app.filter.schedule = {}
+
+		args.plugin = app.filter.schedule['plugin'] = $('#fe_sch_plugin').val();
 		if (!args.plugin) delete args.plugin;
 
-		args.target = $('#fe_sch_target').val();
+		args.target = app.filter.schedule['target'] =  $('#fe_sch_target').val();
 		if (!args.target) delete args.target;
 
-		args.category = $('#fe_sch_cat').val();
+		args.category = app.filter.schedule['category'] = $('#fe_sch_cat').val();
 		if (!args.category) delete args.category;
 
-		args.keywords = $('#fe_sch_keywords').val();
+		args.keywords = app.filter.schedule['keywords'] = $('#fe_sch_keywords').val();
 		if (!args.keywords) delete args.keywords;
 
-		args.enabled = $('#fe_sch_enabled').val();
+		args.enabled = app.filter.schedule['enabled'] = $('#fe_sch_enabled').val();
 		if (!args.enabled) delete args.enabled;
         
 		let self = this;
@@ -1122,10 +1116,10 @@ toggle_token: function () {
 			]
 		);
 
-		html += '<div style="padding:20px;"><div class="subtitle">Add New Event</div></div>';
+		html += '<div style="padding:20px;"><div class="subtitle">Add New Event</div></div><div style="padding:0px 20px 50px 20px"><center><table style="margin:0;">';
 
-		html += '<div style="padding:0px 20px 50px 20px">';
-		html += '<center><table style="margin:0;">';
+		// html += '<div style="padding:0px 20px 50px 20px">';
+		// html += '<center><table style="margin:0;">';
 
 		if (this.event_copy) {
 			// copied from existing event
@@ -1153,20 +1147,19 @@ toggle_token: function () {
 		html += this.get_event_edit_html();
 
 		// buttons at bottom
-		html += '<tr><td colspan="2" align="center">';
-		html += '<div style="height:30px;"></div>';
-
-		html += '<table><tr>';
-		html += '<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().cancel_event_edit()">Cancel</div></td>';
-		html += '<td width="50">&nbsp;</td>';
-		html += '<td><div class="button" style="width:120px;" onMouseUp="$P().do_new_event()"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Create Event</div></td>';
-		html += '</tr></table>';
-
-		html += '</td></tr>';
-		html += '</table></center>';
-
-		html += '</div>'; // table wrapper div
-		html += '</div>'; // sidebar tabs
+		html += `
+		<tr><td colspan="2" align="center">
+		<div style="height:30px;"></div>
+		<table><tr>
+		<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().cancel_event_edit()">Cancel</div></td>
+		<td width="50">&nbsp;</td>
+		<td><div class="button" style="width:120px;" onMouseUp="$P().do_new_event()"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Create Event</div></td>
+		</tr></table>
+		</td></tr>
+		</table></center>
+		</div>
+		</div>
+		`
 
 		this.div.html(html);
 
@@ -1263,20 +1256,32 @@ toggle_token: function () {
 
 		html += this.getSidebarTabs('edit_event', side_tabs);
 
-		// html += '<div style="padding:20px;"><div class="subtitle">Editing Event &ldquo;' + event.title + '&rdquo;</div></div>';
+		html += `
+		<div style="padding:20px;">
+		<div class="subtitle">
+		Editing Event &ldquo;${event.title}&rdquo;
+		<div class="subtitle_widget" style="margin-left:5px;"><a href="#History?sub=event_history&id=${event.id}"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to History</b></a></div>
+		<div class="subtitle_widget"><a href="#History?sub=event_stats&id=${event.id}"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to Stats</b></a></div>
+		<div class="clear"></div>
+		</div>
+		</div>
+		<div style="padding:0px 20px 50px 20px">
+		<center>
+		<table style="margin:0;">
+		
+		`
 
-		html += '<div style="padding:20px;">';
-		html += '<div class="subtitle">';
-		html += 'Editing Event &ldquo;' + event.title + '&rdquo;';
-		html += '<div class="subtitle_widget" style="margin-left:5px;"><a href="#History?sub=event_history&id=' + event.id + '"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to History</b></a></div>';
-		html += '<div class="subtitle_widget"><a href="#History?sub=event_stats&id=' + event.id + '"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to Stats</b></a></div>';
-		html += '<div class="clear"></div>';
-		html += '</div>';
-		html += '</div>';
-
-		html += '<div style="padding:0px 20px 50px 20px">';
-		html += '<center>';
-		html += '<table style="margin:0;">';
+		// html += '<div style="padding:20px;">';
+		// html += '<div class="subtitle">';
+		// html += 'Editing Event &ldquo;' + event.title + '&rdquo;';
+		// html += '<div class="subtitle_widget" style="margin-left:5px;"><a href="#History?sub=event_history&id=' + event.id + '"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to History</b></a></div>';
+		// html += '<div class="subtitle_widget"><a href="#History?sub=event_stats&id=' + event.id + '"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to Stats</b></a></div>';
+		// html += '<div class="clear"></div>';
+		// html += '</div>';
+		// html += '</div>';
+		// html += '<div style="padding:0px 20px 50px 20px">';
+		// html += '<center>';
+		// html += '<table style="margin:0;">';
 
 		// Internal ID
 		if (this.isAdmin()) {
@@ -1287,43 +1292,37 @@ toggle_token: function () {
 
 		html += this.get_event_edit_html();
 
-		html += '<tr><td colspan="2" align="center">';
-		html += '<div style="height:30px;"></div>';
+		html += '<tr><td colspan="2" align="center"><div style="height:30px;"></div><table><tr>';
 
-		html += '<table><tr>';
 		// cancel
 		html += '<td><div class="button" style="width:110px; font-weight:normal;" onMouseUp="$P().cancel_event_edit()">Cancel</div></td>';
 
 		// delete
 		if (app.hasPrivilege('delete_events')) {
-			html += '<td width="30">&nbsp;</td>';
-			html += '<td><div class="button" style="width:110px; font-weight:normal;" onMouseUp="$P().delete_event(\'edit\')">Delete Event...</div></td>';
+			html += '<td width="30">&nbsp;</td><td><div class="button" style="width:110px; font-weight:normal;" onMouseUp="$P().delete_event(\'edit\')">Delete Event...</div></td>';
 		}
 
 		// copy
 		if (app.hasPrivilege('create_events')) {
-			html += '<td width="30">&nbsp;</td>';
-			html += '<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().do_copy_event()">Copy Event...</div></td>';
+			html += '<td width="30">&nbsp;</td><td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().do_copy_event()">Copy Event...</div></td>';
 		}
 
 		// run
 		if (app.hasPrivilege('run_events')) {
-			html += '<td width="30">&nbsp;</td>';
-			html += '<td><div class="button" style="width:110px; font-weight:normal;" onMouseUp="$P().run_event_from_edit(event)">Run Now</div></td>';
+			html += '<td width="30">&nbsp;</td><td><div class="button" style="width:110px; font-weight:normal;" onMouseUp="$P().run_event_from_edit(event)">Run Now</div></td>';
 		}
 
 		// save
-		html += '<td width="30">&nbsp;</td>';
-		html += '<td><div class="button" style="width:130px;" onMouseUp="$P().do_save_event()"><i class="fa fa-floppy-o">&nbsp;&nbsp;</i>Save Changes</div></td>';
-		html += '</tr></table>';
-
-		html += '</td></tr>';
-
-		html += '</table>';
-		html += '</center>';
-		html += '</div>'; // table wrapper div
-
-		html += '</div>'; // sidebar tabs
+		html += `
+		<td width="30">&nbsp;</td>
+		<td><div class="button" style="width:130px;" onMouseUp="$P().do_save_event()"><i class="fa fa-floppy-o">&nbsp;&nbsp;</i>Save Changes</div></td>
+		</tr></table>
+		</td></tr>
+		</table>
+		</center>
+		</div>
+		</div>
+		`
 
 		this.div.html(html);
 	},
@@ -2485,6 +2484,7 @@ toggle_token: function () {
 								if (lang == 'csharp') { lang = 'text/x-csharp' }
 								if (lang == 'sql') { lang = 'text/x-sql' }
 								if (lang == 'dockerfile') { lang = 'text/x-dockerfile' }
+								if (lang == 'toml') { lang = 'text/x-toml' }
 								if (lang == 'yaml') {
 									 lang = 'text/x-yaml'
 									 gutter = 'CodeMirror-lint-markers'
@@ -2557,8 +2557,8 @@ toggle_token: function () {
 							  <br>
 							  <div id="fe_ee_pp_file_list"></div>
 							  <script>$P().render_file_list()</script>
-							  <div class="caption" >Access files via env vars: FILE_NAME_EXT or files/name.ext</div>
 							  <div class="button mini" style="width:90px; margin:10px 10px 10px 0px" onMouseUp="$P().file_add()">Attach File</div>
+							  <div class="caption" >Access files via env vars: FILE_NAME_EXT or files/name.ext</div>
 							<br>
 	 					    `
 							event.theme = param.theme
@@ -2582,6 +2582,7 @@ toggle_token: function () {
 									if(ln == 'csharp') {ln = 'text/x-csharp'}
 									if (ln == 'sql') { ln = 'text/x-sql' }
 									if (ln == 'dockerfile') { ln = 'text/x-dockerfile' }
+									if (ln == 'toml') { ln = 'text/x-toml' }
 									if (ln == 'json') { 
 										ln = 'application/json'
 										editor.setOption("lint", CodeMirror.lint.json)
@@ -2646,10 +2647,10 @@ toggle_token: function () {
 		return {
 			"enabled": 1,
 			params: {
-				"duration": Math.floor(Math.random() * 20),
+				"duration": "5-20",
 				"progress": 1,
 				"burn": tools.randArray([0, 1]),
-				"action": tools.randArray(["Success", "Success", "Success", "Success", "Failure", "Crash"]),
+				"action": "Random",
 				"secret": "Will not be shown in Event UI",
 			},
 			"timing": { "minutes": [Math.floor(Math.random() * 60)], "hours": [Math.floor(Math.random() * 24)] },
