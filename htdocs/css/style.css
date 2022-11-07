@@ -598,7 +598,7 @@ td.table_label {
 	content: ':'
 }
 
-/** cronicle-edge piece: 
+/** cronicle-edge piece: */
 
 		.data_table tr:not(.nohighlight):hover td {
 			background-color: #f0f0f0 !important;
