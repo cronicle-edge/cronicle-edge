@@ -22,6 +22,7 @@
 		"scheduler"
 	],
 	"dependencies": {
+		"@iarna/toml": "^2.2.5",
 		"@mdi/font": "2.1.99",
 		"activedirectory2": "^2.1.0",
 		"ansi_up": "^5.1.0",

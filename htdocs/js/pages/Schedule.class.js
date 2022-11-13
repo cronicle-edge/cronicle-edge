@@ -79,6 +79,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		});
 	},
 
+	render_time_options: function () {
+		let event = this.event
+	   $('#event_starttime').datetimepicker({ value: event.start_time ? new Date(event.start_time) : null, format: 'Y-m-d H:i'}) ;
+	   $('#event_endtime').datetimepicker({ value: event.end_time ? new Date(event.end_time) : null, format: 'Y-m-d H:i'});
+		
+	},
+
 	///  filelist
 
 	extension_map: {
@@ -1271,22 +1278,11 @@ toggle_token: function () {
 		
 		`
 
-		// html += '<div style="padding:20px;">';
-		// html += '<div class="subtitle">';
-		// html += 'Editing Event &ldquo;' + event.title + '&rdquo;';
-		// html += '<div class="subtitle_widget" style="margin-left:5px;"><a href="#History?sub=event_history&id=' + event.id + '"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to History</b></a></div>';
-		// html += '<div class="subtitle_widget"><a href="#History?sub=event_stats&id=' + event.id + '"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to Stats</b></a></div>';
-		// html += '<div class="clear"></div>';
-		// html += '</div>';
-		// html += '</div>';
-		// html += '<div style="padding:0px 20px 50px 20px">';
-		// html += '<center>';
-		// html += '<table style="margin:0;">';
-
 		// Internal ID
 		if (this.isAdmin()) {
 			html += get_form_table_row('Event ID', '<div style="font-size:14px;">' + event.id + '</div>');
 			html += get_form_table_caption("The internal event ID used for API calls.  This cannot be changed.");
+			html += '<br>'
 			html += get_form_table_spacer();
 		}
 
@@ -1622,6 +1618,31 @@ toggle_token: function () {
 		this.show_all_minutes = false;
 
 		html += get_form_table_row('', '<div id="d_ee_timing_params">' + this.get_timing_params_html(tmode) + '</div>');
+
+		// advanced timing option 
+		let time_options_exp = !!(event.ticks || event.start_time || event.end_time);
+		html += get_form_table_row('', `
+			<br><div style="font-size:13px; ${time_options_exp ? 'display:none;' : ''}"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Timing Options</span></div>
+			<fieldset style="padding:10px 10px 0 10px; margin-bottom:5px;${time_options_exp ? '' : 'display:none;'}"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Timing Options</legend>
+		     <div class="plugin_params_label">Extra Ticks: </div>
+		     <div class="plugin_params_content">
+		      <input type="text" id="fe_ee_ticks" size="50" value="${event.ticks || ''}" placeholder="e.g. 3PM|16:45|2020-01-01 09:30" spellcheck="false" onchange="$P().parseTicks()"/>
+		      <span class="link addme" style="padding-left:4px; font-size:13px;" onMouseUp="$P().parseTicks()"> check &nbsp;&nbsp;|</span>
+		      <span class="link addme" style="padding-left:0px; font-size:13px;" onMouseUp="$P().ticks_add_now()">add timestamp</span>		   
+		      <div class="caption" style="margin-top:6px;">Optional extra minute ticks (extends regular schedule). Separate by comma or pipe.<br> Use HH:mm fromat for daily recurring or YYYY-MM-DD HH:mm for onetime ticks</div>
+		     <div style="padding: 5px 0px 0px 5px;"><span style="color: green" id="fe_ee_parsed_ticks"/></div>
+		    </div>			
+			<div class="plugin_params_label">Only Run From</div>
+			<div class="plugin_params_content">
+			  <input id="event_starttime" type="text" placeholder="(now)" >
+			</div>
+			
+			<div class="plugin_params_label">And Until</div>
+			<div class="plugin_params_content"><input placeholder="(forever)" id="event_endtime" type="text"></div>
+			</fieldset>
+			<script>$P().render_time_options()</script>
+		`
+		);
 		html += get_form_table_spacer();
 
 		// show token (admin only) 
@@ -2190,7 +2211,7 @@ toggle_token: function () {
 		var timing = event.timing;
 
 		html += '<div style="font-size:13px; margin-top:7px; display:none;"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Timing Details</span></div>';
-		html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px; max-width:670px;"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Timing Details</legend>';
+		html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px; width:55rem;"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Timing Details</legend>';
 
 		// html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px; max-width:600px;"><legend>Timing Details</legend>';
 
@@ -2270,18 +2291,6 @@ toggle_token: function () {
 
 		html += '</fieldset>';
 		html += '<div class="caption" style="margin-top:6px;">Choose when and how often the event should run.</div>';
-
-		html += `
-		<div><br>
-		   <div><span class="info_label" align="right">Extra Ticks: &nbsp;</span>
-		   <input type="text" id="fe_ee_ticks" size="50" value="${event.ticks || ''}" placeholder="e.g. 3PM|16:45|2020-01-01 09:30" spellcheck="false" onchange="$P().parseTicks()"/>
-		   <span class="link addme" style="padding-left:4px; font-size:13px;" onMouseUp="$P().parseTicks()"> check &nbsp;&nbsp;|</span>
-		   <span class="link addme" style="padding-left:0px; font-size:13px;" onMouseUp="$P().ticks_add_now()">add timestamp</span>		   
-		   <div class="caption" style="margin-top:6px;">Optional extra minute ticks (extends regular schedule). Separate by comma or pipe.<br> Use HH:mm fromat for daily recurring or YYYY-MM-DD HH:mm for onetime ticks</div>
-		   <div style="padding: 5px 0px 0px 5px;"><span style="color: green" id="fe_ee_parsed_ticks"/></div>
-		   </div>
-		</div>
-		`
 
 		setTimeout(function () {
 			$('.ccbox_timing').mouseup(function () {
@@ -2510,12 +2519,9 @@ toggle_token: function () {
 							  gutters: ['${gutter}'],
 							  lint: ${lint},
 							  extraKeys: {
-                                "F11": function(cm) {
-                                  cm.setOption("fullScreen", !cm.getOption("fullScreen"));
-                                },
-                                "Esc": function(cm) {
-                                  if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
-                                }
+                                "F11": (cm) => cm.setOption("fullScreen", !cm.getOption("fullScreen")),
+                                "Esc": (cm) => cm.getOption("fullScreen") ? cm.setOption("fullScreen", false) : null,
+								"Ctrl-/": (cm) => cm.execCommand('toggleComment')
                               }							  
 							});
 		
@@ -2748,6 +2754,8 @@ toggle_token: function () {
 
 		// timezone
 		event.timezone = $('#fe_ee_timezone').val();
+		event.start_time = new Date($('#event_starttime').val()).valueOf()
+        event.end_time = new Date($('#event_endtime').val()).valueOf()
 
 		// max children
 		event.max_children = parseInt($('#fe_ee_max_children').val());
