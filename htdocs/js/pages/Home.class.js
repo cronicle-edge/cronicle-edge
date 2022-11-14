@@ -341,6 +341,8 @@ Class.subclass( Page.Base, "Page.Home", {
 					if (tds.className) tds.className += ' '; else tds.className = '';
 					tds.className += cat.color;
 				}
+
+				if(!app.state.enabled) tds.className += ' disabled'
 				
 				return tds;
 			} // row callback

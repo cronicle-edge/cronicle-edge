@@ -848,13 +848,22 @@ toggle_token: function () {
 			var evt_name = self.getNiceEvent(item, col_width, 'float:left', '<span>&nbsp;&nbsp;</span>');
 			if (chain_tooltip.length > 0) evt_name += `<i  title="${chain_tooltip.join('<br>')}" class="fa fa-arrow-right">&nbsp;&nbsp;</i>${chain_error_msg}</span>`;
 
+			// check if event is has limited time range
+			let inactiveTitle
+			if (item.start_time && Number(item.start_time) > new Date().valueOf() + 60000) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
+			if (item.end_time && Number(item.end_time) < new Date().valueOf()) inactiveTitle = 'Schedule expired on ' + new Date(item.end_time).toLocaleString()
+
+			let niceTiming = summarize_event_timing(item.timing, item.timezone, item.ticks)
+
+			if (inactiveTitle) niceTiming = `<span title="${inactiveTitle}"><s>${niceTiming}</s>`
+
 			var tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
 				'<div class="td_big"><span class="link" onMouseUp="$P().edit_event(' + idx + ')">' + evt_name + '</span></div>',
 				self.getNiceCategory(cat, col_width),
 				self.getNicePlugin(plugin, col_width),
 				self.getNiceGroup(group, item.target, col_width),
-				summarize_event_timing(item.timing, item.timezone, item.ticks) + chainInfo,
+				niceTiming + chainInfo,
 				'<span id="ss_' + item.id + '" onMouseUp="$P().jump_to_last_job('+idx+')">' + status_html + '</span>',
 				actions.join('&nbsp;|&nbsp;')
 			];
@@ -873,7 +882,7 @@ toggle_token: function () {
 			// group by
 			if (group_by) {
 				let cur_group = item[group_by + '_title'];
-				tds.className = 'event_group_' + (group_by == 'group' ? item['target'] || 'allgrp' : item[group_by])
+				tds.className = 'event_group_' + (group_by == 'group' ? item['target'] || 'allgrp' : item[group_by]) + ' ' + tds.className
 
 				if (cur_group != last_group) {
 					last_group = cur_group;
@@ -983,6 +992,7 @@ toggle_token: function () {
 		};
 
 		app.api.post('app/update_event', stub, function (resp) {
+			$('#' + event.id).toggleClass('disabled')
 			app.showMessage('success', "Event '" + event.title + "' has been " + (event.enabled ? 'enabled' : 'disabled') + ".");
 		});
 	},
@@ -2864,6 +2874,10 @@ toggle_token: function () {
 			case 'state':
 				if (this.args.sub == 'edit_event' && !app.scheduleAsGraph ) this.update_rc_value();
 				else if (this.args.sub == 'events') this.update_job_last_runs();
+				break;
+
+			case 'tick':  // refresh schedule page on minute tick to update timing
+				if (this.args.sub == 'events') this.gosub_events(this.args);
 				break;
 		}
 	},
