@@ -37,6 +37,9 @@ onmessage = function(e) {
 		
 		// if item is disabled, skip entirely
 		if (!item.enabled) continue;
+
+		// check if item is past due
+		if (item.end_time && Number(item.end_time) < new Date().valueOf()) continue
 		
 		// check category for disabled flag as well
 		var cat = find_object( categories, { id: item.category } );
@@ -90,6 +93,11 @@ onmessage = function(e) {
 					for (var idy = 0, ley = item.timing.minutes.length; idy < ley; idy++) {
 						var min = item.timing.minutes[idy];
 						var actual = hour_start + (min * 60);
+
+						//  check if actual is within start/end
+						if (item.start_time && Number(item.start_time) > actual * 1000) continue
+						if (item.end_time && Number(item.end_time) < actual * 1000) continue
+
 						if ((actual >= min_epoch) && (actual < max_epoch)) {
 							events.push({ epoch: actual, id: item.id });
 							if (events.length >= max_events) { idy = ley; epoch = max_epoch; idx = len; }
@@ -100,6 +108,11 @@ onmessage = function(e) {
 					// item runs EVERY minute in the hour (unusual)
 					for (var idy = 0; idy < 60; idy++) {
 						var actual = hour_start + (idy * 60);
+
+						//  check if actual is within start/end
+						if (item.start_time && Number(item.start_time) > actual * 1000) continue
+						if (item.end_time && Number(item.end_time) < actual * 1000) continue
+
 						if ((actual >= min_epoch) && (actual < max_epoch)) {
 							events.push({ epoch: actual, id: item.id });
 							if (events.length >= max_events) { idy = 60; epoch = max_epoch; idx = len; }

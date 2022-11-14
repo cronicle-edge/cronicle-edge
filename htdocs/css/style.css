@@ -135,6 +135,7 @@ div.timing_details_label {
 	color: #3f7ed5;
 	cursor: default;
 	text-shadow: 0px 1px 0px white;
+	user-select: none;
 }
 
 div.timing_details_content {
@@ -153,6 +154,7 @@ div.plugin_params_label {
 	color: #3f7ed5;
 	cursor: default;
 	text-shadow: 0px 1px 0px white;
+	user-select: none;
 }
 
 div.plugin_params_content {
@@ -360,6 +362,7 @@ pre.log_chunk {
 
 span.color_label.clicky {
 	cursor: pointer;
+	user-select: none;
 }
 
 div.activity_desc > b {
@@ -586,6 +589,7 @@ div.dialog_subtitle {
 
 td.table_label {
 	cursor: default;
+	user-select: none;
 }
 
 /* User Category/Group Privilege Checkbox Label Augmentation */
@@ -633,7 +637,7 @@ td.table_label {
 		}
 
 		.table_spacer {
-			height: 0.1px;
+			height: 0.9px;
 		}
 
 		.tab.side {
