@@ -384,12 +384,13 @@ Class.subclass( Page.Base, "Page.Home", {
 				this.jobHistoryChart.data.datasets = datasets;
 				this.jobHistoryChart.data.labels = labels;
 				this.jobHistoryChart.options.scales.yAxes[0].type = scaleType;
+				this.jobHistoryChart.options.scales.yAxes[0]
 				this.jobHistoryChart.update()
 				return
 			} 
 
 			let ctx = document.getElementById('d_home_completed_jobs');
-            let self = this;
+
 			jobHistoryChart = new Chart(ctx, {
 				type: 'bar',
 				data: {
@@ -422,8 +423,12 @@ Class.subclass( Page.Base, "Page.Home", {
 						}
 					}
 					, scales: {
+						xAxes: [{
+							gridLines: { color: 'rgb(170, 170, 170)', lineWidth: 0.3 },
+						}],
 						yAxes: [{
 							type: scaleType,
+							gridLines: { color: 'rgb(170, 170, 170)', lineWidth: 0.3 },
 							ticks: {
 								display: false,
 								beginAtZero: true,

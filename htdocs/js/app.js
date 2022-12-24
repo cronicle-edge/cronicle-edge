@@ -711,6 +711,8 @@ app.extend({
 		for (var key in resp) {
 			this[key] = resp[key];
 		}
+
+		this.initTheme()
 		
 		// allow visible app name to be changed in config
 		this.name = config.name;
@@ -800,12 +802,16 @@ app.extend({
 	
 	updateHeaderInfo: function() {
 		// update top-right display
-		var html = '';
-		html += '<div id="d_header_divider" class="right" style="margin-right:0;"></div>';
-		html += '<div class="header_option logout right" onMouseUp="app.doUserLogout()"><i class="fa fa-power-off fa-lg">&nbsp;&nbsp;</i>Logout</div>';
-		html += '<div id="d_header_divider" class="right"></div>';
+		let html = `
+		<div id="d_header_divider" class="right" style="margin-right:0;"></div>
+		<div class="header_option logout right" onMouseUp="app.doUserLogout()"><i class="fa fa-power-off fa-lg">&nbsp;&nbsp;</i>Logout</div>
+		<div id="d_header_divider" class="right"></div>
+		<div id="d_theme_ctrl" class="header_option right" onmouseup="app.toggleTheme()"></div>
+		<div id="d_header_divider" class="right"></div>   
+		`
 		html += '<div id="d_header_user_bar" class="right" style="background-image:url(' + this.getUserAvatarURL( this.retina ? 64 : 32 ) + ')" onMouseUp="app.doMyAccount()">' + (this.user.full_name || app.username).replace(/\s+.+$/, '') + '</div>';
 		$('#d_header_user_container').html( html );
+		this.initTheme();
 	},
 	
 	doUserLogin: function(resp) {

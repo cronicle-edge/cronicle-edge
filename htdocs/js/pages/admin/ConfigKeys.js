@@ -8,11 +8,7 @@ Class.add( Page.Admin, {
 		var self = this;
 		self.div.addClass('loading');
 		self.secret = {};
-		app.api.post('/api/app/get_secret', { id: 'globalenv' }, function (resp) {
-			//if(err) console.log('failed to retreive secret');
-			if (resp.secret) self.secret = resp.secret;
-			app.api.post('app/get_conf_keys', copy_object(args), self.receive_confkeys.bind(self));
-		});
+		app.api.post('app/get_conf_keys', copy_object(args), self.receive_confkeys.bind(self))
 	},
 	
 	receive_confkeys: function(resp) {
@@ -36,6 +32,7 @@ Class.add( Page.Admin, {
 			[
 				['activity', "Activity Log"],
 				['conf_keys', "Configs"],
+				['secrets', "Secrets"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['plugins', "Plugins"],
@@ -46,52 +43,8 @@ Class.add( Page.Admin, {
 		
 		var cols = ['Config Key', 'Value', 'Action'];
 		
-		html += '<div style="padding:20px 20px 30px 20px">';
+		html += '<div style="padding:20px 20px 30px 20px"><div class="subtitle">Configs &nbsp;&nbsp;<div class="clear"></div></div>';
 		
-		html += '<div class="subtitle">';
-		let env_lock = this.secret.encrypted ? '<i class="fa fa-lock">&nbsp;&nbsp;</i>' : ''
-		html += `Configs &nbsp;&nbsp;<span id="fe_env_lock">${env_lock}</span>`;
-
-		var showEnvEditor = app.showEnvEditor ? 'checked' : ''
-
-		html += `<div class="subtitle_widget"><a href="/conf" ><b>Config Viewer</b></a></div>`
-		html += `<div class="subtitle_widget" ><input ${showEnvEditor} id="fe_ee_env_toggle" onclick="$('#fe_ee_env').toggle();env_editor.refresh();app.showEnvEditor=!app.showEnvEditor;" type="checkbox"></input><label for="fe_ee_env_toggle">Show Env Editor</label></div>`
-
-		html += '<div class="clear"></div>';
-		html += '</div>';
-
-		html += `
-		<div  class="plugin_params_content" id="fe_ee_env" style="${app.showEnvEditor ? '' : 'display: none'}">
-		  <textarea id="fe_ee_env_editor" ></textarea>
-		  <div style="height:10px;"></div>
-		  <center><table><tr>
-		  <td><div id="env_enc_button" class="button" style="width:130px;" onMouseUp="$P().toggle_env_encryption()">${this.secret.encrypted ? 'Decrypt' : 'Encrypt'}</div></td>
-		  <td width="40">&nbsp;</td>
-		  <td><div class="button" style="width:130px;" onMouseUp="$P().update_globalenv()"><i class="fa fa-save">&nbsp;&nbsp;</i>Save</div></td>
-		  </tr></table></center>		  
-		</div>
-		<script>
-		
-		var env_editor = CodeMirror.fromTextArea(document.getElementById("fe_ee_env_editor"), {
-		  mode: "text/x-properties",
-		  styleActiveLine: true,
-		  lineWrapping: false,
-		  scrollbarStyle: "overlay",
-		  lineNumbers: true,
-		  matchBrackets: true,
-		  extraKeys: {
-			"F11": function(cm) {
-			  cm.setOption("fullScreen", !cm.getOption("fullScreen"));
-			},
-			"Esc": function(cm) {
-			  if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
-			}
-		  }								  
-		});
-
-		env_editor.setValue(($P().secret.data || '').toString());
-		</script>
-		`
 		html += this.getBasicTable(this.conf_keys, cols, 'key', function (item, idx) {
 			var actions = [
 				'<span class="link" onMouseUp="$P().edit_conf_key(' + idx + ')"><b>Edit</b></span>',
@@ -121,6 +74,8 @@ Class.add( Page.Admin, {
 		html += '<td><div class="button" style="width:130px;" onMouseUp="$P().edit_conf_key(-1)"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Add Config Key...</div></td>';
 		html += '<td width="40">&nbsp;</td>';
 		html += '<td><div class="button" style="width:130px;" onMouseUp="$P().do_reload_conf_key()"><i class="fa fa-refresh">&nbsp;&nbsp;</i>Reload</div></td>';
+		html += '<td width="40">&nbsp;</td>';
+		html += '<td><div class="button" style="width:130px;" onMouseUp="$P().show_conf()"><i class="fa fa-cog">&nbsp;&nbsp;</i>Config Viewer</div></td>';
 		html += '</tr></table></center>';
 
 		html += '</div>'; // padding
@@ -129,24 +84,6 @@ Class.add( Page.Admin, {
 		this.div.html(html);
 	},
 
-	update_globalenv: function () {
-		this.secret.data = env_editor.getValue();
-		app.showProgress(1.0, "Updating Enviroment Data...");
-
-		app.api.post('/api/app/update_secret', this.secret, function (resp) {
-			app.hideProgress();
-			if (resp.code == 0) app.showMessage('success', "Enviroment Data has been updated successfully.");
-
-		});
-	},
-
-	toggle_env_encryption: function () {
-		this.secret.encrypted = !this.secret.encrypted;
-		$("#env_enc_button").html(this.secret.encrypted ? 'Decrypt' : 'Encrypt');
-		$("#fe_env_lock").html(this.secret.encrypted ? '<i class="fa fa-lock">&nbsp;&nbsp;</i>' : '')
-
-	},
-	
 	edit_conf_key: function(idx) {
 		// jump to edit sub
 		if (idx > -1) Nav.go( '#Admin?sub=edit_conf_key&id=' + this.conf_keys[idx].id );
@@ -169,6 +106,7 @@ Class.add( Page.Admin, {
 			[
 				['activity', "Activity Log"],
 				['conf_keys', "Configs"],
+				['secrets', "Secrets"],
 				['new_conf_key', "New Config Key"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
@@ -262,6 +200,7 @@ Class.add( Page.Admin, {
 			[
 				['activity', "Activity Log"],
 				['conf_keys', "Configs"],
+				['secrets', "Secrets"],
 				['edit_conf_key', "Edit Config Key"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
@@ -313,6 +252,45 @@ Class.add( Page.Admin, {
 		
 		app.showProgress( 1.0, "Saving Config Key..." );
 		app.api.post( 'app/update_conf_key', conf_key, this.save_conf_key_finish.bind(this) );
+	},
+
+	show_conf : function (args) {
+		app.api.post('app/get_config', null, function (resp) {
+			//app.hideProgress();
+			app.show_info(`
+			   <div style="text-align:left"><textarea id="conf_view" rows="30" cols="120">${JSON.stringify(resp.config, null, 2)}</textarea></div>
+			   <div class="caption"> This represnts actual current config (config.json and config key combination)</div>
+			   <script> 
+
+			   setTimeout(()=> {
+			   confEditor = CodeMirror.fromTextArea(document.getElementById("conf_view"), {
+				 mode: "application/json",
+				 styleActiveLine: true,
+				 readOnly: true,
+				 lineWrapping: false,
+				 scrollbarStyle: "overlay",
+				 lineNumbers: true,
+				 foldGutter: true,
+				 theme: "darcula",
+				 matchBrackets: true,
+				 gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+				 lint: true
+			 })
+	 
+			 confEditor.on('change', function(cm){
+				 document.getElementById("fe_ee_pp_file_content").value = cm.getValue();
+			  });
+	 
+			 confEditor.setSize(1000, 618)
+	 
+		    }, 30);
+			 </script>
+			   `, '', function (result) {
+
+			});
+
+		});
+	
 	},
 	
 	save_conf_key_finish: function(resp, tx) {

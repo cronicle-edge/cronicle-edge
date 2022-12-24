@@ -16,6 +16,7 @@ Class.add( Page.Admin, {
 			[
 				['activity', "Activity Log"],
 				['conf_keys', "Configs"],
+				['secrets', "Secrets"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['plugins', "Plugins"],
