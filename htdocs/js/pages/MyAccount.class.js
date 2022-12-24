@@ -78,7 +78,7 @@ Class.subclass( Page.Base, "Page.MyAccount", {
 		html += '</td>';
 			html += '<td valign="top" align="left" style="vertical-align:top; text-align:left;">';
 				// gravar profile image and edit button
-				html += '<fieldset style="width:150px; margin-left:40px; background:white; border:1px solid #ddd; box-shadow:none;"><legend>Profile Picture</legend>';
+				html += '<fieldset style="width:150px; margin-left:40px; border:1px solid #ddd; box-shadow:none;"><legend>Profile Picture</legend>';
 				if (app.config.external_users) {
 					html += '<div id="d_ma_image" style="width:128px; height:128px; margin:5px auto 0 auto; background-image:url('+app.getUserAvatarURL(128)+'); cursor:default;"></div>';
 				}

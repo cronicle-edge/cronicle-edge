@@ -59,6 +59,10 @@ Class.subclass( Page.Base, "Page.Admin", {
 			case 'conf_keys':
 				if (this.args.sub == 'conf_keys') this.gosub_conf_keys(this.args);
 			break;
+
+			case 'secrets':
+				if (this.args.sub == 'secrets') this.gosub_secrets(this.args);
+			break;
 		}
 	},
 	
@@ -95,6 +99,12 @@ Class.subclass( Page.Base, "Page.Admin", {
 			case 'conf_keys':
 				if (this.lastConfigKeysResp) {
 					this.receive_confkeys( this.lastConfigKeysResp );
+				}
+			break;
+
+			case 'secrets':
+				if (this.lastSecretsResp) {
+					this.receive_secrets( this.lastSecretsResp );
 				}
 			break;
 

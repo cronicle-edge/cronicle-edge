@@ -23,36 +23,42 @@
 	<link rel="stylesheet" href="codemirror/addon/scroll/simplescrollbars.css">
 	<link rel="stylesheet" href="codemirror/addon/display/fullscreen.css">
 	<link rel="stylesheet" href="codemirror/addon/lint/lint.css">
+	<link rel="stylesheet" href="codemirror/addon/fold/foldgutter.css">
 	<script src="js/external/xss.min.js"></script>
 	<script src="js/external/diff.js"></script>
 	<script src="js/external/ansi_up.js"></script>
-	<script src="js/external/graphlib.min.js"></script>
-	<script src="js/external/vis-network.min.js"></script>
-	<script src="codemirror/lib/codemirror.js"></script>
-	<script src="codemirror/addon/scroll/simplescrollbars.js"></script>
-	<script src="codemirror/addon/edit/matchbrackets.js"></script>
-	<script src="codemirror/addon/selection/active-line.js"></script>
-	<script src="codemirror/mode/powershell/powershell.js"></script>
-	<script src="codemirror/mode/javascript/javascript.js"></script>
-	<script src="codemirror/mode/python/python.js"></script>
-	<script src="codemirror/mode/perl/perl.js"></script>
-	<script src="codemirror/mode/shell/shell.js"></script>
-	<script src="codemirror/mode/groovy/groovy.js"></script>
-	<script src="codemirror/mode/clike/clike.js"></script>
-	<script src="codemirror/mode/properties/properties.js"></script>
-	<script src="codemirror/addon/display/fullscreen.js"></script>
-	<script src="codemirror/mode/xml/xml.js"></script>
-	<script src="codemirror/mode/sql/sql.js"></script>
-	<script src="js/external/js-yaml.min.js"></script>
-	<script src="codemirror/addon/lint/lint.js"></script>
-	<script src="codemirror/addon/lint/json-lint.js"></script>
-	<script src="codemirror/addon/lint/yaml-lint.js"></script>
-	<script src="codemirror/addon/mode/simple.js"></script>
-	<script src="codemirror/mode/dockerfile/dockerfile.js"></script>
-	<script src="codemirror/mode/toml/toml.js"></script>
-	<script src="codemirror/mode/yaml/yaml.js"></script>
-	<script src="codemirror/addon/comment/comment.js"></script>
-	<script src="js/external/jsonlint.js"></script>
+
+	<script defer src="js/external/graphlib.min.js"></script>
+	<script defer src="js/external/vis-network.min.js"></script>
+	<script defer src="codemirror/lib/codemirror.js"></script>
+	<script defer src="codemirror/addon/scroll/simplescrollbars.js"></script>
+	<script defer src="codemirror/addon/edit/matchbrackets.js"></script>
+	<script defer src="codemirror/addon/selection/active-line.js"></script>
+	<script defer src="codemirror/addon/fold/foldgutter.js"></script>
+	<script defer src="codemirror/addon/fold/foldcode.js"></script>
+	<script defer src="codemirror/addon/fold/brace-fold.js"></script>
+	<script defer src="codemirror/addon/fold/indent-fold.js"></script>
+	<script defer src="codemirror/mode/powershell/powershell.js"></script>
+	<script defer src="codemirror/mode/javascript/javascript.js"></script>
+	<script defer src="codemirror/mode/python/python.js"></script>
+	<script defer src="codemirror/mode/perl/perl.js"></script>
+	<script defer src="codemirror/mode/shell/shell.js"></script>
+	<script defer src="codemirror/mode/groovy/groovy.js"></script>
+	<script defer src="codemirror/mode/clike/clike.js"></script>
+	<script defer src="codemirror/mode/properties/properties.js"></script>
+	<script defer src="codemirror/addon/display/fullscreen.js"></script>
+	<script defer src="codemirror/mode/xml/xml.js"></script>
+	<script defer src="codemirror/mode/sql/sql.js"></script>
+	<script defer src="js/external/js-yaml.min.js"></script>
+	<script defer src="codemirror/addon/lint/lint.js"></script>
+	<script defer src="codemirror/addon/lint/json-lint.js"></script>
+	<script defer src="codemirror/addon/lint/yaml-lint.js"></script>
+	<script defer src="codemirror/addon/mode/simple.js"></script>
+	<script defer src="codemirror/mode/dockerfile/dockerfile.js"></script>
+	<script defer src="codemirror/mode/toml/toml.js"></script>
+	<script defer src="codemirror/mode/yaml/yaml.js"></script>
+	<script defer src="codemirror/addon/comment/comment.js"></script>
+	<script defer src="js/external/jsonlint.js" ></script>
 
 </head>
 
@@ -180,6 +186,7 @@
 	<script src="js/pages/admin/Activity.js"></script>
 	<script src="js/pages/admin/APIKeys.js"></script>
 	<script src="js/pages/admin/ConfigKeys.js"></script>
+	<script src="js/pages/admin/Secrets.js"></script>
 	<!-- BUILD: COMBINE_SCRIPT_END -->
 
 	<script src="/api/app/config"></script>

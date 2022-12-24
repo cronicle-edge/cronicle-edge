@@ -41,6 +41,16 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		//app.api.get('app/export?session_id=' + localStorage.session_id )
 	},
 
+	show_graph: function (args) {
+		// app.api.post('app/export', this, function (resp) {
+		// 	//app.hideProgress();
+		const self = this
+		setTimeout(()=>{self.render_schedule_graph(self.events)}, 100)
+			app.show_info(`			  
+			  <div style="width: 90vw; height: 82vh" id="schedule_graph2"></div>		  
+			  `, '', function (result) {});
+	},
+
 	import_schedule: function (args) {
 
 		app.confirm(`<span> Restore Scheduler<br><br>
@@ -80,9 +90,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	},
 
 	render_time_options: function () {
-		let event = this.event
-	   $('#event_starttime').datetimepicker({ value: event.start_time ? new Date(event.start_time) : null, format: 'Y-m-d H:i'}) ;
-	   $('#event_endtime').datetimepicker({ value: event.end_time ? new Date(event.end_time) : null, format: 'Y-m-d H:i'});
+	   let theme = app.getPref('theme')
+	   $('#event_starttime').datetimepicker({ value: event.start_time ? new Date(event.start_time) : null, format: 'Y-m-d H:i', theme: theme}) ;
+	   $('#event_endtime').datetimepicker({ value: event.end_time ? new Date(event.end_time) : null, format: 'Y-m-d H:i', theme: theme});
 		
 	},
 
@@ -137,7 +147,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		let files = self.files || []
 	
-		// let el_style = 'width: 240px; font-size:16px;'
+		// FILE EDITOR ON SHELLPLUG'
 		let html = '<table>' + 
 		get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="" spellcheck="false"/>`) +
 		get_form_table_spacer() +
@@ -147,12 +157,12 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		  setTimeout(()=> {
 		  fileEditor = CodeMirror.fromTextArea(document.getElementById("fe_ee_pp_file_content"), {
-			mode: "text",
+			mode: "javascript",
 			styleActiveLine: true,
 			lineWrapping: false,
 			scrollbarStyle: "overlay",
 			lineNumbers: true,
-			theme: "${self.event.theme || 'default'}",
+			theme: "${app.getPref('theme') == 'dark' ?  'gruvbox-dark' : 'default' }",
 			matchBrackets: true,
 			gutters: [''],
 			lint: true
@@ -217,7 +227,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			lineWrapping: false,
 			scrollbarStyle: "overlay",
 			lineNumbers: true,
-			theme: "${self.event.theme || 'default'}",
+			theme: "${app.getPref('theme') == 'dark' ?  'gruvbox-dark' : 'default' }",
 			matchBrackets: true,
 			gutters: [''],
 			lint: true
@@ -452,30 +462,6 @@ toggle_token: function () {
 		}
 	},
 
-	toggle_schedule_view: function () { //show/hide event graph
-		// initial app.network generation
-		if (!app.network) this.render_schedule_graph()
-		
-		setTimeout(function () { app.network.moveTo({ scale: 1.2 }); }, 20);
-
-		if ($('#fe_sch_graph').is(':checked') && !app.scheduleAsGraph) {
-			$('#schedule_table').hide()
-			$('#schedule_graph').show()
-			$('#graph_fit_button').show()
-			this.render_schedule_graph() 
-			app.scheduleAsGraph = true
-		} else {
-			$('#schedule_table').show()
-			$('#schedule_graph').hide()
-			$('#graph_fit_button').hide()
-			app.scheduleAsGraph = false;
-			if (app.network) app.network.unselectAll();
-			this.gosub_events(this.args) // redraw page on graph=>table
-		}
-
-		app.network.fit()
-	},
-
 	getBasicTable2: function(rows, cols, data_type, callback) {
 		// get html for sorted table (fake pagination, for looks only)
 		var html = '';
@@ -528,6 +514,7 @@ toggle_token: function () {
 	},
 
 	render_schedule_graph: function () {
+		
 		var sNodes = []
 		var sEdges = []
 		var catMap = Object.fromEntries(app.categories.map(i => [i.id, i]))
@@ -583,27 +570,19 @@ toggle_token: function () {
 			}
 		});
 
-		var sGraph = { nodes: new vis.DataSet(sNodes), edges: new vis.DataSet(sEdges) }
+		let sGraph = { nodes: new vis.DataSet(sNodes), edges: new vis.DataSet(sEdges) }
 
-		var options = {
-			// physics: {
-			// 	"barnesHut": {
-			// 		"springConstant": 0.1,
-			// 		"centralGravity": 0.2,
-			// 		"gravitationalConstant": -10000,
-			// 		"avoidOverlap": 0.01,
-			// 	}
-			// },
+		let options = {
 			nodes: { shape: 'box' },
 			groups: { disabled: { color: 'lightgray', font: { color: 'gray' } } },
 		}
 
-		app.network = new vis.Network(document.getElementById("schedule_graph"), sGraph, options)
+		let net = new vis.Network(document.getElementById("schedule_graph2"), sGraph, options)
 
 		// allow delete event by pressing del key
 		$(document).keyup(function (e) {
 			if (e.keyCode == 46) { // delete button pressed
-				var eventId = app.network.getSelectedNodes()[0]
+				var eventId = net.getSelectedNodes()[0]
 				if(! eventId) return;
 				var idx = $P().events.findIndex(i => i.id === eventId)
 				if (eventId) $P().delete_event(idx)
@@ -611,23 +590,14 @@ toggle_token: function () {
 		})
 
 		// open event edit page on double click
-		app.network.on("doubleClick", function (params) {
+		net.on("doubleClick", function (params) {
 			if (params.nodes.length === 1) {
 				var node = params.nodes[0]
 				window.open('#Schedule?sub=edit_event&id=' + node, '_self');
 			}
 		});
 
-		app.network.on("stabilizationProgress", function (params) {
-			app.showProgress(1.0, "Rendering, please wait...");
-		});
-
-		app.network.on("stabilizationIterationsDone", function () {
-            app.hideProgress();
-		});
-
-		// select nodes on graph on event filtering
-		// if(app.schedule.length !== this.events.length) app.network.selectNodes(this.events.map(e=>e.id));
+		net.fit()
 
 	},
 
@@ -635,21 +605,11 @@ toggle_token: function () {
 		// render table of events with filters and search
 		this.div.removeClass('loading');
 		app.setWindowTitle("Scheduled Events");
-		app.scheduleAsGraph = false		
 
 		var size = get_inner_window_size();
 		var col_width = Math.floor(((size.width * 0.9) + 200) / 8);
 		var group_by = app.getPref('schedule_group_by');
 		var html = '';
-
-		/* html += this.getSidebarTabs( 'categories',
-			[
-				['categories', "Categories"],
-				['servers', "Servers"],
-				['plugins', "Plugins"],
-				['users', "Users"]
-			]
-		); */
 
 		// presort some stuff for the filter menus
 		app.categories.sort(function (a, b) {
@@ -675,6 +635,14 @@ toggle_token: function () {
 
 		// apply filters
 		this.events = [];
+
+		// list of events that chain or is chained by other job
+		let chained = new Map()
+		app.schedule.forEach((e) => {
+			if (e.chain) { chained[e.chain] = true; chained[e.id] = true }
+			if (e.chain_error) { chained[e.chain_error] = true; chained[e.id] = true }
+		})
+
 		app.chained_jobs = {};
 		app.event_map = {};
 		var g = new graphlib.Graph();
@@ -739,6 +707,9 @@ toggle_token: function () {
 				if (!app.state.jobCodes || !(item.id in app.state.jobCodes)) continue; // n/a
 				if (!app.state.jobCodes[item.id]) continue; // success
 			}
+			else if (args.enabled == 'chained') {
+				if (!chained[item.id]) continue; // n/a
+			}
 
 			this.events.push(copy_object(item));
 		} // foreach item in schedule
@@ -764,8 +735,7 @@ toggle_token: function () {
 		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_target" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Servers</option>${this.render_target_menu_options(args.target)}</select></div>
 		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>${render_menu_options(app.plugins, args.plugin, false)}</select></div>
 		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>${render_menu_options(app.categories, args.category, false)}</select>
-		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>${render_menu_options( [[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"]], args.enabled, false )}</select></div>
-		<div class="subtitle_widget" ><input ${app.scheduleAsGraph ? 'checked' : ''} id="fe_sch_graph" onclick="$P().toggle_schedule_view()" type="checkbox"></input><label for="fe_sch_graph">Graph View</label></div>
+		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>${render_menu_options( [[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"], ["chained", "Chained"]], args.enabled, false )}</select></div>
 		<div class="clear"></div>
 		</div>
 		</div>
@@ -903,8 +873,7 @@ toggle_token: function () {
 
 		// table and graph (hide latter by default)
 		html += `
-		  <div id="schedule_table" style="${app.scheduleAsGraph ? 'display:none' : ''}"> ${htmlTab} </div>
-		  <div  id="schedule_graph" style="${app.scheduleAsGraph ? '' : 'display:none'}"></div>
+		  <div id="schedule_table"> ${htmlTab} </div>
 		  <div style="height:30px;"></div>
 		  <center><table><tr>
 		`
@@ -925,11 +894,7 @@ toggle_token: function () {
 			}
 		}
 
-		html += `
-		<td width="40">&nbsp;</td>
-		<td><div id="graph_fit_button" class="button" style="width:130px;${app.scheduleAsGraph ? '' : 'display:none'}" onMouseUp="app.network.fit()"><i class="fa fa-arrows">&nbsp;&nbsp;</i>Fit</div></td>
-		</tr></table></center></div>
-		`
+		html += '<td><div class="button" style="width:130px;" onMouseUp="$P().show_graph()"><i class="fa fa-pie-chart">&nbsp;&nbsp;</i>Show Graph</div></td><td width="40">&nbsp;</td>';
 
 		this.div.html(html);
 
@@ -1103,14 +1068,13 @@ toggle_token: function () {
 		args.category = app.filter.schedule['category'] = $('#fe_sch_cat').val();
 		if (!args.category) delete args.category;
 
+		let self = this;
 		args.keywords = app.filter.schedule['keywords'] = $('#fe_sch_keywords').val();
 		if (!args.keywords) delete args.keywords;
 
 		args.enabled = app.filter.schedule['enabled'] = $('#fe_sch_enabled').val();
+		if (args.enabled === 'chained') setTimeout(function () { self.show_graph() }, 20);
 		if (!args.enabled) delete args.enabled;
-        
-		let self = this;
-		if ($('#fe_sch_graph').is(':checked')) setTimeout(function () { self.render_schedule_graph() }, 20);
 	
 		Nav.go('Schedule' + compose_query_string(args));    
 				
@@ -1134,9 +1098,6 @@ toggle_token: function () {
 		);
 
 		html += '<div style="padding:20px;"><div class="subtitle">Add New Event</div></div><div style="padding:0px 20px 50px 20px"><center><table style="margin:0;">';
-
-		// html += '<div style="padding:0px 20px 50px 20px">';
-		// html += '<center><table style="margin:0;">';
 
 		if (this.event_copy) {
 			// copied from existing event
@@ -2514,7 +2475,10 @@ toggle_token: function () {
 									lint = 'CodeMirror.lint.json'
 								 }
 								if (lang == 'props') { lang = 'text/x-properties' }
-								let theme = params.theme || 'default';
+
+								let theme = app.getPref('theme') == 'dark' && params.theme == 'default' ? 'gruvbox-dark' : params.theme ;
+								if(params.theme == 'light') theme = 'default'
+
 								html += `
 							<script>
 							var editor = CodeMirror.fromTextArea(document.getElementById("fe_ee_pp_script"), {
@@ -2620,6 +2584,8 @@ toggle_token: function () {
 								<script>
 								document.getElementById("fe_ee_pp_theme").addEventListener("change", function(){
 									var thm = this.options[this.selectedIndex].value;
+									if(thm === 'default' && app.getPref('theme') === 'dark') thm = 'gruvbox-dark';
+									if(thm === 'light') thm = 'default';
 									editor.setOption("theme", thm);
 								});
 								</script>
@@ -2865,14 +2831,14 @@ toggle_token: function () {
 		// recieved data update (websocket), see if sub-page cares about it
 		switch (key) {
 			case 'schedule':
-				if (this.args.sub == 'events' && !app.scheduleAsGraph && value.length !== this.args.eventCount) {
+				if (this.args.sub == 'events' && value.length !== this.args.eventCount) {
 					 this.args.eventCount = value.length
 					 this.gosub_events(this.args); 
 				}
 				break;
 
 			case 'state':
-				if (this.args.sub == 'edit_event' && !app.scheduleAsGraph ) this.update_rc_value();
+				if (this.args.sub == 'edit_event' ) this.update_rc_value();
 				else if (this.args.sub == 'events') this.update_job_last_runs();
 				break;
 
@@ -2883,15 +2849,7 @@ toggle_token: function () {
 	},
 
 	onStatusUpdate: function (data) {
-		// received status update (websocket), update sub-page if needed
-		// if (data.jobs_changed && (this.args.sub == 'events') && !app.scheduleAsGraph) {
-		// 	for (var idx = 0, len = app.schedule.length; idx < len; idx++) {
-		// 		var item = app.schedule[idx];
-		// 		var jobs = find_objects( app.activeJobs, { event: item.id } );
-		// 		var status_html = jobs.length ? ('<b>Running (' + jobs.length + ')</b>') : 'Idle';
-		// 		$('#ss_' + item.id).html( status_html );
-		// 	}
-		// }
+
 	},
 
 	onResizeDelay: function (size) {

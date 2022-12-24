@@ -68,7 +68,7 @@
 		"ssh2": "^1.11.0",
 		"uglify-js": "3.14.3",
 		"uncatch": "^1.0.0",
-		"vis-network": "^9.1.0",
+		"vis-network": "^9.1.2",
 		"xss": "^1.0.8",
 		"zxcvbn": "3.5.0"
 	},

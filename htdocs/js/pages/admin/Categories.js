@@ -16,6 +16,7 @@ Class.add( Page.Admin, {
 			[
 				['activity', "Activity Log"],
 				['conf_keys', "Configs"],
+				['secrets', "Secrets"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['plugins', "Plugins"],
@@ -104,6 +105,7 @@ Class.add( Page.Admin, {
 			[
 				['activity', "Activity Log"],
 				['conf_keys', "Configs"],
+				['secrets', "Secrets"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['new_category', "New Category"],
@@ -200,6 +202,7 @@ Class.add( Page.Admin, {
 			[
 				['activity', "Activity Log"],
 				['conf_keys', "Configs"],
+				['secrets', "Secrets"],
 				['api_keys', "API Keys"],
 				['categories', "Categories"],
 				['edit_category', "Edit Category"],
