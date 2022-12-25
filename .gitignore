@@ -4,5 +4,7 @@
 /queue
 /data
 /conf
+/dist
+/edge-storage-engines
 
 package-lock.json
