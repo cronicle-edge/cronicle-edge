@@ -173,7 +173,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			document.getElementById("fe_ee_pp_file_content").value = cm.getValue();
 		 });
 
-		fileEditor.setSize(1000, 618)
+		fileEditor.setSize('52vw', '52vh')
 
 	}, 30);
 		</script>`
@@ -238,7 +238,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			document.getElementById("fe_ee_pp_file_content").value = cm.getValue();
 		 });
 
-		fileEditor.setSize(1000, 618)
+		fileEditor.setSize('52vw', '52vh')
 
 	}, 30);
 		</script>`
@@ -367,8 +367,9 @@ wf_update_start: function () {
 
 wf_event_add_cat: function () {
 	let self = this;
+	let cat = self.event.category || $('#fe_ee_cat').val() || '';
 	self.wf = (app.schedule || [])
-	    .filter(e => e.id != self.event.id && e.category === self.event.category)
+	    .filter(e => e.id != self.event.id && e.category === cat)
 		.map(e => { return { id: e.id, title: e.title, arg: "", wait: false } })
 	
 	// update startFrom menu
@@ -824,10 +825,13 @@ toggle_token: function () {
 			if (item.start_time && Number(item.start_time) > new Date().valueOf() + 60000) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
 			if (item.end_time && Number(item.end_time) < new Date().valueOf()) inactiveTitle = 'Schedule expired on ' + new Date(item.end_time).toLocaleString()
 
-			let niceTiming = summarize_event_timing(item.timing, item.timezone, item.ticks)
+			let niceTiming = summarize_event_timing(item.timing, item.timezone,  !inactiveTitle ? item.ticks : null)
 
-			if (inactiveTitle) niceTiming = `<span title="${inactiveTitle}"><s>${niceTiming}</s>`
-
+			if (inactiveTitle) {
+				niceTiming = `<span title="${inactiveTitle}"><s>${niceTiming}</s>`
+				if(item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`
+			}
+			
 			var tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
 				'<div class="td_big"><span class="link" onMouseUp="$P().edit_event(' + idx + ')">' + evt_name + '</span></div>',
@@ -2535,7 +2539,6 @@ toggle_token: function () {
 						
 						case 'filelist':
 							html += `
-							  <br>
 							  <div id="fe_ee_pp_file_list"></div>
 							  <script>$P().render_file_list()</script>
 							  <div class="button mini" style="width:90px; margin:10px 10px 10px 0px" onMouseUp="$P().file_add()">Attach File</div>

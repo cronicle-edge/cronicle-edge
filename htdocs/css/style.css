@@ -641,19 +641,26 @@ td.table_label {
 
 		}
 
+		:root {
+			--new_event_color: #a2ffa9;
+		}
+
+		.dark {
+			--new_event_color: rgb(0, 88, 0);
+		  }
+
 		@keyframes focus {
 			0% {
 				background: initial;
 			}
 
 			50% {
-				background: #a2ffa9;
+				background: var(--new_event_color);
 			}
 
 			100% {
 				background: initial;
-			}
-			
+			}			
 		}
 
 		.table_spacer {

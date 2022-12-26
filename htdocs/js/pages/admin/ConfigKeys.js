@@ -281,7 +281,7 @@ Class.add( Page.Admin, {
 				 document.getElementById("fe_ee_pp_file_content").value = cm.getValue();
 			  });
 	 
-			 confEditor.setSize(1000, 618)
+			 confEditor.setSize('68vw', '68vh')
 	 
 		    }, 30);
 			 </script>
