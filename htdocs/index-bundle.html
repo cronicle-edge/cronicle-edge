@@ -28,6 +28,9 @@
 </head>
 
 <body>
+	<script>
+		if(window.localStorage && localStorage['theme'] === 'dark') document.body.classList.add("dark")
+	</script>
 	<div id="d_message" class="message" style="display:none" onMouseUp="app.hideMessage(250)">
 		<div id="d_message_inner" class="message_inner"></div>
 	</div>
