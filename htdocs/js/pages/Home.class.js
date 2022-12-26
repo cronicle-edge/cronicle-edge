@@ -352,8 +352,12 @@ Class.subclass( Page.Base, "Page.Home", {
 	},
 
 	refresh_completed_job_chart: function () {
-	
-		let statusMap = { 0: 'lightgreen', 255: 'orange' }
+	    let isDark = app.getPref('theme') === 'dark'
+		let green = isDark ? '#44bb44' : 'lightgreen' // success
+		let orange = isDark ? 'bbbb44' : 'orange'  // warning
+		let red = isDark ? '#bb4444' : 'pink'  // error
+
+		let statusMap = { 0: green, 255: orange }
 
 		let jobLimit = $('#fe_cmp_job_chart_limit').val() || 50
 
@@ -373,7 +377,7 @@ Class.subclass( Page.Base, "Page.Home", {
 				label: 'Completed Jobs',
 				// data: jobs.map(j => Math.ceil(j.elapsed/60)),
 				data: jobs.map(j => Math.ceil(j.elapsed) + 1),
-				backgroundColor: jobs.map(j => statusMap[j.code] || 'pink'),
+				backgroundColor: jobs.map(j => statusMap[j.code] || red),
 				jobs: jobs
 				// borderWidth: 0.3
 			}];
@@ -400,8 +404,9 @@ Class.subclass( Page.Base, "Page.Home", {
 				},
 				options: {
 
-					legend: { display: false }
-					, tooltips: {
+					legend: { display: false },
+					layout: { padding: { bottom: 25 } },
+					tooltips: {
 						yAlign: 'top',
 						titleFontSize: 14,
 						titleFontColor: 'orange',
