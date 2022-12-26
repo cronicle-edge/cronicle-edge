@@ -29,11 +29,11 @@ Class.subclass( Page.Base, "Page.Home", {
 		  Event Flow
 		  <div class="subtitle_widget"><i class="fa fa-refresh" onClick="$P().refresh_completed_job_chart();$P().refresh_header_stats();$P().refresh_upcoming_events()">&nbsp;</i></div>
 		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i>
-			<select id="fe_cmp_job_chart_scale" class="subtitle_menu" onChange="$P().refresh_completed_job_chart()">
+			<select id="fe_cmp_job_chart_scale" class="subtitle_menu" onChange="$P().refresh_completed_job_chart();app.setPref('job_chart_scale', this.value)">
 			<option value="linear">linear</option><option value="logarithmic">logarithmic</option></select>
 		  </div>
 		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i>
-			  <select id="fe_cmp_job_chart_limit" class="subtitle_menu" style="width:75px;" onChange="$P().refresh_completed_job_chart()">
+			  <select id="fe_cmp_job_chart_limit" class="subtitle_menu" style="width:75px;" onChange="$P().refresh_completed_job_chart();app.setPref('job_chart_limit', this.value)">
 			  <option value="50">Last 50</option>
 			  <option value="10">Last 10</option>
 			  <option value="25">Last 25</option>
@@ -52,13 +52,12 @@ Class.subclass( Page.Base, "Page.Home", {
 		<canvas id="d_home_completed_jobs" height="40px"></canvas>
 		<div style="height:10px;"></div>
 		<script>
-		let ui = app.config.ui
-		if(ui) {
-		let lmt = ui.job_chart_limit || 50 
+		let ui = app.config.ui || {}
+		let lmt = Number(app.getPref('job_chart_limit') || ui.job_chart_limit || 50)
+		let scale = app.getPref('job_chart_scale') || ui.job_chart_scale || 'linear'
 		let lmtActual = [10, 25, 35, 50, 100, 120, 150].includes(lmt) ? lmt : 50
-		  $('#fe_cmp_job_chart_scale').val(ui.job_chart_scale === 'logarithmic' ? 'logarithmic' : 'linear')
-		  $('#fe_cmp_job_chart_limit').val(lmtActual )
-		}
+		  $('#fe_cmp_job_chart_scale').val(scale)
+		  $('#fe_cmp_job_chart_limit').val(lmtActual)
 	   </script>
 		`
 		
@@ -389,6 +388,7 @@ Class.subclass( Page.Base, "Page.Home", {
 				this.jobHistoryChart.data.labels = labels;
 				this.jobHistoryChart.options.scales.yAxes[0].type = scaleType;
 				this.jobHistoryChart.options.scales.yAxes[0]
+				this.jobHistoryChart.options.layout.padding.bottom = jobLimit > 50 ? 50 : 20  
 				this.jobHistoryChart.update()
 				return
 			} 
@@ -405,7 +405,7 @@ Class.subclass( Page.Base, "Page.Home", {
 				options: {
 
 					legend: { display: false },
-					layout: { padding: { bottom: 25 } },
+					layout: { padding: { bottom: jobLimit > 50 ? 50 : 20 } },
 					tooltips: {
 						yAlign: 'top',
 						titleFontSize: 14,

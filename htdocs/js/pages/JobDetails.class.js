@@ -402,7 +402,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 			//html += '<iframe id="i_arch_job_log" style="width:100%; height:'+iheight+'px; border:none;" frameborder="0" src="'+app.base_api_url+'/app/get_job_log?id='+job.id+'"></iframe>';
 
 			// replace iframe with ajax output. This will make log output look like terminal, and also fixes ansi colors
-			html += '<div style="background-color:black;color:#f2f2f2;background-image: radial-gradient(rgba(128, 128, 128, 0.75), black 200%);font: 1rem Inconsolata, monospace;"><pre id="console_output">test</pre></div>'
+			html += '<div style="background-color:black;color:#f2f2f2;background-image: radial-gradient(rgba(48, 48, 48, 1), black 300%);font: 1rem Inconsolata, monospace;"><pre id="console_output">test</pre></div>'
 			var ansi_up = new AnsiUp;
 			var logurl = '/api/app/get_job_log?id=' + job.id
 
