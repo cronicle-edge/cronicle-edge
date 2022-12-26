@@ -377,7 +377,7 @@
 			[ "copyFiles", "node_modules/graphlib/dist/graphlib.min.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/jsonlint-mod/lib/jsonlint.js", "htdocs/js/external/" ],
 			[ "copyFiles", "node_modules/js-yaml/dist/js-yaml.min.js", "htdocs/js/external/" ],
-			[ "copyFiles", "node_modules/diff/dist/diff.js", "htdocs/js/external/" ],
+			[ "copyFiles", "node_modules/diff/dist/diff.min.js", "htdocs/js/external/" ],
 
 			[ "symlinkFile", "node_modules/codemirror", "htdocs/codemirror" ],		
 			

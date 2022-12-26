@@ -91,6 +91,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	render_time_options: function () {
 	   let theme = app.getPref('theme')
+	   let event = this.event
 	   $('#event_starttime').datetimepicker({ value: event.start_time ? new Date(event.start_time) : null, format: 'Y-m-d H:i', theme: theme}) ;
 	   $('#event_endtime').datetimepicker({ value: event.end_time ? new Date(event.end_time) : null, format: 'Y-m-d H:i', theme: theme});
 		

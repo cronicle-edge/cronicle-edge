@@ -1,7 +1,11 @@
+#!/bin/bash
 
 npm i esbuild -g 
+# add some extra packages for plugin/engin bundling
 npm i level redis@3.1.2 ssh2-sftp-client @aws-sdk/client-s3 @aws-sdk/lib-storage knex pg pg-query-stream mysql2 
 mkdir -p dist && cp -r htdocs dist/
+
+# external js
 
 mkdir -p dist/htdocs/js/external && cp \
  node_modules/jquery/dist/jquery.min.js \
@@ -17,17 +21,8 @@ mkdir -p dist/htdocs/js/external && cp \
  node_modules/vis-network/dist/vis-network.min.js \
  node_modules/xss/dist/xss.min.js \
  node_modules/jquery-datetimepicker/build/jquery.datetimepicker.full.min.js \
- node_modules/jsonlint-mod/lib/jsonlint.js \
- node_modules/js-yaml/dist/js-yaml.min.js \
  node_modules/diff/dist/diff.min.js \
 dist/htdocs/js/external/
-
-mkdir -p dist/htdocs/codemirror  && cp -r \
-  node_modules/codemirror/addon \
-  node_modules/codemirror/mode \
-  node_modules/codemirror/lib \
-  node_modules/codemirror/theme \
- dist/htdocs/codemirror
 
 mkdir -p dist/htdocs/css && cp \
   node_modules/font-awesome/css/font-awesome.min.css \
@@ -43,14 +38,61 @@ mkdir -p dist/htdocs/fonts && cp \
  node_modules/pixl-webapp/fonts/*.woff \
 dist/htdocs/fonts/
 
-cp -r node_modules/pixl-webapp/js dist/htdocs/js/common
-cp htdocs/index-dev.html dist/htdocs/index.html
+# code mirror css
+
+cat \
+	node_modules/codemirror/lib/codemirror.css \
+	node_modules/codemirror/theme/darcula.css \
+	node_modules/codemirror/theme/solarized.css \
+	node_modules/codemirror/theme/gruvbox-dark.css \
+	node_modules/codemirror/addon/scroll/simplescrollbars.css \
+	node_modules/codemirror/addon/display/fullscreen.css \
+	node_modules/codemirror/addon/lint/lint.css \
+	node_modules/codemirror/addon/fold/foldgutter.css \
+  > dist/htdocs/css/codemirror.css
+
+# codemirror js
+cat \
+	 node_modules/codemirror/lib/codemirror.js \
+	 node_modules/codemirror/addon/scroll/simplescrollbars.js \
+	 node_modules/codemirror/addon/edit/matchbrackets.js \
+	 node_modules/codemirror/addon/selection/active-line.js \
+	 node_modules/codemirror/addon/fold/foldgutter.js \
+	 node_modules/codemirror/addon/fold/foldcode.js \
+	 node_modules/codemirror/addon/fold/brace-fold.js \
+	 node_modules/codemirror/addon/fold/indent-fold.js \
+	 node_modules/codemirror/mode/powershell/powershell.js \
+	 node_modules/codemirror/mode/javascript/javascript.js \
+	 node_modules/codemirror/mode/python/python.js \
+	 node_modules/codemirror/mode/perl/perl.js \
+	 node_modules/codemirror/mode/shell/shell.js \
+	 node_modules/codemirror/mode/groovy/groovy.js \
+	 node_modules/codemirror/mode/clike/clike.js \
+	 node_modules/codemirror/mode/properties/properties.js \
+	 node_modules/codemirror/addon/display/fullscreen.js \
+	 node_modules/codemirror/mode/xml/xml.js \
+	 node_modules/codemirror/mode/sql/sql.js \
+   node_modules/js-yaml/dist/js-yaml.js \
+	 node_modules/codemirror/addon/lint/lint.js \
+	 node_modules/codemirror/addon/lint/json-lint.js \
+	 node_modules/codemirror/addon/lint/yaml-lint.js \
+	 node_modules/codemirror/addon/mode/simple.js \
+	 node_modules/codemirror/mode/dockerfile/dockerfile.js \
+	 node_modules/codemirror/mode/toml/toml.js \
+	 node_modules/codemirror/mode/yaml/yaml.js \
+	 node_modules/codemirror/addon/comment/comment.js \
+   node_modules/jsonlint-mod/lib/jsonlint.js \
+   | esbuild --minify > dist/htdocs/js/codemirror.min.js
+
+# ----- MAIN ------ #
+
+cp htdocs/index-bundle.html dist/htdocs/index.html
   
 cp -r bin dist/
 cp -r sample_conf/ dist/conf
 cp package.json dist/bin/
 
-esbuild --bundle --minify --platform=node --outdir=dist/bin/  bin/storage-cli.js
+esbuild --bundle --minify --platform=node --outdir=dist/bin/ --external:../conf/config.json --external:../conf/setup.json bin/storage-cli.js
 
 esbuild --bundle --minify --platform=node --outdir=dist/bin/  bin/shell-plugin.js
 esbuild --bundle --minify --platform=node --outdir=dist/bin/  bin/test-plugin.js
@@ -64,9 +106,9 @@ esbuild --bundle --minify --platform=node --outdir=dist/bin/engines node_modules
 esbuild --bundle --minify --platform=node --outdir=dist/bin/engines engines/S3.js
 esbuild --bundle --minify --platform=node --outdir=dist/bin/engines --loader:.node=file engines/Sftp.js
 
-# LevelDb - to make it work copy you can copy native module
-# from node_modules/classic-level/prebuilds/linux-x64/node.napi.musl.node  (or whatever platform)
-# to dist/bin/engines/prebuilds/linux-x64/
+# LevelDb - to make it work you can copy native module
+# from: node_modules/classic-level/prebuilds/linux-x64/node.napi.musl.node  (or whatever platform)
+# to: dist/bin/engines/prebuilds/linux-x64/
 esbuild --bundle --minify --platform=node --outdir=dist/bin/engines engines/Level.js
 
 # SQL engine bundle up knex, mysql2 and pg. You can install sqlite3, oracledb, tedious separetly
@@ -77,20 +119,23 @@ esbuild --bundle --minify --platform=node --external:oracledb --external:sqlite3
 # Lmdb, need to install lmdb separetly (npm i lmdb)
 esbuild --bundle --minify --platform=node --outdir=dist/bin/engines --external:lmdb engines/Lmdb.js 
 
-
+# --- CRONICLE.JS
 esbuild --bundle --minify --keep-names --platform=node --outfile=dist/bin/cronicle.js lib/main.js
 
 chmod -R 755 dist/bin
 
+# FRONT END
+
 cat \
-  htdocs/js/common/md5.js \
-  htdocs/js/common/oop.js \
-  htdocs/js/common/xml.js \
-  htdocs/js/common/tools.js \
-  htdocs/js/common/datetime.js \
-  htdocs/js/common/page.js \
-  htdocs/js/common/base.js \
-  | esbuild --minify > dist/htdocs/js/common.min.js
+  node_modules/pixl-webapp/js/md5.js \
+  node_modules/pixl-webapp/js/oop.js \
+  node_modules/pixl-webapp/js/xml.js \
+  node_modules/pixl-webapp/js/tools.js \
+  node_modules/pixl-webapp/js/datetime.js \
+  node_modules/pixl-webapp/js/page.js \
+  node_modules/pixl-webapp/js/dialog.js \
+  node_modules/pixl-webapp/js/base.js \
+  | esbuild --minify --keep-names > dist/htdocs/js/common.min.js
 
 cat htdocs/js/app.js \
   htdocs/js/pages/Base.class.js \
@@ -109,35 +154,4 @@ cat htdocs/js/app.js \
   htdocs/js/pages/admin/APIKeys.js \
   htdocs/js/pages/admin/ConfigKeys.js \
   htdocs/js/pages/admin/Secrets.js \
-  | esbuild --minify > dist/htdocs/js/combo.min.js
-
-
-cat \
-	 htdocs/codemirror/lib/codemirror.js \
-	 htdocs/codemirror/addon/scroll/simplescrollbars.js \
-	 htdocs/codemirror/addon/edit/matchbrackets.js \
-	 htdocs/codemirror/addon/selection/active-line.js \
-	 htdocs/codemirror/addon/fold/foldgutter.js \
-	 htdocs/codemirror/addon/fold/foldcode.js \
-	 htdocs/codemirror/addon/fold/brace-fold.js \
-	 htdocs/codemirror/addon/fold/indent-fold.js \
-	 htdocs/codemirror/mode/powershell/powershell.js \
-	 htdocs/codemirror/mode/javascript/javascript.js \
-	 htdocs/codemirror/mode/python/python.js \
-	 htdocs/codemirror/mode/perl/perl.js \
-	 htdocs/codemirror/mode/shell/shell.js \
-	 htdocs/codemirror/mode/groovy/groovy.js \
-	 htdocs/codemirror/mode/clike/clike.js \
-	 htdocs/codemirror/mode/properties/properties.js \
-	 htdocs/codemirror/addon/display/fullscreen.js \
-	 htdocs/codemirror/mode/xml/xml.js \
-	 htdocs/codemirror/mode/sql/sql.js \
-	 htdocs/codemirror/addon/lint/lint.js \
-	 htdocs/codemirror/addon/lint/json-lint.js \
-	 htdocs/codemirror/addon/lint/yaml-lint.js \
-	 htdocs/codemirror/addon/mode/simple.js \
-	 htdocs/codemirror/mode/dockerfile/dockerfile.js \
-	 htdocs/codemirror/mode/toml/toml.js \
-	 htdocs/codemirror/mode/yaml/yaml.js \
-	 htdocs/codemirror/addon/comment/comment.js \
-   | esbuild --minify > dist/htdocs/js/codemirror.min.js
+  | esbuild --minify --keep-names > dist/htdocs/js/combo.min.js
