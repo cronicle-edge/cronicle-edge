@@ -156,6 +156,10 @@ esbuild --bundle --minify --keep-names --platform=node --outfile=dist/bin/cronic
 
 # clean up 
 rm -rf dist/bin/jars dist/bin/cms dist/bin/cronicled.init dist/bin/importkey.sh dist/bin/debug.sh \
-  dist/bin/java-plugin.js dist/bin/install.js dist/bin/build.js dist/bin/build-tools.js \
-  dist/conf/setup.json dist/conf/ssl.* dist/conf/backup
+  dist/bin/java-plugin.js dist/bin/install.js dist/bin/build.js dist/bin/build-tools.js dist/conf/backup
+
+# generate sample secret_key. Please change, or use CRONICLE_secret_key variable to overwrite
+cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 > dist/conf/secret_key
+#chmod 400 dist/conf/secret_key
+
 chmod -R 755 dist/bin

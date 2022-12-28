@@ -6,5 +6,6 @@
 /conf
 /dist
 /edge-storage-engines
+/target
 
 package-lock.json

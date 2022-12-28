@@ -1,0 +1,7 @@
+{
+    "engine": "Lmdb",
+    "list_page_size": 50,
+    "concurrency": 4,
+    "log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
+    "Lmdb": { "dbpath":"data-lmdb", "compression":true }       
+}

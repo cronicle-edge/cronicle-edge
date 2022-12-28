@@ -1,0 +1,22 @@
+{
+    "engine": "SQL",
+    "list_page_size": 50,
+    "concurrency": 4,
+    "log_event_types": {
+        "get": 1,
+        "put": 1,
+        "head": 1,
+        "delete": 1,
+        "expire_set": 1
+    },
+    "SQL": {
+        "client": "oracledb",
+        "table": "cronicle",
+        "connection": {
+            "connectString": "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost...)))",
+            "user": "cronicle",
+            "password": "P@ssword",
+            "database": "CRONICLE_SCHEMA"
+        }
+    }
+}

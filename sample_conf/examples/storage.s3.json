@@ -1,0 +1,26 @@
+{
+    "engine": "S3",
+    "AWS": {
+        "endpoint": "http://localhost:9000",
+        "endpointPrefix": false,
+        "forcePathStyle": true,
+        "region": "us-east-1",
+        "hostPrefixEnabled": false,
+        "credentials": {
+            "secretAccessKey": "minioadmin",
+            "accessKeyId": "minioadmin"
+        },
+        "correctClockSkew": true,
+        "maxRetries": 5,
+        "httpOptions": {
+            "connectTimeout": 5000,
+            "timeout": 5000
+        }
+    },
+    "S3": {
+        "fileExtensions": true,
+        "params": {
+            "Bucket": "demo"
+        }
+    }
+}
