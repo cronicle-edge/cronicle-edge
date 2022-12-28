@@ -120,7 +120,7 @@ module.exports = class SQLEngine extends Component {
     }
 
     prepKey(key) { // no need to prep key for SQL at this point
-        return key;
+        return String(key);
     }
 
     /**
