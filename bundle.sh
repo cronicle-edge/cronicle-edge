@@ -154,8 +154,6 @@ esbuild --bundle --minify --platform=node --outdir=dist/bin/engines --external:l
 # --- CRONICLE.JS
 esbuild --bundle --minify --keep-names --platform=node --outfile=dist/bin/cronicle.js lib/main.js
 
-mv dist/bin/manager-bundle dist/bin/manager
-mv dist/bin/worker-bundle dist/bin/worker
 # clean up 
 rm -rf dist/bin/jars dist/bin/cms dist/bin/cronicled.init dist/bin/importkey.sh dist/bin/debug.sh \
   dist/bin/java-plugin.js dist/bin/install.js dist/bin/build.js dist/bin/build-tools.js \
