@@ -28,6 +28,12 @@ cd $HOMEDIR
 #
 # the path to your binary, including options if necessary
 BINARY="node $HOMEDIR/lib/main.js"
+
+# check if bundle exist
+if [ -f "$HOMEDIR/bin/cronicle.js" ]; then
+    BINARY="$HOMEDIR/bin/cronicle.js"
+fi
+
 #
 # the path to your PID file
 PIDFILE=$HOMEDIR/logs/cronicled.pid

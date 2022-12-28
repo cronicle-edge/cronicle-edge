@@ -353,7 +353,7 @@ Class.subclass( Page.Base, "Page.Home", {
 	refresh_completed_job_chart: function () {
 	    let isDark = app.getPref('theme') === 'dark'
 		let green = isDark ? '#44bb44' : 'lightgreen' // success
-		let orange = isDark ? 'bbbb44' : 'orange'  // warning
+		let orange = isDark ? '#bbbb44' : 'orange'  // warning
 		let red = isDark ? '#bb4444' : 'pink'  // error
 
 		let statusMap = { 0: green, 255: orange }

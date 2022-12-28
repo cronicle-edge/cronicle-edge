@@ -86,6 +86,38 @@ cat \
 
 # ----- MAIN ------ #
 
+# CRONICLE FRONT END
+
+cat \
+  node_modules/pixl-webapp/js/md5.js \
+  node_modules/pixl-webapp/js/oop.js \
+  node_modules/pixl-webapp/js/xml.js \
+  node_modules/pixl-webapp/js/tools.js \
+  node_modules/pixl-webapp/js/datetime.js \
+  node_modules/pixl-webapp/js/page.js \
+  node_modules/pixl-webapp/js/dialog.js \
+  node_modules/pixl-webapp/js/base.js \
+  | esbuild --minify --keep-names > dist/htdocs/js/common.min.js
+
+cat htdocs/js/app.js \
+  htdocs/js/pages/Base.class.js \
+  htdocs/js/pages/Home.class.js \
+  htdocs/js/pages/Login.class.js \
+  htdocs/js/pages/Schedule.class.js \
+  htdocs/js/pages/History.class.js \
+  htdocs/js/pages/JobDetails.class.js \
+  htdocs/js/pages/MyAccount.class.js \
+  htdocs/js/pages/Admin.class.js \
+  htdocs/js/pages/admin/Categories.js \
+  htdocs/js/pages/admin/Servers.js \
+  htdocs/js/pages/admin/Users.js \
+  htdocs/js/pages/admin/Plugins.js \
+  htdocs/js/pages/admin/Activity.js \
+  htdocs/js/pages/admin/APIKeys.js \
+  htdocs/js/pages/admin/ConfigKeys.js \
+  htdocs/js/pages/admin/Secrets.js \
+  | esbuild --minify --keep-names > dist/htdocs/js/combo.min.js
+
 cp htdocs/index-bundle.html dist/htdocs/index.html
   
 cp -r bin dist/
@@ -122,36 +154,10 @@ esbuild --bundle --minify --platform=node --outdir=dist/bin/engines --external:l
 # --- CRONICLE.JS
 esbuild --bundle --minify --keep-names --platform=node --outfile=dist/bin/cronicle.js lib/main.js
 
+mv dist/bin/manager-bundle dist/bin/manager
+mv dist/bin/worker-bundle dist/bin/worker
+# clean up 
+rm -rf dist/bin/jars dist/bin/cms dist/bin/cronicled.init dist/bin/importkey.sh dist/bin/debug.sh \
+  dist/bin/java-plugin.js dist/bin/install.js dist/bin/build.js dist/bin/build-tools.js \
+  dist/conf/setup.json dist/conf/ssl.* dist/conf/backup
 chmod -R 755 dist/bin
-
-# FRONT END
-
-cat \
-  node_modules/pixl-webapp/js/md5.js \
-  node_modules/pixl-webapp/js/oop.js \
-  node_modules/pixl-webapp/js/xml.js \
-  node_modules/pixl-webapp/js/tools.js \
-  node_modules/pixl-webapp/js/datetime.js \
-  node_modules/pixl-webapp/js/page.js \
-  node_modules/pixl-webapp/js/dialog.js \
-  node_modules/pixl-webapp/js/base.js \
-  | esbuild --minify --keep-names > dist/htdocs/js/common.min.js
-
-cat htdocs/js/app.js \
-  htdocs/js/pages/Base.class.js \
-  htdocs/js/pages/Home.class.js \
-  htdocs/js/pages/Login.class.js \
-  htdocs/js/pages/Schedule.class.js \
-  htdocs/js/pages/History.class.js \
-  htdocs/js/pages/JobDetails.class.js \
-  htdocs/js/pages/MyAccount.class.js \
-  htdocs/js/pages/Admin.class.js \
-  htdocs/js/pages/admin/Categories.js \
-  htdocs/js/pages/admin/Servers.js \
-  htdocs/js/pages/admin/Users.js \
-  htdocs/js/pages/admin/Plugins.js \
-  htdocs/js/pages/admin/Activity.js \
-  htdocs/js/pages/admin/APIKeys.js \
-  htdocs/js/pages/admin/ConfigKeys.js \
-  htdocs/js/pages/admin/Secrets.js \
-  | esbuild --minify --keep-names > dist/htdocs/js/combo.min.js
