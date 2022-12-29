@@ -124,7 +124,9 @@ cp -r bin dist/
 cp -r sample_conf/ dist/conf
 cp package.json dist/bin/
 
-esbuild --bundle --minify --platform=node --outdir=dist/bin/ --external:../conf/config.json --external:../conf/setup.json bin/storage-cli.js
+esbuild --bundle --minify --platform=node --outdir=dist/bin/ \
+ --external:../conf/config.json --external:../conf/storage.json --external:../conf/setup.json \
+bin/storage-cli.js
 
 esbuild --bundle --minify --platform=node --outdir=dist/bin/  bin/shell-plugin.js
 esbuild --bundle --minify --platform=node --outdir=dist/bin/  bin/test-plugin.js
