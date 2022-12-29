@@ -21,6 +21,9 @@ process.chdir(path.dirname(__dirname));
 // load app's config file
 
 var config = require('../conf/config.json');
+if(fs.existsSync("conf/storage.json")) {
+	config.Storage = require("../conf/storage.json")
+}
 
 // shift commands off beginning of arg array
 var argv = JSON.parse(JSON.stringify(process.argv.slice(2)));
