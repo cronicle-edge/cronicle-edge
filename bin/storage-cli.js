@@ -19,10 +19,12 @@ var StandaloneStorage = require('pixl-server-storage/standalone');
 process.chdir(path.dirname(__dirname));
 
 // load app's config file
-
 var config = require('../conf/config.json');
-if(fs.existsSync("conf/storage.json")) {
-	config.Storage = require("../conf/storage.json")
+
+// check for storage config file
+var storage_config = path.resolve(process.env['CRONICLE_storage_config'] || '../conf/storage.json');
+if(fs.existsSync(storage_config)) {                                                                 
+        config.Storage = require(storage_config)                                                    
 }
 
 // shift commands off beginning of arg array
