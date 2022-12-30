@@ -15,7 +15,7 @@
         "connection": {
             "host": "localhost",
             "port": 5432,
-            "user": "cronicle",
+            "user": "postgres",
             "password": "P@ssword",
             "database": "postgres"
         }

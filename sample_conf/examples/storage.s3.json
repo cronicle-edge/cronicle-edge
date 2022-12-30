@@ -20,7 +20,7 @@
     "S3": {
         "fileExtensions": true,
         "params": {
-            "Bucket": "demo"
+            "Bucket": "cronicle"
         }
     }
 }

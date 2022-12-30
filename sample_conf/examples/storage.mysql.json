@@ -15,7 +15,7 @@
         "connection": {
             "host": "localhost",
             "port": 3306,
-            "user": "cronicle",
+            "user": "root",
             "password": "P@ssword",
             "database": "cronicle"
         }
