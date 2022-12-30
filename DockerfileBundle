@@ -4,19 +4,19 @@
 # then type manager or worker
 
 FROM alpine:3.16 as build
-RUN apk add --no-cache git nodejs npm 
+RUN apk add --no-cache git bash nodejs npm 
 ARG echo
 RUN echo $echo
 WORKDIR /opt/cronicle
 RUN git clone https://github.com/cronicle-edge/cronicle-edge . && ./bundle.sh
 
-FROM alpine:3.16
-RUN apk add --no-cache git nodejs tini util-linux bash openssl procps coreutils curl tar jq
+# copy level db binaries
+RUN mkdir -p dist/bin/engines/prebuilds/linux-x64 && cp node_modules/classic-level/prebuilds/linux-x64/node.napi.musl.node dist/bin/engines/prebuilds/linux-x64/
+
+# FROM alpine:3.16
+# RUN apk add --no-cache git nodejs tini util-linux bash openssl procps coreutils curl tar jq
 # required: all: tini; alpine: util-linux procps coreutils
-
-# optional lolcat for tty/color debugging
-#RUN apk add lolcat --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
-
+FROM cronicle/cronicle:base 
 
 ENV CRONICLE_foreground=1
 ENV CRONICLE_echo=1

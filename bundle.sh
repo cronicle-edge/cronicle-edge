@@ -1,4 +1,3 @@
-#!/bin/bash
 
 npm i esbuild -g 
 # add some extra packages for plugin/engin bundling
