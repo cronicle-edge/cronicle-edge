@@ -3,8 +3,13 @@
 const { readFileSync } = require('fs');
 const { Client } = require('ssh2');
 const conn = new Client();
-const fs =  require('fs')
+const {EOL} = require('os')
+const JSONStream = require('pixl-json-stream');
 const { spawn } = require('child_process')
+
+const print = (text) => {
+	process.stdout.write(text + EOL);
+}
 
 let hostInfo = process.env['SSH_HOST'] || process.env['JOB_ARG'] || ''
 
@@ -16,219 +21,216 @@ let script = process.env['SCRIPT']
 
 hostInfo = process.env[hostInfo] || hostInfo
 
-function printJSONmessage(complete, code, desc) {
-    console.log(JSON.stringify({ complete: complete, code: code || 0, description: desc || "" }))
-}
-
 let kill_timer = null
 
 let stderr_msg = ""
 
 let trapCmd = ""
 
-// ================  Run Locally if no host info provided ====================================== //
+// -------------------------- MAIN --------------------------------------------------------------//
 
-if (!hostInfo || hostInfo.toLowerCase() === 'localhost') {
+const stream = new JSONStream(process.stdin, process.stdout);
 
-    let shell = fs.existsSync('/bin/bash') ? '/bin/bash' : (process.env.SHELL || 'sh')
-
-    // ----------- START 
-
-    let json = parseInt(process.env['JSON'] || '')
-
-    const child = spawn(shell, ['-c', command])
-
-    child.on('error', (err) => printJSONmessage(1, 1, `Script failed: ${err.message}`))
-
-    child.on('spawn', () => {
-        console.log(`[INFO] \x1b[32mRunning locally\x1b[0m\n`)
-        console.log(`[INFO] \x1b[32mCMD: ${command}\x1b[0m\n`)
-    })
-
-    child.stdout.on('data', (data) => {
-
-        String(data).trim().split('\n').forEach(line => {
-
-            if (line.match(/^\s*(\d+)\%\s*$/)) { // handle progress
-                let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
-                console.log(JSON.stringify({
-                    progress: progress
-                }))
-            }
-            else if (line.match(/^\s*\#(.{1,60})\#\s*$/)) { // handle memo
-                let memoText = RegExp.$1
-                console.log(JSON.stringify({
-                    memo: memoText
-                }))
-            }
-            else {
-                // adding ANSI sequence (grey-ish color) to prevent JSON interpretation
-                console.log(json ? line : `\x1b[109m${line}\x1b[0m`)
-            }
-        }) // foreach    
-    })
-
-    child.stderr.on('data', (data) => {
-        let d = String(data).trim()
-        if (d) {
-            console.log(`\x1b[31m${d}\x1b[0m`); // red
-            stderr_msg = d.split("\n")[0].substring(0, 128)
-        }
-    })
-
-    // ------------ Exit
-
-    child.on('exit', function (code, signal) {
-        // child exited
-        if (kill_timer) clearTimeout(kill_timer)
-
-        code = (code || signal || 0)
-
-        printJSONmessage(1, code, code ? `Script exited with code: ${code}; ${stderr_msg}} ` : "")
-
-
-    });
-
-    // silence EPIPE errors on child STDIN
-    child.stdin.on('error', (err) => { })
-
-    // Handle shutdown
-    process.on('SIGTERM', function () {
-        console.log("Caught SIGTERM, killing child: " + child.pid);
-
-        kill_timer = setTimeout(function () {
-            // child didn't die, kill with prejudice
-            console.log("Child did not exit, killing harder: " + child.pid);
-            child.kill('SIGKILL');
-        }, 9 * 1000);
-
-        // try killing nicely first
-        child.kill('SIGTERM');
-    });
-
-    child.stdin.write(script)
-    child.stdin.end()
+function printJSONmessage(complete, code, desc) {
+    stream.write({ complete: complete, code: code || 0, description: desc || "" })
 }
 
-// ================  RUN OVER SSH ====================================== //
+    // ================  Run Locally if no host info provided ====================================== //
+    // ================ this would emulate: echo "some command" | sh - =============================//
 
-else {
+    if (!hostInfo || hostInfo.toLowerCase() === 'localhost') {
 
-    if (!hostInfo.startsWith('sftp://')) hostInfo = 'sftp://' + hostInfo
+        // ----------- START 
 
-    let uri = new URL(hostInfo)
+        let json = parseInt(process.env['JSON'] || '')
 
-    let conf = {
-        host: uri.hostname,
-        port: parseInt(uri.port) || 22,
-        username: uri.username,
-        pty: true
-    }
+        const child = process.platform == 'win32' ? spawn('sh', ['-c', command]) : spawn('cmd', ['/c', command])
 
-    if (uri.password) conf.password = decodeURIComponent(uri.password)
-    if (process.env['SSH_KEY']) conf.privateKey = Buffer.from(process.env['SSH_KEY'])
-    if (uri.searchParams.get('privateKey')) conf.privateKey = readFileSync(String(uri.searchParams.get('privateKey')))
-    if (uri.searchParams.get('passphrase')) conf.passphrase = uri.searchParams.get('passphrase')
+        child.on('error', (err) => printJSONmessage(1, 1, `Script failed: ${err.message}`))
 
+        child.on('spawn', () => {
+            print(`[INFO] \x1b[32mRunning locally\x1b[0m\n`)
+            print(`[INFO] \x1b[32mCMD: ${command}\x1b[0m\n`)
+        })
 
-    let tmpFile = `/tmp/cronicle-${process.env['JOB_ID']}`
+        child.stdout.on('data', (data) => {
 
-    // some variables to send to SSH session
-    // will only work if AcceptEnv setting is set (usually LC_* by default)
-    let env = {
-          LC_TMP_FILE: tmpFile
-        , LC_JOB_ID: process.env['JOB_ID']
-        , LC_BASE_URL: process.env['BASE_URL']
-    }
+            String(data).trim().split('\n').forEach(line => {
 
-    conn.on('error', (err) => {  // handle configuration errors
-        console.log(JSON.stringify({
-            complete: 1,
-            code: 1,
-            description: err.message
-        }));
-    })
-
-    let streamRef = null
-
-    conn.on('ready', () => {
-        console.log(`[INFO] \x1b[32mConnected to ${conf.host}\x1b[0m\n`)
-        console.log(`[INFO] \x1b[32mCMD: ${command}\x1b[0m\n`)
-
-        conn.exec(command, { env: env }, (err, stream) => {
-
-            if(err) printJSONmessage(1, 1, err.message)
-
-            streamRef = stream
-
-            stream.on('close', (code, signal) => {
-
-                code = (code || signal || 0);
-
-                conn.end();
-
-                printJSONmessage(1, code, code ? `Script exited with code: ${code}; ${stderr_msg}` : "")
-
-            }).on('data', (data) => {
-
-                String(data).trim().split('\n').forEach(line => {
-
-                    if (!trapCmd && line.trim().startsWith('trap:')) {
-                        trapCmd = line.trim().substring(5)
-                        console.log(`[INFO] \x1b[33mTrap command set to: ${trapCmd}\x1b[0m`)
-                    } 
-
-                    else if (line.match(/^\s*(\d+)\%\s*$/)) { // handle progress
-                        let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
-                        console.log(JSON.stringify({
-                            progress: progress
-                        }))
-                    }
-                    else if (line.match(/^\s*\#(.{1,60})\#\s*$/)) { // handle memo
-                        let memoText = RegExp.$1
-                        console.log(JSON.stringify({
-                            memo: memoText
-                        }))
-                    }
-                    else {
-                        // adding ANSI sequence (grey-ish color) to prevent JSON interpretation
-                        console.log(json ? line : `\x1b[109m${line}\x1b[0m`)
-                    }
-                }) // foreach
-
-            }).stderr.on('data', (data) => {
-                let d = String(data).trim()
-                if (d) {
-                    console.log(`\x1b[31m${d}\x1b[0m`); // red
-                    stderr_msg = d.split("\n")[0].substring(0, 128)
+                if (line.match(/^\s*(\d+)\%\s*$/)) { // handle progress
+                    let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
+                    stream.write({progress: progress})
                 }
-            });
+                else if (line.match(/^\s*\#(.{1,60})\#\s*$/)) { // handle memo
+                    let memoText = RegExp.$1
+                    stream.write({
+                        memo: memoText
+                    })
+                }
+                else {
+                    // adding ANSI sequence (grey-ish color) to prevent JSON interpretation
+                    print(json ? line : `\x1b[109m${line}\x1b[0m` + "\r")
+                }
+            }) // foreach    
+        })
 
-            stream.stdin.write(script)
-            stream.stdin.end()
+        child.stderr.on('data', (data) => {
+            let d = String(data).trim()
+            if (d) {
+                print(`\x1b[31m${d}\x1b[0m`); // red
+                stderr_msg = d.split("\n")[0].substring(0, 128)
+            }
+        })
+
+        // ------------ Exit
+
+        child.on('exit', function (code, signal) {
+            // child exited
+            if (kill_timer) clearTimeout(kill_timer)
+            code = (code || signal || 0)
+            printJSONmessage(1, code, code ? `Script exited with code: ${code}; ${stderr_msg}} ` : "")
         });
-    }).connect(conf)
 
-    process.on('SIGTERM', (signal) => {
-        console.log("Caugth SIGTERM")
-         if (trapCmd) {
-             console.log("Executing trap command:", trapCmd)
-             conn.exec(trapCmd, (err, s) => {
-                 if (err) {
-                     console.log("Failed to abort: ", err.message)
-                     conn.end()
-                 }
-                 s.on('data', (d) => { console.log(String(d)) })
-                 s.stderr.on('data', (d) => { console.log(String(d)) }) 
-                 s.on('exit', (cd) => {
-                     console.log("trap command", cd ? "failed" : "completed")
-                     conn.end()
-                 })
-             })
-         }
-         else {
-             console.log("\x1b[33mTrap command is not detected. You process may still run on remote host\x1b[0m")
-             conn.end()
-         }
-     })
-} /// run remote
+        // silence EPIPE errors on child STDIN
+        child.stdin.on('error', (err) => { })
+
+        // Handle shutdown
+        process.on('SIGTERM', function () {
+            print("Caught SIGTERM, killing child: " + child.pid);
+
+            kill_timer = setTimeout(function () {
+                // child didn't die, kill with prejudice
+                print("Child did not exit, killing harder: " + child.pid);
+                child.kill('SIGKILL');
+            }, 9 * 1000);
+
+            // try killing nicely first
+            child.kill('SIGTERM');
+        });
+
+        child.stdin.write(script)
+        child.stdin.end()
+    }
+
+    // ================  RUN OVER SSH ====================================== //
+
+    else {
+
+        if (!hostInfo.startsWith('sftp://')) hostInfo = 'sftp://' + hostInfo
+
+        let uri = new URL(hostInfo)
+
+        let conf = {
+            host: uri.hostname,
+            port: parseInt(uri.port) || 22,
+            username: uri.username,
+            pty: true
+        }
+
+        if (uri.password) conf.password = decodeURIComponent(uri.password)
+        if (process.env['SSH_KEY']) conf.privateKey = Buffer.from(process.env['SSH_KEY'])
+        if (uri.searchParams.get('privateKey')) conf.privateKey = readFileSync(String(uri.searchParams.get('privateKey')))
+        if (uri.searchParams.get('passphrase')) conf.passphrase = uri.searchParams.get('passphrase')
+
+
+        let tmpFile = `/tmp/cronicle-${process.env['JOB_ID']}`
+
+        // some variables to send to SSH session
+        // will only work if AcceptEnv setting is set (usually LC_* by default)
+        let env = {
+            LC_TMP_FILE: tmpFile
+            , LC_JOB_ID: process.env['JOB_ID']
+            , LC_BASE_URL: process.env['BASE_URL']
+        }
+
+        conn.on('error', (err) => {  // handle configuration errors
+            stream.write({
+                complete: 1,
+                code: 1,
+                description: err.message
+            });
+        })
+
+        let streamRef = null
+
+        conn.on('ready', () => {
+            print(`[INFO] \x1b[32mConnected to ${conf.host}\x1b[0m\n`)
+            print(`[INFO] \x1b[32mCMD: ${command}\x1b[0m\n`)
+
+            conn.exec(command, { env: env }, (err, stream) => {
+
+                if (err) printJSONmessage(1, 1, err.message)
+
+                streamRef = stream
+
+                stream.on('close', (code, signal) => {
+
+                    code = (code || signal || 0);
+
+                    conn.end();
+
+                    printJSONmessage(1, code, code ? `Script exited with code: ${code}; ${stderr_msg}` : "")
+
+                }).on('data', (data) => {
+
+                    String(data).trim().split('\n').forEach(line => {
+
+                        if (!trapCmd && line.trim().startsWith('trap:')) {
+                            trapCmd = line.trim().substring(5)
+                            print(`[INFO] \x1b[33mTrap command set to: ${trapCmd}\x1b[0m \n`)
+                        }
+
+                        else if (line.match(/^\s*(\d+)\%\s*$/)) { // handle progress
+                            let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
+                            stream.write({
+                                progress: progress
+                            })
+                        }
+                        else if (line.match(/^\s*\#(.{1,60})\#\s*$/)) { // handle memo
+                            let memoText = RegExp.$1
+                            stream.write({
+                                memo: memoText
+                            })
+                        }
+                        else {
+                            // adding ANSI sequence (grey-ish color) to prevent JSON interpretation
+                            print(json ? line : `\x1b[109m${line}\x1b[0m`)
+                        }
+                    }) // foreach
+
+                }).stderr.on('data', (data) => {
+                    let d = String(data).trim()
+                    if (d) {
+                        print(`\x1b[31m${d}\x1b[0m`); // red
+                        stderr_msg = d.split("\n")[0].substring(0, 128)
+                    }
+                });
+
+                stream.stdin.write(script)
+                stream.stdin.end()
+            });
+        }).connect(conf)
+
+        process.on('SIGTERM', (signal) => {
+            print("Caugth SIGTERM")
+            if (trapCmd) {
+                print("Executing trap command:", trapCmd)
+                conn.exec(trapCmd, (err, s) => {
+                    if (err) {
+                        print("Failed to abort: ", err.message)
+                        conn.end()
+                    }
+                    s.on('data', (d) => { print(String(d)) })
+                    s.stderr.on('data', (d) => { print(String(d)) })
+                    s.on('exit', (cd) => {
+                        print("trap command", cd ? "failed" : "completed")
+                        conn.end()
+                    })
+                })
+            }
+            else {
+                print("\x1b[33mTrap command is not detected. You process may still run on remote host\x1b[0m")
+                conn.end()
+            }
+        })
+    } /// run remote

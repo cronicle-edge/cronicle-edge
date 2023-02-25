@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
-const rl = require('readline').createInterface({ input: process.stdin });
+// const rl = require('readline').createInterface({ input: process.stdin });
 const PixlRequest = require('pixl-request');
 const request = new PixlRequest();
 const he = require('he');
+const {EOL} = require('os')
+const JSONStream = require('pixl-json-stream');
 
 if (!process.env['WF_SIGNATURE']) throw new Error('WF Signature is not set')
 request.setHeader('x-wf-signature', process.env['WF_SIGNATURE'])
@@ -21,6 +23,10 @@ let finishingJobs = {} // a map for
 let errorCount = 0
 let wfStatus = 'running'
 let max_errors = parseInt(process.env['WF_MAXERR']);
+
+const print = (text) => {
+	process.stdout.write(text + EOL);
+}
 
 function niceInterval(s, asLocatTime) {
 	let date = new Date(s * 1000);
@@ -46,11 +52,11 @@ async function abortPending() {
 		try {
 			if (!(jobStatus[j].completed)) {
 				let resp = await getJson(baseUrl + '/api/app/abort_job', { id: j })
-				console.log('SIGTERM sent to job ' + j);
+				print('SIGTERM sent to job ' + j);
 			}
 		}
 		catch (e) {
-			console.log('Failed to abort job: ' + j + ': ' + e.message);
+			print('Failed to abort job: ' + j + ': ' + e.message);
 		}
 	}
 }
@@ -58,7 +64,7 @@ async function abortPending() {
 
 // handle termination
 process.on('SIGTERM', async function () {
-	console.log("Caught SIGTERM, aborting pending jobs");
+	print("Caught SIGTERM, aborting pending jobs");
 
 	wfStatus = 'abort';
 	await abortPending();
@@ -67,19 +73,18 @@ process.on('SIGTERM', async function () {
 
 // -------------------------- MAIN --------------------------------------------------------------//
 
-rl.on('line', function (line) {
-	// got line from stdin, parse JSON
-	console.log(JSON.stringify({ progress: 0.01 }))
+const stream = new JSONStream( process.stdin, process.stdout );
+stream.on('json', function (job) {
 
-	const input = JSON.parse(line);
+	stream.write({ progress: 0.01 })
 
 	let concur = parseInt(process.env['WF_CONCUR']) || 1
 
 	let wf_strict = parseInt(process.env['WF_STRICT']) || 0 // report error on any job failure (warning is default)
 
-	taskList = (input.workflow || []).map((e, i) => { e.stepId = i + 1; return e })
+	taskList = (job.workflow || []).map((e, i) => { e.stepId = i + 1; return e })
 
-	let opts = input.options || {}
+	let opts = job.options || {}
 
 	let startFrom = opts.wf_start_from_step || 1
 	if (startFrom > taskList.length) throw new Error('"Start From" parameter cannot exceed event list length')
@@ -111,32 +116,32 @@ rl.on('line', function (line) {
 		let currActive = []
 		for (let id in r.data.jobs) { currActive.push(r.data.jobs[id].event) }
 
-		console.log(`	\u001b[1mJob Schedule [Concurrency: ${concur}, From Step: ${startFrom}]\u001b[22m`);
-		console.log(`\n RUNNING(${taskList.length}): `)
+		print(`	\u001b[1mJob Schedule [Concurrency: ${concur}, From Step: ${startFrom}]\u001b[22m`);
+		print(`\n RUNNING(${taskList.length}): `)
 
 		let lineLen = 0;
 		taskList.forEach(e => {
 			let msg = ` [${e.stepId}] ${e.title} (${e.id}) ${e.arg ? ('@' + e.arg) : ''}`
 			if (currActive.includes(e.id)) msg += `⚠️ already in progress  `
 			lineLen = lineLen > msg.length ? lineLen : msg.length
-			console.log(msg)
+			print(msg)
 		});
 
-		console.log(' ' + '─'.repeat(lineLen))
+		print(' ' + '─'.repeat(lineLen))
 
 		if (skip.length > 0) {
-			console.log(` SKIPPING(${skip.length}):\n` + skip.map(e => " " + e).join("\n"))
-			console.log(' ' + '─'.repeat(lineLen))
+			print(` SKIPPING(${skip.length}):\n` + skip.map(e => " " + e).join("\n"))
+			print(' ' + '─'.repeat(lineLen))
 		}
 
-		console.log(`\n\n\u001b[1m\u001b[32mWorkflow Started\u001b[39m\u001b[22m @ ${(new Date()).toLocaleString()}\n │  `)
+		print(`\n\n\u001b[1m\u001b[32mWorkflow Started\u001b[39m\u001b[22m @ ${(new Date()).toLocaleString()}\n │  `)
 
 		let pendingJobs = taskList.length
 
 		// launch first batch of jobs
 		for (let q = 0; q < concur; q++) {
 			let task = taskList[q];
-			console.log(` \n ├───────> starting \u001b[1m${task.title}\u001b[22m${task.arg ? ': ' + task.arg : ''}`);
+			print(` \n ├───────> starting \u001b[1m${task.title}\u001b[22m${task.arg ? ': ' + task.arg : ''}`);
 
 			try {
 				let job = await getJson(baseUrl + '/api/app/run_event', { id: task.id, arg: task.arg || 0 });
@@ -170,7 +175,7 @@ rl.on('line', function (line) {
 			}
 		}
 
-		console.log(' │  ');
+		print(' │  ');
 
 		let next = concur;
 		// begin polling
@@ -196,13 +201,13 @@ rl.on('line', function (line) {
 				if (rerunList[j] && jobStatus[j].rerunid !== rerunList[j].id) {
 					jobStatus[j].rerunid = rerunList[j].id
 					let attLeft = rerunList[j].retries ? `retries left: ${rerunList[j].retries}` : 'last attempt'
-					console.log(` ├───── ⚠️ ${jobStatus[j].title} failed, will retry at ${niceInterval(rerunList[j].when, true)} [${attLeft}] \n │`)  //${niceInterval(rerunList[j].when, true)}
+					print(` ├───── ⚠️ ${jobStatus[j].title} failed, will retry at ${niceInterval(rerunList[j].when, true)} [${attLeft}] \n │`)  //${niceInterval(rerunList[j].when, true)}
 					continue
 				}
 
 				if (!(resp.data.jobs[j]) && !(rerunList[j])) {  // if job is not in active job list or rerun queue - mark as completed
 
-					//if(rerunList[j]) console.log(`job ${j} is still running on background`)
+					//if(rerunList[j]) print(`job ${j} is still running on background`)
 
 					let msg = '';
 
@@ -230,9 +235,9 @@ rl.on('line', function (line) {
 							if (finishingJobs[j]) { finishingJobs[j] += 1 }
 							else {
 								finishingJobs[j] = 1
-								console.log(` ├───────> Job ${j} is finishing up`)
+								print(` ├───────> Job ${j} is finishing up`)
 							}
-							// console.log(" │  ---- DEBUG: ----:", e.message) // just for testing
+							// print(" │  ---- DEBUG: ----:", e.message) // just for testing
 							continue
 						}
 
@@ -298,23 +303,23 @@ rl.on('line', function (line) {
 						next += 1
 					}
 
-					console.log(msg);
+					print(msg);
 
 					if (max_errors && errorCount >= max_errors) {
-						console.log(" │\n ⚠️ Error count exceeded maximum, aborting workflow...")
+						print(" │\n ⚠️ Error count exceeded maximum, aborting workflow...")
 						wfStatus = 'abort';
 						await abortPending();
 						throw new Error("WF Error count exceeded maximum");
 
 					}
 
-					console.log(' │');
-					console.log(JSON.stringify({ progress: (1 - pendingJobs / taskList.length) }))
+					print(' │');
+					stream.write({ progress: (1 - pendingJobs / taskList.length) })
 				}
 			}
 		}
 
-		console.log(`\n\u001b[1m\u001b[32mWorkflow Completed\u001b[39m\u001b[22m @${(new Date()).toLocaleString()}  `)
+		print(`\n\u001b[1m\u001b[32mWorkflow Completed\u001b[39m\u001b[22m @${(new Date()).toLocaleString()}  `)
 
 		// print performance
 		let perf = {}
@@ -343,16 +348,15 @@ rl.on('line', function (line) {
 			caption: ""
 		};
 
-		console.log(JSON.stringify({ perf: perf, table: table }))
+		stream.write({ perf: perf, table: table })
 
 		let result = { complete: 1, code: 0 }
 		if (errorCount > 0) result = { complete: 1, code: (wf_strict ? 1 : 255), description: `WF - ${errorCount} out of ${taskList.length} jobs reported error` }
 		if (errorCount == taskList.length) result = { complete: 1, code: 1, description: "WF - All jobs failed" }
-		console.log(JSON.stringify(result))
+		stream.write(result)
 
 	};
 
-	poll().catch(e => console.log(JSON.stringify({ complete: 1, code: 1, description: e.message })));
-	rl.close();
+	poll().catch(e => stream.write({ complete: 1, code: 1, description: e.message }));
 
 });
