@@ -44,7 +44,7 @@ function printJSONmessage(complete, code, desc) {
 
         let json = parseInt(process.env['JSON'] || '')
 
-        const child = process.platform == 'win32' ? spawn('sh', ['-c', command]) : spawn('cmd', ['/c', command])
+        const child = process.platform == 'win32' ?  spawn('cmd', ['/c', command]) : spawn('sh', ['-c', command])
 
         child.on('error', (err) => printJSONmessage(1, 1, `Script failed: ${err.message}`))
 
