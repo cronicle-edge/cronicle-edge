@@ -108,7 +108,7 @@ function printJSONmessage(complete, code, desc) {
             child.kill('SIGTERM');
         });
 
-        child.stdin.write(script)
+        child.stdin.write(script + EOL)
         child.stdin.end()
     }
 
@@ -206,7 +206,7 @@ function printJSONmessage(complete, code, desc) {
                     }
                 });
 
-                stream.stdin.write(script)
+                stream.stdin.write(script + EOL)
                 stream.stdin.end()
             });
         }).connect(conf)
