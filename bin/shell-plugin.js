@@ -12,6 +12,7 @@ const path = require('path');
 const JSONStream = require('pixl-json-stream');
 const Tools = require('pixl-tools');
 const moment = require('moment')
+const sqparse = require('shell-quote').parse;
 
 if(process.env['ENV_FILE']) {
  try { 
@@ -30,8 +31,7 @@ const stream = new JSONStream(process.stdin, process.stdout);
 stream.on('json', function (job) {
 	// got job from parent 
 
-	let script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.sh');
-	fs.writeFileSync(script_file, job.params.script, { mode: "775" });
+	let script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.sh');	
 
 	// attach "files" as env variables
 	if(Array.isArray(job.files)) {
@@ -46,7 +46,33 @@ stream.on('json', function (job) {
 	if (job.tty) process.env['TERM'] = 'xterm';
 	let child_exec = job.tty ? "/usr/bin/script" : script_file;
 	let child_args = job.tty ? ["-qec", script_file, "--flush", "/dev/null"] : [];
+
+	let script = (job.params.script || '').trim()
+
+	if (os.platform() == 'win32') { // if Windows - try to parse shebang or invoke as bat file
+		let fl = script.substring(0, script.indexOf("\n"))
+
+		// if script contains shebang, resolve interpreter from there
+		if (fl.startsWith("#!")) {
+			script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.ps1');
+			child_args = sqparse(fl.substring(2).trim())
+			if (child_args.length == 0) { // for empty shebang use windows powershell
+				child_exec = 'powershell'
+				child_args = ['-f', script_file ]				
+			}
+			else {
+				child_exec = child_args.shift() || 'powershell'
+				child_args.push(script_file)
+			}			
+			script = script.substring(script.indexOf("\n")).trim() // remove shebang			
+		}
+		else { // if no shebang - just treat it as bat file
+			script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.bat');
+			child_exec = script_file
+		}
+	}
 	
+	fs.writeFileSync(script_file, script, { mode: "775" });
 	const child = cp.spawn(child_exec, child_args, {stdio: ['pipe', 'pipe', 'pipe']});
 
 	let kill_timer = null;
