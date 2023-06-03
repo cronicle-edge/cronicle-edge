@@ -155,6 +155,9 @@ esbuild --bundle --minify --platform=node --outdir=dist/bin/engines --external:l
 # --- CRONICLE.JS
 esbuild --bundle --minify --keep-names --platform=node --outfile=dist/bin/cronicle.js lib/main.js
 
+# --- fix  formidable
+esbuild --bundle --minify --keep-names --platform=node --outdir=dist/bin/plugins node_modules/formidable/src/plugins/*.js
+
 # clean up 
 rm -rf dist/bin/jars dist/bin/cms dist/bin/cronicled.init dist/bin/importkey.sh dist/bin/debug.sh \
   dist/bin/java-plugin.js dist/bin/install.js dist/bin/build.js dist/bin/build-tools.js dist/conf/backup
