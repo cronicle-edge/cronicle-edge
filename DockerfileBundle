@@ -8,7 +8,9 @@ RUN apk add --no-cache git bash nodejs npm
 ARG echo
 RUN echo $echo
 WORKDIR /opt/cronicle
-RUN git clone https://github.com/cronicle-edge/cronicle-edge . && ./bundle.sh
+#RUN git clone https://github.com/cronicle-edge/cronicle-edge . && ./bundle.sh
+COPY . . 
+RUN ./bundle.sh
 
 # copy level db binaries
 RUN mkdir -p dist/bin/engines/prebuilds/linux-x64 && cp node_modules/classic-level/prebuilds/linux-x64/node.napi.musl.node dist/bin/engines/prebuilds/linux-x64/
