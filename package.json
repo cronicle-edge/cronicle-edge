@@ -7,7 +7,11 @@
 	"license": "MIT",
 	"main": "lib/main.js",
 	"scripts": {
-		"test": "pixl-unit lib/test.js"
+		"test": "pixl-unit lib/test.js",
+		"postinstall": "pixl-boot install",
+		"preuninstall": "pixl-boot uninstall",
+		"boot": "pixl-boot install",
+		"unboot": "pixl-boot uninstall"
 	},
 	"repository": {
 		"type": "git",
@@ -47,6 +51,7 @@
 		"netmask": "^2.0.2",
 		"openssl-wrapper": "^0.3.4",
 		"pixl-args": "^1.0.3",
+		"pixl-boot": "^2.0.0",
 		"pixl-class": "^1.0.3",
 		"pixl-cli": "^1.0.13",
 		"pixl-config": "^1.0.12",
