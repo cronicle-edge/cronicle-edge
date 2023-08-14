@@ -190,7 +190,7 @@ Write-Host "`n ---- Building Storage Engines:`n"
 
 $engines = "FS"
 Write-Host "     - bundling FS Engine`n"
-esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines node_modules/pixl-server-storage/engines/Filesystem.js
+esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines engines/Filesystem.js
 
 if ($S3.IsPresent ) {
   Write-Host "     - bundling S3 Engine`n"
