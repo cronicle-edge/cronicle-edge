@@ -51,6 +51,10 @@ if (!(Test-Path .\node_modules) -or $Force.IsPresent) {
 mkdir -EA SilentlyContinue $Path/htdocs/js/external, $Path/htdocs/css, $Path/htdocs/fonts | Out-Null
 Copy-Item -Force -r htdocs $Path/
 
+# ---- Copy over bin 
+Copy-Item -Force -r bin $Path/  
+Copy-Item -Force package.json $Path/bin/
+
 $FullPath = (Get-Item $Path).FullName
 
 # EXTERNAL JS
@@ -240,9 +244,6 @@ if($Lmdb.IsPresent) {
 }
 
 
-# ---- Copy over bin 
-Copy-Item -Force -r bin $Path/  
-Copy-Item -Force package.json $Path/bin/
 
 #### ------- SET UP CONFIGS ----- only do it if config folder doesnt exist #
 if (!(Test-Path $Path/conf)) {
