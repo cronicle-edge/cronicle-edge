@@ -4,6 +4,37 @@
 check this  repo for more details:
 https://github.com/cronicle-edge/edge-storage-engine
 
+## S3
+```bash
+npm i @aws-sdk/client-s3 @aws-sdk/lib-storage
+```
+
+```json
+"Storage": {
+		"engine": "S3",
+		"AWS": {
+			"endpoint": "http://minio:9000",
+			"endpointPrefix": false,
+			"s3ForcePathStyle": true,
+			"region": "east",
+			"hostPrefixEnabled": false,
+			"accessKeyId": "admin",
+			"secretAccessKey": "admin_secret",
+			"correctClockSkew": true,
+			"maxRetries": 5,
+			"httpOptions": {
+				"connectTimeout": 5000,
+				"timeout": 5000
+			}
+		},
+		"S3": {
+			"fileExtensions": true,
+			"params": {
+				"Bucket": "cronicle"
+			}
+		}
+	},
+```
 ## SFTP:
 ```bash
 npm i ssh2-sftp-client

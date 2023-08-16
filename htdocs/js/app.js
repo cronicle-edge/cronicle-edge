@@ -1390,7 +1390,7 @@ app.extend({
 			}, 1 );
 		} );
 		
-		if (!window.zxcvbn) load_script('js/external/zxcvbn.js');
+		//if (!window.zxcvbn) load_script('js/external/zxcvbn.js');
 	},
 	
 	update_password_strength: function($field, $cont) {
