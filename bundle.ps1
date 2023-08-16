@@ -207,7 +207,7 @@ if ($Redis.IsPresent) {
   Write-Host "     - bundling Redis Engine`n"
   $engines += ", Redis"
   npm i redis@3.1.2 --no-save --loglevel silent 
-  esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines node_modules/pixl-server-storage/engines/Redis.js
+  esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines engines/Redis.js
 }
 
 if ($Sftp.IsPresent) {
