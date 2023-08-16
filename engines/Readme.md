@@ -10,30 +10,32 @@ npm i @aws-sdk/client-s3 @aws-sdk/lib-storage
 ```
 
 ```json
-"Storage": {
-		"engine": "S3",
-		"AWS": {
-			"endpoint": "http://minio:9000",
-			"endpointPrefix": false,
-			"s3ForcePathStyle": true,
-			"region": "east",
-			"hostPrefixEnabled": false,
-			"accessKeyId": "admin",
-			"secretAccessKey": "admin_secret",
-			"correctClockSkew": true,
-			"maxRetries": 5,
-			"httpOptions": {
-				"connectTimeout": 5000,
-				"timeout": 5000
-			}
-		},
-		"S3": {
-			"fileExtensions": true,
-			"params": {
-				"Bucket": "cronicle"
-			}
-		}
-	},
+    "Storage": {
+        "engine": "S3",
+        "AWS": {
+            "endpoint": "http://minio:9000",
+            "endpointPrefix": false,
+            "forcePathStyle": true,
+            "region": "us-east-1",
+            "hostPrefixEnabled": false,
+            "credentials": {
+                "accessKeyId": "minioadmin",
+                "secretAccessKey": "minioadmin"
+            },
+            "correctClockSkew": true,
+            "maxRetries": 5,
+            "httpOptions": {
+                "connectTimeout": 5000,
+                "timeout": 5000
+            }
+        },
+        "S3": {
+            "fileExtensions": true,
+            "params": {
+                "Bucket": "demo"
+            }
+        }
+    },
 ```
 ## SFTP:
 ```bash
