@@ -25,6 +25,7 @@ while (( "$#" )); do
         --dev | -d )  dev=1 ;;
         --verbose | -v )  verbose=1 ;;
         --force | -f )  force=1 ;;
+        --restart | -r ) restart=1 ;;
         -*) echo "invalid parameter: $1"; usage ;;
         * ) dist=$1; x=$(($x + 1))
     esac
@@ -59,16 +60,29 @@ minify="--minify=true"
 ESBuildLogLevel="warning"
 npmLogLevel="warn"
 
+# check if cronicle is running and stop
+if [ -e $dist/logs/cronicled.pid ]; then 
+  if ps -p $(cat $dist/logs/cronicled.pid) > /dev/null; then
+    writehead "Stopping cronicle [use --restart param to auto start]"
+    kill -9 $(cat $dist/logs/cronicled.pid)
+  fi
+fi
+  
 if [ "$dev" = 1 ]; then
   minify="--minify=false"
   ESBuildLogLevel="info"
   npmLogLevel="info"
 fi
 
+if [ "$restart" = 1 ]; then
+  minify="--minify=false"
+fi
+
 if [ "$verbose" = 1 ]; then
   ESBuildLogLevel="info"
   npmLogLevel="info"
 fi
+
 
 # ---------------------------------------------------------
 
@@ -81,7 +95,6 @@ if [ ! -d "node_modules" ] || [ "$force" = 1 ]; then
   writehead "Installing npm packages"
   npm install --loglevel $npmLogLevel
 fi
-
 
 # ----------------
 
@@ -304,6 +317,16 @@ chmod -R 755 $dist/bin
 
 
 # -------------------- we are done 
+
+# if in dev mode, start cronicle on background in manager mode
+if [ "$restart" = 1 ]; then
+  writehead "Starting cronicle..."
+  export CRONICLE_dev_version="1.x.dev-$(date '+%Y-%m-%d %H:%M:%S')"
+  ./$dist/bin/cronicle.js --manager
+  echo "    - new process: $(cat $dist/logs/cronicled.pid)"
+  echo "    - dev version: $CRONICLE_dev_version"
+  exit 0  
+fi
 
 echo "-------------------------------------------------------------------------------------------------------------------------------------------"
 echo "Bundle is ready: $(readlink -f $dist)"
