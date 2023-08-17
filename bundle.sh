@@ -102,7 +102,6 @@ mkdir -p $dist/htdocs/js/external && cp \
  node_modules/moment-timezone/builds/moment-timezone-with-data.min.js \
  node_modules/chart.js/dist/Chart.min.js \
  node_modules/jstimezonedetect/dist/jstz.min.js \
- node_modules/zxcvbn/dist/zxcvbn.js \
  node_modules/socket.io/client-dist/socket.io.min.js \
  node_modules/ansi_up/ansi_up.js \
  node_modules/jquery-ui-dist/jquery-ui.min.js \
@@ -218,8 +217,6 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/workflow.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/run-detached.js
 
-
-
 writehead "Building Storage Engines"
 
 printf "    - bundling FS Engine\n"
@@ -247,7 +244,7 @@ fi
 if [ "$sftp" = 1 ]; then
    printf "    - bundling Sftp Engine\n"
    npm i ssh2-sftp-client --no-save --loglevel silent 
-   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/engines engines/Sftp.js
+   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --loader:.node=file --outdir=$dist/bin/engines engines/Sftp.js
 fi
 
 if [ "$sql" = 1 ]; then

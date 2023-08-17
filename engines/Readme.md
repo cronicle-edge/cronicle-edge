@@ -113,7 +113,7 @@ npm i level
 				"filename": "/tmp/cronicle.db"
 			}
 		}
-	}
+	},
 ```
 ### MySQL:
 ```bash
