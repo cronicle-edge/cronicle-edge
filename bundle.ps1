@@ -48,11 +48,12 @@ if (!(Test-Path .\node_modules) -or $Force.IsPresent) {
    }
 
 
-mkdir -EA SilentlyContinue $Path/htdocs/js/external, $Path/htdocs/css, $Path/htdocs/fonts | Out-Null
+# ---- set up bin and htdocs folders on dist (will overwrite)
 Copy-Item -Force -r htdocs $Path/
+mkdir -EA SilentlyContinue $Path/htdocs/js/external, $Path/htdocs/css, $Path/htdocs/fonts | Out-Null
 
-# ---- Copy over bin 
-Copy-Item -Force -r bin $Path/  
+mkdir -EA SilentlyContinue $Path/bin | Out-Null
+Copy-Item -Force bin/manager.bat, bin/win-install.js, bin/win-uninstall.js $Path/bin/
 Copy-Item -Force package.json $Path/bin/
 
 $FullPath = (Get-Item $Path).FullName
@@ -252,6 +253,8 @@ if (!(Test-Path $Path/conf)) {
 
   Copy-Item -Force -r sample_conf/ $Path/conf
 
+  Remove-Item -Recurse -Force $Path/conf/examples 
+
   # generate sample secret_key. Please change, or use CRONICLE_secret_key variable to overwrite
   -join ((48..57) + (97..122) | Get-Random -Count 32 | ForEach-Object { [char]$_ }) > $Path/conf/secret_key
 
@@ -267,16 +270,16 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=no
 
 #  --------------- Final Clean up  ---------------------------
 
-Remove-Item -Recurse -Force `
-  $Path/bin/jars `
-  , $Path/bin/cms `
-  , $Path/bin/cronicled.init `
-  , $Path/bin/importkey.sh `
-  , $Path/bin/debug.sh `
-  , $Path/bin/java-plugin.js `
-  , $Path/bin/install.js `
-  , $Path/bin/build.js `
-  , $Path/bin/build-tools.js `
+# Remove-Item -Recurse -Force `
+#   $Path/bin/jars `
+#   , $Path/bin/cms `
+#   , $Path/bin/cronicled.init `
+#   , $Path/bin/importkey.sh `
+#   , $Path/bin/debug.sh `
+#   , $Path/bin/java-plugin.js `
+#   , $Path/bin/install.js `
+#   , $Path/bin/build.js `
+#   , $Path/bin/build-tools.js `
 
 
 # --- if needed set up npm package in dist folder to install some deps that cannot be bundled
