@@ -287,6 +287,7 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=no
 if [ ! -d $dist/conf ]; then
   writehead "Setting up initial configs"
   cp -r sample_conf/  $dist/conf
+  rm -rf $dist/conf/examples
   cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 > $dist/conf/secret_key
   chmod 400 $dist/conf/secret_key
 fi
@@ -310,9 +311,8 @@ cd - &>/dev/null
 
 # ------  clean up 
 writehead "Final cleanup"
-rm -rf $dist/bin/jars $dist/bin/cms $dist/bin/cronicled.init $dist/bin/importkey.sh $dist/bin/debug.sh \
-  $dist/bin/java-plugin.js $dist/bin/install.js $dist/bin/build.js \
-  $dist/bin/build-tools.js $dist/conf/backup $dist/bin/win-*
+rm -rf $dist/bin/cronicled.init $dist/bin/debug.sh $dist/bin/install.js $dist/bin/build.js \  
+  $dist/bin/build-tools.js $dist/bin/manager.bat $dist/bin/win-*
 
 chmod -R 755 $dist/bin
 
