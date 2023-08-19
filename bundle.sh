@@ -311,7 +311,8 @@ cd - &>/dev/null
 # ------  clean up 
 writehead "Final cleanup"
 rm -rf $dist/bin/jars $dist/bin/cms $dist/bin/cronicled.init $dist/bin/importkey.sh $dist/bin/debug.sh \
-  $dist/bin/java-plugin.js $dist/bin/install.js $dist/bin/build.js $dist/bin/build-tools.js $dist/conf/backup
+  $dist/bin/java-plugin.js $dist/bin/install.js $dist/bin/build.js \
+  $dist/bin/build-tools.js $dist/conf/backup $dist/bin/win-*
 
 chmod -R 755 $dist/bin
 
