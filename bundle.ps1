@@ -283,14 +283,14 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=no
 
 
 # --- if needed set up npm package in dist folder to install some deps that cannot be bundled
-Set-Location $Path
+Push-Location $Path
 if(!(Test-Path "package.json")) {
   Write-Host " ---- Setting up npm package in $Path `n"
   npm init -y | Out-Null
   npm pkg set scripts.start="bin\manager"
 }
 if($Lmdb.IsPresent) { npm i lmdb --loglevel silent}
-Set-Location -
+Pop-Location
 
 
 # --- Print setup info / stats
