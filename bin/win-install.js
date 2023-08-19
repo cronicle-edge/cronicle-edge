@@ -1,7 +1,10 @@
-/// install node-windows first: npm i node-windows -g
+/// install node-windows first:
+///  npm install -g node-windows
+///  npm link node-windows
 
 var Service = require('node-windows').Service;
 
+console.log(require('path').join(__dirname,'cronicle.js'))
 // Create a new service object
 var svc = new Service({
   name:'cronicle',
@@ -17,3 +20,5 @@ var svc = new Service({
 svc.on('install',function(){
   svc.start();
 });
+
+svc.install();
