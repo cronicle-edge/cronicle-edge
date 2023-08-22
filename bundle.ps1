@@ -182,12 +182,15 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
   --external:../conf/config.json --external:../conf/storage.json --external:../conf/setup.json `
   bin/storage-cli.js
 
+esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:../conf/config.json bin/storage-repair.js 
+
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/shell-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/test-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/url-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  --loader:.node=file bin/ssh-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/workflow.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/run-detached.js
+
 
 # ------------ Bundle Storage Engines ------------------------------ #
 

@@ -223,6 +223,8 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
  --external:../conf/config.json --external:../conf/storage.json --external:../conf/setup.json \
 bin/storage-cli.js
 
+esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/ --external:../conf/config.json bin/storage-repair.js 
+
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/shell-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/test-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/url-plugin.js
