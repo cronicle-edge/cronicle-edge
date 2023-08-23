@@ -111,7 +111,6 @@ if ($Command -eq "stop") {
     }
     else {
         if ($Force.IsPresent) {
-            Write-Host ""
             Stop-Process -id $proc.Id
             Write-Host "Cronicle has been stopped (forced)"
         }

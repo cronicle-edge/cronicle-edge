@@ -317,6 +317,8 @@ Pop-Location
 
 if($Reload.IsPresent) {
   Write-Host "`n---- Restarting cronicle`n"
+  # ---
+  $env:CRONICLE_dev_version="1.x.dev-$([datetime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))"
   Start-Process node -WindowStyle Minimized -ArgumentList @("$Path\bin\cronicle.js", "--foreground", "--echo", "--manager", "--color")
 }
 
