@@ -11,7 +11,7 @@ param(
   [switch]$Sftp, # bundle sftp engine
   [switch]$Force, # force reinstall if something is broken in node_modules
   [switch]$Dev, # prevent minificaiton and add verbosity
-  [Switch]$Reload, # for dev purposes only: it will force kill cronicle if running, and start it over again once bundling is complete
+  [Switch]$Restart, # for dev purposes only: it will force kill cronicle if running, and start it over again once bundling is complete
   [switch]$V, # verbose
   [ValidateSet("warning", "debug", "info", "warning", "error","silent")][string]$ESBuildLogLevel = "warning"
 
@@ -31,12 +31,12 @@ if(Test-Path $pidFile ) {
 }
 
 if($proc) {
-  if($Reload.IsPresent) {
+  if($Restart.IsPresent) {
     Write-Host "Shutting down cronicle..."
     if(!$proc.CloseMainWindow()) {Stop-Process -id $proc.Id }
   }
   else {
-    Write-Error "Cronicle is still running, stop it first or use -Reload option"
+    Write-Error "Cronicle is still running, stop it first or use -Restart option"
     exit 1
   }
 }
@@ -315,7 +315,7 @@ if($Lmdb.IsPresent) { npm i lmdb --loglevel silent}
 Pop-Location
 
 
-if($Reload.IsPresent) {
+if($Restart.IsPresent) {
   Write-Host "`n---- Restarting cronicle`n"
   # ---
   $env:CRONICLE_dev_version="1.x.dev-$([datetime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))"

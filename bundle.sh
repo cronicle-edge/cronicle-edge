@@ -13,7 +13,7 @@ writehead() {
 
 # -------------------- ARG CHECK 
 x=0 
-dist="dist"
+dist="dist"  # default
 
 while (( "$#" )); do
     case $1 in
@@ -50,9 +50,9 @@ fi
 
 # ---------------------------------------------------------------------
 
-echo "-----------------------------------------"
-echo " Installing cronicle bundle into $dist"
-echo "-----------------------------------------"
+echo "------------------------------------------------------"
+echo " Installing cronicle bundle into $(readlink -f $dist)"
+echo "------------------------------------------------------"
 echo ""
 
 # debug settings
@@ -60,11 +60,16 @@ minify="--minify=true"
 ESBuildLogLevel="warning"
 npmLogLevel="warn"
 
+do_restart="false"
+if [ "$restart" = 1 ]; then
+ do_restart="true"
+fi
+
 # check if cronicle is running and stop
 if [ -e $dist/logs/cronicled.pid ]; then 
   if ps -p $(cat $dist/logs/cronicled.pid) > /dev/null; then
-    writehead "Stopping cronicle [use --restart param to auto start]"
-    kill -9 $(cat $dist/logs/cronicled.pid)
+    writehead "Stopping cronicle [auto restart: $do_restart]"
+    kill -15 $(cat $dist/logs/cronicled.pid)  # sigterm
   fi
 fi
   
@@ -234,17 +239,17 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
 
 writehead "Building Storage Engines"
 
-printf "    - bundling FS Engine\n"
+printf "      - bundling FS Engine\n"
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/engines engines/Filesystem.js
 
 if [ "$s3" = 1 ]; then
-   printf "    - bundling S3 Engine\n"
+   printf "      - bundling S3 Engine\n"
    npm i @aws-sdk/client-s3 @aws-sdk/lib-storage --no-save --loglevel silent 
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/engines engines/S3.js
 fi
 
 if [ "$level" = 1 ]; then
-   printf "    - bundling Level Engine\n"
+   printf "      - bundling Level Engine\n"
    npm i level --no-save --loglevel silent 
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/engines engines/Level.js
    mkdir -p $dist/bin/engines/prebuilds/
@@ -252,18 +257,18 @@ if [ "$level" = 1 ]; then
 fi
 
 if [ "$lmdb" = 1 ]; then
-   printf "    - bundling Lmdb Engine*\n"
+   printf "      - bundling Lmdb Engine*\n"
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/engines --external:lmdb engines/Lmdb.js 
 fi
 
 if [ "$sftp" = 1 ]; then
-   printf "    - bundling Sftp Engine\n"
+   printf "      - bundling Sftp Engine\n"
    npm i ssh2-sftp-client --no-save --loglevel silent 
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --loader:.node=file --outdir=$dist/bin/engines engines/Sftp.js
 fi
 
 if [ "$sql" = 1 ]; then
-   printf "    - bundling SQL Engine [mysql/postgres]\n"
+   printf "      - bundling SQL Engine [mysql/postgres]\n"
    npm i knex pg pg-query-stream mysql2 --no-save --loglevel silent
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
      --external:mysql  --external:tedious --external:pg-native --external:better-sqlite3  \
@@ -271,7 +276,7 @@ if [ "$sql" = 1 ]; then
 fi
 
 if [ "$redis" = 1 ]; then
-   printf "    - bundling Redis Engine \n"
+   printf "      - bundling Redis Engine \n"
    npm i redis@3.1.2 --no-save --loglevel silent 
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/engines engines/Redis.js
 fi
@@ -323,9 +328,9 @@ chmod -R 755 $dist/bin
 if [ "$restart" = 1 ]; then
   writehead "Starting cronicle..."
   export CRONICLE_dev_version="1.x.dev-$(date '+%Y-%m-%d %H:%M:%S')"
-  ./$dist/bin/cronicle.js --manager
-  echo "    - new process: $(cat $dist/logs/cronicled.pid)"
-  echo "    - dev version: $CRONICLE_dev_version"
+  $dist/bin/cronicle.js --manager
+ # echo "      - new process: $(cat $dist/logs/cronicled.pid)"
+  echo "      - dev version: $CRONICLE_dev_version"
   exit 0  
 fi
 
@@ -347,12 +352,12 @@ Before you begin:
  - Set you Secret key in conf/congig.json || conf/secret_key file || CRONICLE_secret_key_file || CRONICLE_secret_key env variables
 
 To setup cronicle storage (on the first run):
- node ./$dist/bin/storage-cli.js setup
+ node $dist/bin/storage-cli.js setup
 
 Start as manager in foreground:
- node ./$dist/bin/cronicle.js --echo --foreground --manager --color
+ node $dist/bin/cronicle.js --echo --foreground --manager --color
 
-Or  both together: ./$dist/bin/manager
+Or  both together: $dist/bin/manager
 
 -------------------------------------------------------------------------------------------------------------------------------------------
 
