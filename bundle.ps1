@@ -53,7 +53,7 @@ Copy-Item -Force -r htdocs $Path/
 mkdir -EA SilentlyContinue $Path/htdocs/js/external, $Path/htdocs/css, $Path/htdocs/fonts | Out-Null
 
 mkdir -EA SilentlyContinue $Path/bin | Out-Null
-Copy-Item -Force bin/manager.bat, bin/win-install.js, bin/win-uninstall.js $Path/bin/
+Copy-Item -Force bin/manager.bat, bin/win-install.js, bin/win-uninstall.js, bin/control.ps1 $Path/bin/
 Copy-Item -Force package.json $Path/bin/
 
 $FullPath = (Get-Item $Path).FullName
