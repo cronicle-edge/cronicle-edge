@@ -11,6 +11,7 @@ param(
   [switch]$Sftp, # bundle sftp engine
   [switch]$Force, # force reinstall if something is broken in node_modules
   [switch]$Dev, # prevent minificaiton and add verbosity
+  [Switch]$Reload, # for dev purposes only: it will force kill cronicle if running, and start it over again once bundling is complete
   [switch]$V, # verbose
   [ValidateSet("warning", "debug", "info", "warning", "error","silent")][string]$ESBuildLogLevel = "warning"
 
@@ -21,6 +22,24 @@ $ErrorActionPreference = 'Stop'
 Write-Host "-----------------------------------------"
 Write-Host " Installing cronicle bundle into $Path"
 Write-Host "-----------------------------------------"
+
+$proc = $null
+$pidFile = Get-ChildItem "$Path\logs\cronicled.pid"
+
+if(Test-Path $pidFile ) {
+  $proc = Get-Process -Id $(Get-Content -Raw $pidFile ) -ErrorAction SilentlyContinue
+}
+
+if($proc) {
+  if($Reload.IsPresent) {
+    Write-Host "Shutting down cronicle..."
+    if(!$proc.CloseMainWindow()) {Stop-Process -id $proc.Id }
+  }
+  else {
+    Write-Error "Cronicle is still running, stop it first or use -Reload option"
+    exit 1
+  }
+}
 
 # debug settings
 $minify = "--minify=true"
@@ -295,6 +314,11 @@ if(!(Test-Path "package.json")) {
 if($Lmdb.IsPresent) { npm i lmdb --loglevel silent}
 Pop-Location
 
+
+if($Reload.IsPresent) {
+  Write-Host "`n---- Restarting cronicle`n"
+  Start-Process node -WindowStyle Minimized -ArgumentList @("$Path\bin\cronicle.js", "--foreground", "--echo", "--manager", "--color")
+}
 
 # --- Print setup info / stats
 Write-Host "`n-------------------------------------------------------------------------------------------------------------------------------------------`n"
