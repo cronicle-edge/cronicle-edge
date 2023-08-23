@@ -9,7 +9,11 @@ param(
     [Switch]$Manager,
     [Switch]$Echo,
     [Switch]$Color,
-    [Int32]$Page = 0
+
+    # list collection items
+    [Int32]$Limit = 50,
+    [Int32]$Offset = 0,
+    [switch]$Full
 )
 
 $ErrorActionPreference = "stop"
@@ -31,12 +35,11 @@ if (!$Command) {
 
     .\control.ps1 logs [-Tail 20]  ## check Cronicle.log records
 
-    .\control.ps1 ls  events|jobs|servers|server_groups|api_keys|conf_keys|secrets|cats|logs [-Page 0]  # browse cronicle storage
-         Page: use it if collection has multiple pages (e.g. > 50 records). By default Page == 0
+    .\control.ps1 ls  events|jobs|servers|server_groups|api_keys|conf_keys|secrets|cats|users|logs [-Limit 50] [-Offset 0]  # browse cronicle storage
       examples:
       .\control.ps1 ls events | sort -Property mod -Descending | ft
-      .\control.ps1 ls events | sort -Property plugin -Descending | ft -GroupBy plugin
-      .\control.ps1 ls jobs -Page -1 | select -first 20 | ft
+      .\control.ps1 ls events | sort -Property category -Descending | ft -GroupBy category
+      .\control.ps1 ls jobs -Limit 20 | ft
 
      
 "
@@ -130,17 +133,39 @@ if ($Command -eq "logs") {
 }
 
 if ($Command -in "list", "ls") {
-    if (!$Key) {
-        Write-Host "Specify items to list:"
-        Write-Host "[events|jobs|servers|server_groups|api_keys|conf_keys|secrets|cats|logs]`n"
-        exit 1
+    if (!$Key) { 
+        Write-Host " events => global/schedule"
+        Write-Host " jobs => logs/completed"
+        Write-Host " servers => global/servers"
+        Write-Host " groups => global/server_groups"
+        Write-Host " api => global/api_keys"
+        Write-Host " plugins => global/plugins"
+        Write-Host " conf => global/conf_keys"
+        Write-Host " cats => global/categories"
+        Write-Host " users => global/users"
+        Write-Host " logs => logs/activity"
+        exit 0
     }
-        
-    if ($Key -eq "events") { $Key = "schedule" }
-    if ($Key -eq "cats") { $Key = "categories" }
-    $list = "global/$Key"
-    if ($Key -eq "logs") { $list = "logs/activity" }
-    if ($Key -eq "jobs") { $list = "logs/completed" }
+    
+    # aliased lists
+    $alias = @{
+        events = "global/schedule"
+        jobs = "logs/completed"
+        servers = "global/servers"
+        groups = "global/server_groups"
+        api = "global/api_keys"
+        conf = "global/conf_keys"
+        cats = "global/categories"
+        users = "global/users"
+        plugins = "global/plugins"
+        logs = "logs/activity"
+
+    }
+    $list = $alias[$Key] ?? $Key
+    # if ($Key -eq "events") { $List = "global/schedule" }
+    # if ($Key -eq "cats")   { $List = "global/categories" }
+    # if ($Key -eq "logs")   { $list = "logs/activity" }
+    # if ($Key -eq "jobs")   { $list = "logs/completed" }
     
     $timing = @{n = "schedule"; e = {      
             if ($_.timing.years) { "custom" }
@@ -155,9 +180,9 @@ if ($Command -in "list", "ls") {
 
     $global:cats = @{}
     $global:plugs = @{}
-    if ($Key -eq "schedule") {
-        node $PSScriptRoot\storage-cli.js get 'global/categories/0' | convertfrom-json | % items | % { $cats[$_.id] = $_.title }
-        node $PSScriptRoot\storage-cli.js get 'global/plugins/0' | convertfrom-json | % items | % { $plugs[$_.id] = $_.title }
+    if ($Key -eq "events" -OR $list -eq "global/schedule") {
+        node $PSScriptRoot\storage-cli.js list_get 'global/categories' 0 0 1 | convertfrom-json | foreach { $global:cats[$_.id] = $_.title }
+        node $PSScriptRoot\storage-cli.js list_get 'global/plugins' 0 0 1 | convertfrom-json |  foreach { $global:plugs[$_.id] = $_.title }
     }
 
     $mod = @{name = "mod"; e = { [System.DateTimeOffset]::FromUnixTimeSeconds($_.modified).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") } }
@@ -166,33 +191,39 @@ if ($Command -in "list", "ls") {
     $cat = @{name = "category"; e = { $cats[$_.category] } }
     $plug = @{name = "plugin"; e = { $plugs[$_.plugin] } }
 
+    #  Adjust layouts for collections
     $propMap = @{
-        schedule   = @( "title", "id", $cat, $plug, $timing, $mod, $notes )
+        events   = @( "title", "id", $cat, $plug, $timing, $mod, $notes )
         logs       = @("action", "username", "ip", $epoch )
-        api_keys   = @("title", $mod, "privileges")
+        api   = @("title", $mod, "privileges")
         secrets    = @("id", "encrypted", "form")
-        categories = @("id", "title", "enabled", "description", $mod)
+        cats  = @("id", "title", "enabled", "description", $mod)
         plugins    = @("id", "title", "enabled", "command", $mod)
-        conf_keys  = @("title", "key")
+        conf  = @("title", "key")
         jobs       = @($epoch, "event_title", "category_title", "plugin_title", "elapsed", "code", 'description')
 
     }
     
-    $props = $propMap[$Key] ?? "*"
+    $props = $propMap[$Key] ?? '*'
+    #?? "*"
+    #if($Full.IsPresent) { $props = "*"}
+
+    node $PSScriptRoot\storage-cli.js list_get $list $Offset $Limit 1 | convertfrom-json | select $props
+
     
-    $listMeta = node $PSScriptRoot\storage-cli.js get $list | convertfrom-json
-    $firstPage = $listMeta.first_page
-    $nextPage = $firstPage + 1
-    if ($Page) {
-        node $PSScriptRoot\storage-cli.js get "$list/$Page" | convertfrom-json | % items | select $props
-    }
-    else {
-        Write-Host "----------- List info: $($listMeta) -----------------------"
-        node $PSScriptRoot\storage-cli.js get "$list/$firstPage" | convertfrom-json | % items | select $props
-        if ($listMeta.length -gt 50) {
-            node $PSScriptRoot\storage-cli.js get "$list/$nextPage" | convertfrom-json | % items | select $props
-        }
-    }
+    # $listMeta = node $PSScriptRoot\storage-cli.js get $list | convertfrom-json
+    # $firstPage = $listMeta.first_page
+    # $nextPage = $firstPage + 1
+    # if ($Page) {
+    #     node $PSScriptRoot\storage-cli.js get "$list/$Page" | convertfrom-json | % items | select $props
+    # }
+    # else {
+    #     Write-Host "----------- List info: $($listMeta) -----------------------"
+    #     node $PSScriptRoot\storage-cli.js get "$list/$firstPage" | convertfrom-json | % items | select $props
+    #     if ($listMeta.length -gt 50) {
+    #         node $PSScriptRoot\storage-cli.js get "$list/$nextPage" | convertfrom-json | % items | select $props
+    #     }
+    # }
 
     exit 0
 }
