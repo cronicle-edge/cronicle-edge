@@ -53,7 +53,6 @@ fi
 echo "------------------------------------------------------"
 echo " Installing cronicle bundle into $(readlink -f $dist)"
 echo "------------------------------------------------------"
-echo ""
 
 # debug settings
 minify="--minify=true"
@@ -321,7 +320,7 @@ cd - &>/dev/null
 
 # ------  clean up 
 writehead "Final cleanup"
-rm -rf $dist/bin/cronicled.init $dist/bin/debug.sh $dist/bin/install.js $dist/bin/build.js $dist/bin/build-tools.js $dist/bin/manager.bat $dist/bin/win-*
+rm -rf $dist/bin/cronicled.init $dist/bin/debug.sh $dist/bin/install.js $dist/bin/build.js $dist/bin/build-tools.js $dist/bin/manager.bat $dist/bin/win-* $dist/bin/*.ps1
 chmod -R 755 $dist/bin
 
 
@@ -337,7 +336,9 @@ if [ "$restart" = 1 ]; then
   exit 0  
 fi
 
+echo ""
 echo "-------------------------------------------------------------------------------------------------------------------------------------------"
+echo ""
 echo "Bundle is ready: $(readlink -f $dist)"
 if [ "$sql" = 1 ]; then
   echo " - SQL Engine is bundled for mysql and postgress only. SQLite, MSSQL Oracle need to be installed separetly in $dist"
@@ -350,6 +351,7 @@ if [ "$level" = 1 ]; then
 fi 
 
 cat << EOF
+
 Before you begin:
  - Configure you storage engine setting in conf/config.json || conf/storage.json || CRONICLE_storage_config=/path/to/custom/storage.json
  - Set you Secret key in conf/congig.json || conf/secret_key file || CRONICLE_secret_key_file || CRONICLE_secret_key env variables
@@ -359,11 +361,20 @@ To setup cronicle storage (on the first run):
 
 Start as manager in foreground:
  node $dist/bin/cronicle.js --echo --foreground --manager --color
+ ### or just: $dist/bin/manager
 
-Or  both together: $dist/bin/manager
+To reinstall/upgrade run:  ./bundle.sh $dist -f 
+Please back up $(readlink -f $dist) first for prod deployments
+
+To setup as systemd service (! make sure node version for sudo user is 16 or higher):
+ cd $(readlink -f $dist)
+ npm i pixl-boot
+ sudo node node_modules/pixl-boot/cli.js install
+ ### systemctl status croniclex
+
+To remove service:
+ sudo node node_modules/pixl-boot/cli.js uninstall
 
 -------------------------------------------------------------------------------------------------------------------------------------------
 
-To reinstall/upgrade run (please back up $(readlink -f $dist) ):
- ./bundle.sh $dist -f
 EOF
