@@ -24,7 +24,7 @@ Write-Host " Installing cronicle bundle into $Path"
 Write-Host "-----------------------------------------"
 
 $proc = $null
-$pidFile = Get-ChildItem "$Path\logs\cronicled.pid"
+$pidFile = "$Path\logs\cronicled.pid"
 
 if(Test-Path $pidFile ) {
   $proc = Get-Process -Id $(Get-Content -Raw $pidFile ) -ErrorAction SilentlyContinue
@@ -72,7 +72,9 @@ Copy-Item -Force -r htdocs $Path/
 mkdir -EA SilentlyContinue $Path/htdocs/js/external, $Path/htdocs/css, $Path/htdocs/fonts | Out-Null
 
 mkdir -EA SilentlyContinue $Path/bin | Out-Null
-Copy-Item -Force bin/manager.bat, bin/win-install.js, bin/win-uninstall.js, bin/control.ps1 $Path/bin/
+Copy-Item -Force bin/manager.bat, bin/control.ps1 $Path/bin/
+Copy-Item bin/win-install.js $Path/install.js
+Copy-Item bin/win-uninstall.js $Path/uninstall.js
 Copy-Item -Force package.json $Path/bin/
 
 $FullPath = (Get-Item $Path).FullName
