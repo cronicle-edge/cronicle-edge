@@ -305,7 +305,10 @@ cd $dist
 if [ ! -e 'package.json' ]; then 
   writehead "Setting up npm package in $dist"
    npm init -y &>/dev/null
-   npm pkg set scripts.start="bin/manager"
+   npm pkg set name="croniclex"
+   npm pkg set bin="bin/control.sh"
+   npm pkg set main="bin/cronicle.js"
+   npm pkg set scripts.start="bin/cronicle.js --foreground --echo --manager --color"
 fi
 
 if [ "$lmdb" = 1 ]; then

@@ -309,7 +309,10 @@ Push-Location $Path
 if(!(Test-Path "package.json")) {
   Write-Host " ---- Setting up npm package in $Path `n"
   npm init -y | Out-Null
-  npm pkg set scripts.start="bin\manager"
+  npm pkg set name="croniclex"
+  npm pkg set bin="bin/control.ps1"
+  npm pkg set main="bin/cronicle.js"
+  npm pkg set scripts.start="node bin/cronicle.js --foreground --echo --manager --color"
 }
 if($Lmdb.IsPresent) { npm i lmdb --loglevel silent}
 Pop-Location

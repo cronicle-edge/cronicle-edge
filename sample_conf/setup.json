@@ -38,7 +38,7 @@
 			"enabled": 1,
 			"command": "node bin/shell-plugin.js",
 			"username": "admin",
-			"uid": "cronicle",
+			"uid": 1000,
 			"modified": 1434125333,
 			"created": 1434125333,
 			"params": [
