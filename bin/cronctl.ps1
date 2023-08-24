@@ -47,89 +47,19 @@ if (!$Command) {
 # $conf = Get-Content "$PSScriptRoot\..\conf\config.json" | ConvertFrom-Json -Depth 10
 
 
-# -------------------- check if process is up
-$pidFile = "$PSScriptRoot\..\logs\cronicled.pid"
-$proc = $null
-$state = "Stopped"
-if (Test-Path $pidFile) {
-    $p = Get-Content -Raw $pidFile
-    $proc = Get-Process -Id $p  -ErrorAction SilentlyContinue
-    $state = $proc ? "Running [ $($proc.Id) ]" : "Stopped [ Crashed ]"
-}
 
+# ===========================   LOGS / LS commands first  (no need to check process) ==========================================
 
-if ($Command -eq "status") {
-    Write-Host "Cronicle is $state"
-    exit 0
-}
-
-if ($Command -eq "start") {
-
-    $args = [System.Collections.Generic.List[String]]::new()
-    
-    [void]$args.Add("$PSScriptRoot\cronicle.js")
-    [void]$args.Add( "--foreground" )
-    if ($Echo.IsPresent) { [void]$args.Add("--echo") }
-    if ($WinMon.IsPresent) { [void]$args.Add("--winmon") }
-    if ($manager.IsPresent) { [void]$args.Add("--manager") }
-    if ($Color.IsPresent) { [void]$args.Add("--color") }
-
-    if ($Force.IsPresent) {
-        $proc | Stop-Process
-        $proc = $null
-    }
-
-    if ($proc) { Write-Host "Cronicle already running ($($proc.id)), use -Force to restart"; exit 1 }
-
-    $winStyle = $Hide.IsPresent ? "Hidden" : "Minimized"
-
-    if ($CronicleArgs) {
-
-        Start-Process node -WindowStyle $winStyle -ArgumentList @CronicleArgs
-        Write-Host "Cronicle started"
-
-    }
-    else {
-        # default
-        Start-Process node -WindowStyle $winStyle -ArgumentList $args
-        Write-Host "Cronicle started"
-    }
-    
-    exit 0
-}
-
-if ($Command -eq "stop") {
-
-    if (!$proc) {
-        Write-Host "Cronicle is not running"; exit 0;
-    }
-
-
-    if ($proc.CloseMainWindow()) {
-        $proc.WaitForExit()
-        Write-Host "Cronicle has been stopped gracefully"
-    }
-    else {
-        if ($Force.IsPresent) {
-            Stop-Process -id $proc.Id
-            Write-Host "Cronicle has been stopped (forced)"
-        }
-        else {
-            Write-Host "Cannot shutdown cronicle (it's running in the backgroud)"
-            Write-Host "Use -Force option to force kill the process, or shut it down from UI"
-        }
-    }
-
-    exit 0
-}
-
+# ======================= LOGS =================
 if ($Command -eq "logs") {
     $logFile = Get-ChildItem "$PSScriptRoot\..\logs\Cronicle.log"
     Write-Host "log file: $logFile"   
-
+    if($Key) {$Tail = $Key} # control.ps1 
     Get-Content -Tail $Tail $logFile
     exit 0
 }
+
+# ======================= LS/LIST =================
 
 if ($Command -in "list", "ls") {
     if (!$Key) { 
@@ -160,11 +90,9 @@ if ($Command -in "list", "ls") {
         logs = "logs/activity"
 
     }
-    $list = $alias[$Key] ?? $Key
-    # if ($Key -eq "events") { $List = "global/schedule" }
-    # if ($Key -eq "cats")   { $List = "global/categories" }
-    # if ($Key -eq "logs")   { $list = "logs/activity" }
-    # if ($Key -eq "jobs")   { $list = "logs/completed" }
+
+    $list = $alias[$Key]
+    if(!$list) { $list = $Key}
     
     $timing = @{n = "schedule"; e = {      
             if ($_.timing.years) { "custom" }
@@ -186,7 +114,7 @@ if ($Command -in "list", "ls") {
 
     $mod = @{name = "mod"; e = { [System.DateTimeOffset]::FromUnixTimeSeconds($_.modified).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") } }
     $epoch = @{name = "epoch"; e = { [System.DateTimeOffset]::FromUnixTimeSeconds($_.epoch).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") } }
-    $notes = @{name = "notes"; e = { $_.notes.Length -gt 40 ? $_.notes.Substring(0, 40) + "..." : $_.notes } }
+    $notes = @{name = "notes"; e = { if($_.notes.Length -gt 40) { $_.notes.Substring(0, 40) + "..." } else { $_.notes } }}
     $cat = @{name = "category"; e = { $cats[$_.category] } }
     $plug = @{name = "plugin"; e = { $plugs[$_.plugin] } }
 
@@ -199,34 +127,105 @@ if ($Command -in "list", "ls") {
         cats  = @("id", "title", "enabled", "description", $mod)
         plugins    = @("id", "title", "enabled", "command", $mod)
         conf  = @("title", "key")
-        jobs       = @($epoch, "event_title", "category_title", "plugin_title", "elapsed", "code", 'description')
+        jobs = @($epoch, "event_title", "category_title", "plugin_title", "elapsed", "code", 'description')
 
     }
     
-    $props = $propMap[$Key] ?? '*'
-    #?? "*"
-    #if($Full.IsPresent) { $props = "*"}
+    $props = $propMap[$Key];
+    if(!$props)  { $props = "*"}
 
-    node $PSScriptRoot\storage-cli.js list_get $list $Offset $Limit 1 | convertfrom-json | select $props
-
-    
-    # $listMeta = node $PSScriptRoot\storage-cli.js get $list | convertfrom-json
-    # $firstPage = $listMeta.first_page
-    # $nextPage = $firstPage + 1
-    # if ($Page) {
-    #     node $PSScriptRoot\storage-cli.js get "$list/$Page" | convertfrom-json | % items | select $props
-    # }
-    # else {
-    #     Write-Host "----------- List info: $($listMeta) -----------------------"
-    #     node $PSScriptRoot\storage-cli.js get "$list/$firstPage" | convertfrom-json | % items | select $props
-    #     if ($listMeta.length -gt 50) {
-    #         node $PSScriptRoot\storage-cli.js get "$list/$nextPage" | convertfrom-json | % items | select $props
-    #     }
-    # }
-
+    $items = node $PSScriptRoot\storage-cli.js list_get $list $Offset $Limit 1 | convertfrom-json
+    $items | select $props
     exit 0
 }
 
 
+# ======================================  START/STOP/STATUS === need to check proc
+
+
+# -------------------- check if process is up
+$pidFile = "$PSScriptRoot\..\logs\cronicled.pid"
+$proc = $null
+$state = "Stopped"
+if (Test-Path $pidFile) {
+    $p = Get-Content -Raw $pidFile
+    $proc = Get-Process -Id $p  -ErrorAction SilentlyContinue
+    $state = "Stopped [ Crashed ]"
+    if($proc) { $state = "Running [ $($proc.Id) ]"}
+}
+
+# ======================= STATUS=================
+
+if ($Command -eq "status") {
+    Write-Host "Cronicle is $state"
+    exit 0
+}
+
+# ======================= START =================
+
+if ($Command -eq "start") {
+
+    $args = [System.Collections.Generic.List[String]]::new()
+    
+    [void]$args.Add("$PSScriptRoot\cronicle.js")
+    [void]$args.Add( "--foreground" )
+    if ($Echo.IsPresent) { [void]$args.Add("--echo") }
+    if ($WinMon.IsPresent) { [void]$args.Add("--winmon") }
+    if ($manager.IsPresent) { [void]$args.Add("--manager") }
+    if ($Color.IsPresent) { [void]$args.Add("--color") }
+
+    if ($Force.IsPresent) {
+        $proc | Stop-Process
+        $proc = $null
+    }
+
+    if ($proc) { Write-Host "Cronicle already running ($($proc.id)), use -Force to restart"; exit 1 }
+    
+    $winStyle = "Minimized"
+    if( $Hide.IsPresent ) { $winStyle = "Hidden" }
+
+    if ($CronicleArgs) {
+
+        Start-Process node -WindowStyle $winStyle -ArgumentList @CronicleArgs
+        Write-Host "Cronicle started"
+
+    }
+    else {
+        # default
+        Start-Process node -WindowStyle $winStyle -ArgumentList $args
+        Write-Host "Cronicle started"
+    }
+    
+    exit 0
+}
+
+# ======================= STOP =================
+
+if ($Command -eq "stop") {
+
+    if (!$proc) {
+        Write-Host "Cronicle is not running"; exit 0;
+    }
+
+
+    if ($proc.CloseMainWindow()) {
+        $proc.WaitForExit()
+        Write-Host "Cronicle has been stopped gracefully"
+    }
+    else {
+        if ($Force.IsPresent) {
+            Stop-Process -id $proc.Id
+            Write-Host "Cronicle has been stopped (forced)"
+        }
+        else {
+            Write-Host "Cannot shutdown cronicle (it's running in the backgroud)"
+            Write-Host "Use -Force option to force kill the process, or shut it down from UI"
+        }
+    }
+
+    exit 0
+}
+
+# ======================= Anything else =================
 Write-Host "Unknown command: $Command"
 exit 1

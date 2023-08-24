@@ -72,9 +72,9 @@ Copy-Item -Force -r htdocs $Path/
 mkdir -EA SilentlyContinue $Path/htdocs/js/external, $Path/htdocs/css, $Path/htdocs/fonts | Out-Null
 
 mkdir -EA SilentlyContinue $Path/bin | Out-Null
-Copy-Item -Force bin/manager.bat, bin/control.ps1 $Path/bin/
-Copy-Item bin/win-install.js $Path/install.js
-Copy-Item bin/win-uninstall.js $Path/uninstall.js
+Copy-Item -Force bin/manager.bat, bin/cronctl.ps1 $Path/bin/
+Copy-Item bin/win-install.js $Path/bin/install.js
+Copy-Item bin/win-uninstall.js $Path/bin/uninstall.js
 Copy-Item -Force package.json $Path/bin/
 
 $FullPath = (Get-Item $Path).FullName
@@ -356,5 +356,16 @@ Or  both together: .\$Path\bin\manager
 
 to reinstall/upgrade run (please back up $FullPath first):
  .\bundle.ps1 $Path -Force
+
+to install as windows service:
+  cd $Path
+  npm i node-windows -g
+  npm link node-windows
+  node bin\install.js
+
+test: Get-Service cronicle
+
+to remove service:
+  node bin\uninstall.js
 
 "
