@@ -12,6 +12,8 @@ param(
   [switch]$Force, # force reinstall if something is broken in node_modules
   [switch]$Dev, # prevent minificaiton and add verbosity
   [Switch]$Restart, # for dev purposes only: it will force kill cronicle if running, and start it over again once bundling is complete
+  [Switch]$Tools, # bundle repair/migrate tools
+  [Switch]$All, # bundle all storage engines and tools
   [switch]$V, # verbose
   [ValidateSet("warning", "debug", "info", "warning", "error","silent")][string]$ESBuildLogLevel = "warning"
 
@@ -55,6 +57,15 @@ if ($Dev.IsPresent) {
 if($V.IsPresent) {
   $ESBuildLogLevel = "info"  
   $npmLogLevel = "info"
+}
+
+if($All.IsPresent) {
+  $S3.IsPresent = $true
+  $Sftp.IsPresent = $true
+  $Lmdb.IsPresent = $true
+  $Level.IsPresent = $true
+  $Sql.IsPresent = $true 
+  $Tools.IsPresent = $true
 }
 # -------------------------
 
@@ -203,7 +214,13 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
   --external:../conf/config.json --external:../conf/storage.json --external:../conf/setup.json `
   bin/storage-cli.js
 
-esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:../conf/config.json bin/storage-repair.js 
+if($Tools.IsPresent) {
+  Write-Host "     - storage-repair.js`n"
+  esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:../conf/config.json bin/storage-repair.js
+  Write-Host "     - storage-migrate.js`n"
+  esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:../conf/config.json bin/storage-migrate.js
+}
+ 
 
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/shell-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/test-plugin.js

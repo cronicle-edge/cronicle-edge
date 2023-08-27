@@ -17,15 +17,17 @@ dist="dist"  # default
 
 while (( "$#" )); do
     case $1 in
-        --s3 )    s3=1 ;;
+        --s3 | --S3 ) s3=1 ;;
         --sftp )  sftp=1 ;;
         --lmdb )  lmdb=1 ;;
         --level ) level=1 ;;
         --sql )   sql=1 ;;
-        --dev | -d )  dev=1 ;;
+        --dev | -d )  dev=1 ;; # avoid minification, add verbosity
         --verbose | -v )  verbose=1 ;;
-        --force | -f )  force=1 ;;
-        --restart | -r ) restart=1 ;;
+        --force | -f )  force=1 ;; # reinstall npm packages
+        --tools | -t ) tools=1 ;; # bundle up repair and migration tools
+        --all | -a ) all=1 ;; # install all engines
+        --restart | -r ) restart=1 ;; # start cronicle upon completion
         -*) echo "invalid parameter: $1"; usage ;;
         * ) dist=$1; x=$(($x + 1))
     esac
@@ -87,14 +89,25 @@ if [ "$verbose" = 1 ]; then
   npmLogLevel="info"
 fi
 
+if [ "$all" = 1 ]; then
+  s3=1
+  level=1
+  lmdb=1
+  sql=1
+  sftp=1
+  tools=1
+fi
+
 
 # ---------------------------------------------------------
 
+# install esbuild if needed
 if ! command -v esbuild &>/dev/null; then
   writehead "Installing esbuild"
   npm i esbuild -g --loglevel $npmLogLevel
 fi
 
+# skip "npm install" if node_modules exist already
 if [ ! -d "node_modules" ] || [ "$force" = 1 ]; then
   writehead "Installing npm packages"
   npm install --loglevel $npmLogLevel
@@ -227,14 +240,21 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
  --external:../conf/config.json --external:../conf/storage.json --external:../conf/setup.json \
 bin/storage-cli.js
 
-esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/ --external:../conf/config.json bin/storage-repair.js 
-
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/shell-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/test-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/url-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  --loader:.node=file bin/ssh-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/workflow.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/run-detached.js
+
+# ----------- Tools (repair/migrate)
+if [ "$tools" = 1 ]; then
+writehead "Bundling cronicle tools"
+  printf "      - storage-repair.js \n"
+  esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/ --external:../conf/config.json bin/storage-repair.js
+  printf "      - storage-migrate.js \n"
+  esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/ --external:../conf/config.json bin/storage-migrate.js
+fi
 
 writehead "Building Storage Engines"
 
@@ -314,13 +334,12 @@ if [ "$lmdb" = 1 ]; then
   npm i lmdb --loglevel silent
 fi 
 
-cd - &>/dev/null
-
-  
+cd - &>/dev/null  
 
 # ------  clean up 
 writehead "Final cleanup"
-rm -rf $dist/bin/cronicled.init $dist/bin/debug.sh $dist/bin/install.js $dist/bin/build.js $dist/bin/build-tools.js $dist/bin/manager.bat $dist/bin/win-* $dist/bin/*.ps1
+rm -rf $dist/bin/cronicled.init $dist/bin/debug.sh $dist/bin/install.js $dist/bin/build.js $dist/bin/build-tools.js \
+$dist/bin/manager.bat $dist/bin/win-* $dist/bin/*.ps1
 chmod -R 755 $dist/bin
 
 
@@ -337,7 +356,7 @@ if [ "$restart" = 1 ]; then
 fi
 
 echo ""
-echo "-------------------------------------------------------------------------------------------------------------------------------------------"
+echo "---------------------------------------------------------------------------------------------------------------------------------------"
 echo ""
 echo "Bundle is ready: $(readlink -f $dist)"
 if [ "$sql" = 1 ]; then
@@ -354,14 +373,15 @@ cat << EOF
 
 Before you begin:
  - Configure you storage engine setting in conf/config.json || conf/storage.json || CRONICLE_storage_config=/path/to/custom/storage.json
- - Set you Secret key in conf/congig.json || conf/secret_key file || CRONICLE_secret_key_file || CRONICLE_secret_key env variables
+ - Set you Secret key in conf/config.json || conf/secret_key file || CRONICLE_secret_key_file || CRONICLE_secret_key env variables
 
 To setup cronicle storage (on the first run):
  node $dist/bin/storage-cli.js setup
 
 Start as manager in foreground:
  node $dist/bin/cronicle.js --echo --foreground --manager --color
- ### or just: $dist/bin/manager
+
+Or use $dist/bin/manager script to setup storage + start cronicle in single manager mode
 
 To reinstall/upgrade run:  ./bundle.sh $dist -f 
 Please back up $(readlink -f $dist) first for prod deployments
@@ -375,6 +395,6 @@ To setup as systemd service (! make sure node version for sudo user is 16 or hig
 To remove service:
  sudo node node_modules/pixl-boot/cli.js uninstall
 
--------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------
 
 EOF
