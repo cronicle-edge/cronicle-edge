@@ -208,7 +208,7 @@ Copy-Item -Force htdocs/index-bundle.html $Path/htdocs/index.html
   
 # -------- Bundle storage-cli and event plugins ----------------------------------------------- #
 
-Write-Host "`n ---- Building storage-cli and plugins"
+Write-Host "`n ---- Building storage-cli and plugins`n"
 
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ `
   --external:../conf/config.json --external:../conf/storage.json --external:../conf/setup.json `
