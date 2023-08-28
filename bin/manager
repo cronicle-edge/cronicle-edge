@@ -24,7 +24,7 @@ BINARY="node $HOMEDIR/lib/main.js"
 # check if bundle exist
 if [ -f "$HOMEDIR/bin/cronicle.js" ]; then
     BINARY="$HOMEDIR/bin/cronicle.js"
-    echo "starting bundle"
+    # echo "starting bundle"
 fi
 
 #$HOMEDIR/bin/control.sh start

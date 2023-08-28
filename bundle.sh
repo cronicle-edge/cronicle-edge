@@ -312,8 +312,9 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=no
 # --- setup configs on the initial run
 if [ ! -d $dist/conf ]; then
   writehead "Setting up initial configs"
-  cp -r sample_conf/  $dist/conf
-  rm -rf $dist/conf/examples
+  mkdir -p $dist/conf
+  cp sample_conf/config.json sample_conf/setup.json $dist/conf/
+  cp -r sample_conf/emails $dist/emails
   cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 > $dist/conf/secret_key
   chmod 400 $dist/conf/secret_key
 fi

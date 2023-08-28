@@ -191,6 +191,12 @@
 			"manager": 0
 		} ],
 		[ "listPush", "global/server_groups", {
+			"id": "managergrp",
+			"title": "Managers",
+			"regexp": "manager",
+			"manager": 1
+		} ],
+		[ "listPush", "global/server_groups", {
 			"id": "allgrp",
 			"title": "All Servers",
 			"regexp": ".+",

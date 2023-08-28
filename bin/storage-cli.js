@@ -22,7 +22,7 @@ process.chdir(path.dirname(__dirname));
 var config = require('../conf/config.json');
 
 // check for storage config file
-var storage_config = path.resolve(process.env['CRONICLE_storage_config'] || '../conf/storage.json');
+var storage_config = path.resolve(process.env['CRONICLE_storage_config'] || 'conf/storage.json');
 if(fs.existsSync(storage_config)) {                                                                 
         config.Storage = require(storage_config)                                                    
 }
