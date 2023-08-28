@@ -7,9 +7,9 @@ FROM alpine:3.17 as build
 RUN apk add --no-cache bash nodejs npm 
 COPY . /build
 WORKDIR /build
-RUN ./bundle.sh /dist --s3 --lmdb
+RUN ./bundle /dist --s3 --lmdb
 
-FROM alpine:3.16
+FROM alpine:3.17
 RUN apk add --no-cache bash nodejs tini util-linux bash openssl procps coreutils curl tar jq
 
 # non root user for shell plugin

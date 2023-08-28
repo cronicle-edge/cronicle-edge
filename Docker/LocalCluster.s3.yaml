@@ -43,7 +43,8 @@ services:
       - cron
     deploy:
       replicas: 1
-    entrypoint: manager
+    entrypoint: bash
+    command: -c 'curl -I http://minio:9000/minio/health/live && manager'
     environment:
       - CRONICLE_secret_key = cronicle_secret_key
     configs:
