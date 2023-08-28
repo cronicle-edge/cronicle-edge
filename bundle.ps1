@@ -60,12 +60,12 @@ if($V.IsPresent) {
 }
 
 if($All.IsPresent) {
-  $S3.IsPresent = $true
-  $Sftp.IsPresent = $true
-  $Lmdb.IsPresent = $true
-  $Level.IsPresent = $true
-  $Sql.IsPresent = $true 
-  $Tools.IsPresent = $true
+  $S3 = $true
+  $Sftp = $true
+  $Lmdb = $true
+  $Level = $true
+  $Sql = $true 
+  $Tools = $true
 }
 # -------------------------
 
