@@ -38,7 +38,7 @@
 			"enabled": 1,
 			"command": "node bin/shell-plugin.js",
 			"username": "admin",
-			"uid": "cronicle",
+			"uid": 1000,
 			"modified": 1434125333,
 			"created": 1434125333,
 			"params": [
@@ -189,6 +189,12 @@
 			"title": "Workers",
 			"regexp": "worker",
 			"manager": 0
+		} ],
+		[ "listPush", "global/server_groups", {
+			"id": "managergrp",
+			"title": "Managers",
+			"regexp": "manager",
+			"manager": 1
 		} ],
 		[ "listPush", "global/server_groups", {
 			"id": "allgrp",

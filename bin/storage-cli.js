@@ -22,7 +22,7 @@ process.chdir(path.dirname(__dirname));
 var config = require('../conf/config.json');
 
 // check for storage config file
-var storage_config = path.resolve(process.env['CRONICLE_storage_config'] || '../conf/storage.json');
+var storage_config = path.resolve(process.env['CRONICLE_storage_config'] || 'conf/storage.json');
 if(fs.existsSync(storage_config)) {                                                                 
         config.Storage = require(storage_config)                                                    
 }
@@ -389,11 +389,17 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 			var key = commands.shift();
 			var idx = parseInt(commands.shift() || 0);
 			var len = parseInt(commands.shift() || 0);
+			var compact = parseInt(commands.shift() || 0);
 			storage.listGet(key, idx, len, function (err, items) {
 				if (err) throw err;
-				print("Got " + items.length + " items.\n");
-				print("Items from list: " + key + ": " + JSON.stringify(items, null, "\t") + "\n");
-				print("\n");
+				if (compact) {
+					print(JSON.stringify(items))
+				}
+				else {
+					print("Got " + items.length + " items.\n");
+					print("Items from list: " + key + ": " + JSON.stringify(items, null, "\t") + "\n");
+					print("\n");
+				}
 
 				storage.shutdown(function () { process.exit(0); });
 			});

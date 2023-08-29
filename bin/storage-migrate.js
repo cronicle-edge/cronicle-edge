@@ -33,6 +33,12 @@ process.chdir( Path.dirname( __dirname ) );
 // load app's config file
 var config = require('../conf/config.json');
 
+// check for storage config file
+var storage_config = path.resolve(process.env['CRONICLE_storage_config'] || 'conf/storage.json');
+if(fs.existsSync(storage_config)) {                                                                 
+        config.Storage = require(storage_config)                                                    
+}
+
 var StorageMigrator = {
 	
 	version: "1.0.0",

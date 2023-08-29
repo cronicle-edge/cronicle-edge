@@ -6,7 +6,7 @@ version: '3.6'
 # ------------- template
 
 x-node: &node
-  image: cronicle/cronicle:edge
+  image: cronicle:bundle
   deploy:
     resources:
       limits:

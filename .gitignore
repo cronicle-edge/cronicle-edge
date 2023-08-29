@@ -4,7 +4,7 @@
 /queue
 /data
 /conf
-/dist
+/dist*
 /edge-storage-engines
 /target
 

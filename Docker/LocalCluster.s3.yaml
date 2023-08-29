@@ -1,12 +1,39 @@
 version: '3.8'
 services:
 
-# multi-manager cluster with s3
-# create minio service first (can use mini.yaml), using same network as this clustr (create overlay network called "cron")
-# use config.s3.json to create cron_s3 config
+# multi manager cluster with minio s3 storage
 
+# start:
+# docker stack deploy --compose-file  Docker/LocalCluster.s3.yaml cron_stack_s3
+
+# debug:
+# docker stack ps cron_stack_s3 
+# docker service logs cron_stack_s3_manager1
+
+# remove
+# docker stack rm cron_stack_s3 
+
+  minio:
+    image: bitnami/minio
+    hostname: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - cron_drive_s3:/data
+    networks:
+      - cron
+    deploy:
+      replicas: 1
+    user: root
+    entrypoint: bash
+    command: -c 'mkdir -p /data/cronicle && minio server /data --console-address ":9001"'
+    environment:
+      - "MINIO_ROOT_PASSWORD=minioadmin"
+      - "MINIO_ROOT_USER=minioadmin"
+     
   manager1:
-    image: cronicle:s3
+    image: cronicle:bundle
     hostname: manager1
     depends_on:
       - minio
@@ -16,15 +43,16 @@ services:
       - cron
     deploy:
       replicas: 1
-    entrypoint: manager
+    entrypoint: bash
+    command: -c 'curl -I http://minio:9000/minio/health/live && manager'
+    environment:
+      - CRONICLE_secret_key = cronicle_secret_key
     configs:
      - source: cron_s3
-       target: /opt/cronicle/conf/config.json
-      
-
+       target: /opt/cronicle/conf/storage.json  
 
   manager2:
-    image: cronicle:s3
+    image: cronicle:bundle
     hostname: manager2
     ports:
       - "3013:3012"
@@ -33,13 +61,14 @@ services:
     deploy:
       replicas: 1
     entrypoint: worker
+    environment:
+      - CRONICLE_secret_key = cronicle_secret_key
     configs:
      - source: cron_s3
-       target: /opt/cronicle/conf/config.json
-
+       target: /opt/cronicle/conf/storage.json
 
   manager3:
-    image: cronicle:s3
+    image: cronicle:bundle
     hostname: manager3
     ports:
       - "3014:3012"
@@ -48,17 +77,22 @@ services:
     deploy:
       replicas: 1
     entrypoint: worker
+    environment:
+      - CRONICLE_secret_key = cronicle_secret_key
     configs:
      - source: cron_s3
-       target: /opt/cronicle/conf/config.json
+       target: /opt/cronicle/conf/storage.json
+
 
 
 networks:
   cron:
-    external:
-      true
+    driver: overlay
+    attachable: true
       
 configs:
   cron_s3:
-    external:
-      true
+    file: ../sample_conf/examples/storage.s3.json
+
+volumes:
+  cron_drive_s3:

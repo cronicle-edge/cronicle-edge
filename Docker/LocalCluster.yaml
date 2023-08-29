@@ -14,7 +14,7 @@
 version: '3.8'
 services:
   worker1:
-    image: cronicle/cronicle:edge
+    image: cronicle:bundle
     hostname: worker1
     ports: 
       - "3013:3012"
@@ -23,15 +23,17 @@ services:
     deploy:
       replicas: 1
     entrypoint: worker
-    secrets:
-      - source: "secret_key"
-        target: "secret_key"
-        uid: "0"
-        gid: "0"
-        mode: 0400
+    environment:
+      - CRONICLE_secret_key = cronicle_secret_key
+    # secrets:
+    #   - source: "secret_key"
+    #     target: "secret_key"
+    #     uid: "0"
+    #     gid: "0"
+    #     mode: 0400
 
   worker2:
-    image: cronicle/cronicle:edge
+    image: cronicle:bundle
     hostname: worker2
     ports: 
       - "3014:3012"
@@ -40,39 +42,46 @@ services:
     deploy:
       replicas: 1
     entrypoint: worker
-    secrets:
-      - source: "secret_key"
-        target: "secret_key"
-        uid: "0"
-        gid: "0"
-        mode: 0400
+    environment:
+      - CRONICLE_secret_key = cronicle_secret_key
+    # secrets:
+    #   - source: "secret_key"
+    #     target: "secret_key"
+    #     uid: "0"
+    #     gid: "0"
+    #     mode: 0400
  
   manager1:
-    image: cronicle/cronicle:edge
+    image: cronicle:bundle
     hostname: manager1
     ports: 
       - "3012:3012"
+    volumes:
+      - cron_drive_fs:/data
     networks:
       - cw
     deploy:
       replicas: 1
     entrypoint: manager 
-    secrets:
-      - source: "secret_key"
-        target: "secret_key"
-        uid: "0"
-        gid: "0"
-        mode: 0400
     environment:
-      - "CRONICLE_manager=1"
+      - CRONICLE_secret_key = cronicle_secret_key
+    # secrets:
+    #   - source: "secret_key"
+    #     target: "secret_key"
+    #     uid: "0"
+    #     gid: "0"
+    #     mode: 0400
 
 networks:
   cw:
     driver: overlay
     attachable: true
     
-secrets:
-  secret_key:
-    external: true
+# secrets:
+#   secret_key:
+#     external: true
+
+volumes:
+  cron_drive_fs:
 
 # once manager1 is up and running go to Add Server menu and add worker1 and worker2
