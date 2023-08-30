@@ -1,6 +1,6 @@
 {
 	"name": "cronicle-edge",
-	"version": "1.6.4",
+	"version": "1.7.0",
 	"description": "A simple, distributed task scheduler and runner with a web based UI.",
 	"author": "Joseph Huckaby <jhuckaby@gmail.com>",
 	"homepage": "https://github.com/jhuckaby/Cronicle",
@@ -13,15 +13,16 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/jhuckaby/Cronicle"
+		"url": "https://github.com/cronicle-edge/cronicle-edge"
 	},
 	"bugs": {
-		"url": "https://github.com/jhuckaby/Cronicle/issues"
+		"url": "https://github.com/cronicle-edge/cronicle-edge/issues"
 	},
 	"keywords": [
 		"cron",
 		"crontab",
-		"scheduler"
+		"scheduler",
+		"Orchestra"
 	],
 	"dependencies": {
 		"@iarna/toml": "^2.2.5",
@@ -61,7 +62,7 @@
 		"pixl-server": "^1.0.40",
 		"pixl-server-api": "^1.0.2",
 		"pixl-server-storage": "^3.1.12",
-		"pixl-server-web": "^1.3.3",
+		"pixl-server-web": "^1.3.20",
 		"pixl-tools": "^1.0.29",
 		"pixl-webapp": "^2.0.2",
 		"read-last-lines": "^1.8.0",

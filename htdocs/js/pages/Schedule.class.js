@@ -693,7 +693,7 @@ toggle_token: function () {
 			// keyword filter
 			args.keywords = args.keywords || filter['keywords']
 			var words = [item.title, item.username, item.notes, item.target].join(' ').toLowerCase();
-			if (args.keywords && words.indexOf(args.keywords.toLowerCase()) == -1) continue;
+			if (('keywords' in args) && words.indexOf(args.keywords.toString().toLowerCase()) == -1) continue;
 
 			// enabled filter
 			args.enabled = args.enabled || filter['enabled']
