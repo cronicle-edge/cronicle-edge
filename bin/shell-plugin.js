@@ -83,6 +83,7 @@ stream.on('json', function (job) {
 	const cstream = job.tty ? new JSONStream(child.stdout) : new JSONStream(child.stdout, child.stdin);
 
 	cstream.recordRegExp = /^\s*\{.+\}\s*$/;
+	cstream.EOL = "\n" // force \n on Windows (default \r\n will cause issues if \n is used by the app (e.g. console.log))
 
 	cstream.on('json', function (data) {
 		// received JSON data from child, pass along to Cronicle or log
@@ -121,7 +122,7 @@ stream.on('json', function (job) {
 				let dargs = Tools.getDateArgs(new Date());
 				line = '[' + dargs.yyyy_mm_dd + ' ' + dargs.hh_mi_ss + '] ' + line;
 			}
-			fs.appendFileSync(job.log_file, line);
+			fs.appendFileSync(job.log_file, line);  
 		}
 	});
 
