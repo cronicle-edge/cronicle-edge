@@ -155,7 +155,8 @@ var StorageMigrator = {
 			'global/schedule',
 			'global/servers',
 			'global/api_keys',
-			'global/conf_keys'
+			'global/conf_keys',
+			'global/secrets'
 		];
 		lists.forEach( function(key) { self.copyList(key); } );
 		
