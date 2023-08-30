@@ -17,7 +17,6 @@
 // After completion, delete `Storage`, and rename `NewStorage` to `Storage`, and you're migrated.
 
 var Path = require('path');
-var os = require('os');
 var fs = require('fs');
 var async = require('async');
 var Logger = require('pixl-logger');
@@ -34,7 +33,7 @@ process.chdir( Path.dirname( __dirname ) );
 var config = require('../conf/config.json');
 
 // check for storage config file
-var storage_config = path.resolve(process.env['CRONICLE_storage_config'] || 'conf/storage.json');
+var storage_config = Path.resolve(process.env['CRONICLE_storage_config'] || 'conf/storage.json');
 if(fs.existsSync(storage_config)) {                                                                 
         config.Storage = require(storage_config)                                                    
 }
@@ -156,7 +155,8 @@ var StorageMigrator = {
 			'global/schedule',
 			'global/servers',
 			'global/api_keys',
-			'global/conf_keys'
+			'global/conf_keys',
+			'global/secrets'
 		];
 		lists.forEach( function(key) { self.copyList(key); } );
 		

@@ -7,5 +7,5 @@
 /dist*
 /edge-storage-engines
 /target
-
+node.napi.node
 package-lock.json
