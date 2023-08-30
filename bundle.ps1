@@ -83,7 +83,7 @@ Copy-Item -Force -r htdocs $Path/
 mkdir -EA SilentlyContinue $Path/htdocs/js/external, $Path/htdocs/css, $Path/htdocs/fonts | Out-Null
 
 mkdir -EA SilentlyContinue $Path/bin | Out-Null
-Copy-Item -Force bin/manager.bat, bin/cronctl.ps1 $Path/bin/
+Copy-Item -Force bin/manager.bat, bin/worker.bat, bin/control.sh.ps1 $Path/bin/
 Copy-Item bin/win-install.js $Path/bin/install.js
 Copy-Item bin/win-uninstall.js $Path/bin/uninstall.js
 Copy-Item -Force package.json $Path/bin/
@@ -355,6 +355,8 @@ if($SQL.IsPresent) {
 if($Lmdb.IsPresent) {
   Write-Host " * Lmdb cannot be fully bundled. lmdb package is installed in the dist folder using npm"
 }
+
+if($env:Path.indexOf("$FullPath\bin") -lt 0) { $env:Path = $env:Path + ";$FullPath\bin"; Write-Host "$Path\bin is added to path variable"}
 
 Write-Host "
 Before you begin:
