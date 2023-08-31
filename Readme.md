@@ -1,6 +1,6 @@
 # Overview
 
-This is a fork of [jhuckaby/Cronicle](https://github.com/jhuckaby/Cronicle) with quite a few new features and APIs. The main purpose of this fork is to make Cronicle work better with Docker, and add some experimental features that are only expected in Cronincle 2.0 (a.k.a. Orchestra)
+This is a fork of [jhuckaby/Cronicle](https://github.com/jhuckaby/Cronicle) with quite a few new features and APIs. The main purpose of this fork is to make Cronicle work better with Docker, and add some experimental features that are only expected in Cronicle 2.0 (a.k.a. Orchestra)
 
 You can quickly try it using Docker using image from docker hub:
 ```bash
