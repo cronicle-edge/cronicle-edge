@@ -4,7 +4,8 @@ This is a fork of [jhuckaby/Cronicle](https://github.com/jhuckaby/Cronicle) with
 
 You can quickly try it using Docker using image from docker hub:
 ```bash
- docker run -it  -p 3012:3012 -e CRONICLE_manager=1 cronicle/cronicle:edge manager 
+ docker run -it --rm -p 3012:3012 ghcr.io/cronicle-edge/cronicle-edge:main manager
+ # images are also generated for each release, e.g. ghcr.io/cronicle-edge/cronicle-edge:v1.7.0
 ```
 Or build the image locally - clone or download the latest release and run command below from project root
 ```bash
