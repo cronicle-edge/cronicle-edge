@@ -151,9 +151,9 @@ mkdir -p $dist/htdocs/css && cp \
  $dist/htdocs/css/
 
 mkdir -p $dist/htdocs/fonts && cp \
- node_modules/font-awesome/fonts/* \
- node_modules/@mdi/font/fonts/*.woff \
- node_modules/pixl-webapp/fonts/*.woff \
+ node_modules/font-awesome/fonts/*.woff2 \
+ node_modules/@mdi/font/fonts/*.woff2 \
+ node_modules/pixl-webapp/fonts/*.woff2 \
  $dist/htdocs/fonts/
 
 # code mirror css

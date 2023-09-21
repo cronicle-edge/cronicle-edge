@@ -10,8 +10,8 @@ const os = require('os');
 const cp = require('child_process');
 const path = require('path');
 const JSONStream = require('pixl-json-stream');
-const Tools = require('pixl-tools');
-const moment = require('moment')
+// const Tools = require('pixl-tools');
+// const moment = require('moment')
 const sqparse = require('shell-quote').parse;
 
 if(process.env['ENV_FILE']) {
@@ -20,7 +20,7 @@ if(process.env['ENV_FILE']) {
   } catch { }
 }
 
-let start = moment();
+// let start = moment();
 
 // setup stdin / stdout streams 
 process.stdin.setEncoding('utf8');
@@ -109,18 +109,19 @@ stream.on('json', function (job) {
 				memo: memoText
 			});	
 			
-			if(job.params.logmemo) { 
-				let dint = moment().diff(start) > 999000 ? 'm' : 's'
-				let diff = String(moment().diff(start, dint)).padStart(2, ' ')
-				start = moment()
-				console.log(`[${start.format('yyyy-MM-DD HH:mm:ss')}][${diff}${dint}]: ${memoText}`);
-			}
+			// if(job.params.logmemo) { 
+			// 	let dint = moment().diff(start) > 999000 ? 'm' : 's'
+			// 	let diff = String(moment().diff(start, dint)).padStart(2, ' ')
+			// 	start = moment()
+			// 	console.log(`[${start.format('yyyy-MM-DD HH:mm:ss')}][${diff}${dint}]: ${memoText}`);
+			// }
 		}
 		else {
 			// otherwise just log it
 			if (job.params.annotate) {
-				let dargs = Tools.getDateArgs(new Date());
-				line = '[' + dargs.yyyy_mm_dd + ' ' + dargs.hh_mi_ss + '] ' + line;
+				// let dargs = Tools.getDateArgs(new Date());
+				// line = '[' + dargs.yyyy_mm_dd + ' ' + dargs.hh_mi_ss + '] ' + line;
+				line = `[${new Date().toISOString()}] ${line}`
 			}
 			fs.appendFileSync(job.log_file, line);  
 		}
@@ -136,7 +137,7 @@ stream.on('json', function (job) {
 		stream.write({
 			complete: 1,
 			code: 1,
-			description: "Script failed: " + Tools.getErrorDescription(err)
+			description: "Script failed: " + err.message // Tools.getErrorDescription(err)
 		});
 
 		fs.unlink(script_file, function (err) { ; });

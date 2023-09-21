@@ -141,6 +141,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		var html = '';
 		var stats = app.state ? (app.state.stats || {}) : {};
 		var servers = app.servers || {};
+		var ui = app.config.ui || {};
 		var active_events = find_objects( app.schedule, { enabled: 1 } );
 		var mserver = servers[ app.managerHostname ] || {};
 
@@ -160,13 +161,17 @@ Class.subclass( Page.Base, "Page.Home", {
 			if (job.cpu) total_cpu += (job.cpu.current || 0);
 			if (job.mem) total_mem += (job.mem.current || 0);
 		}
+
+		let errBg = stats.jobs_completed > 0 && (stats.jobs_failed || 0)/stats.jobs_completed > (parseFloat(ui.err_rate) || 0.03) ? 'red2' : 'gray'
+		let errTitle = Object.entries(stats.errorLog || {}).slice(0,20).sort((a,b)=> a[1] < b[1] ? 1 : -1).map(e=>`${e[0]}:\t<b>${e[1]}</b>`).join("\n")
+
 		html += ` 
 				<fieldset style="margin-top:0px; margin-right:0px; padding-top:10px;"><legend>Server Stats</legend>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>EVENTS:&nbsp;<b> <span class="color_label gray">${ active_events.length}</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>CATEGORIES:&nbsp;<b> <span class="color_label gray">${app.categories.length}</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>PLUGINS:&nbsp;<b> <span class="color_label gray">${app.plugins.length}</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>JOBS COMPLETED TODAY:&nbsp;<b> <span class="color_label gray">${stats.jobs_completed || 0 }</span>&nbsp;</div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>FAILED:&nbsp;<b> <span class="color_label gray">${stats.jobs_failed || 0}</span>&nbsp;</div>
+				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>FAILED:&nbsp;<b> <span title="${errTitle}" class="color_label ${errBg}">${stats.jobs_failed || 0}</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>SUCCESS RATE:&nbsp;<b> <span class="color_label gray">${pct( (stats.jobs_completed || 0) - (stats.jobs_failed || 0), stats.jobs_completed || 1 ) }</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>AVG LOG SIZE:&nbsp;<b> <span class="color_label gray"> 2K</span>&nbsp;</div>
   
@@ -473,7 +478,7 @@ Class.subclass( Page.Base, "Page.Home", {
 			return (a.time_start < b.time_start) ? 1 : -1;
 		} );
 		
-		var cols = ['Job ID', 'Event Name', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Memo', 'Actions'];
+		var cols = ['Job ID', 'Event Name', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Performance', 'Memo', 'Actions'];
 		
 		// render table
 		var self = this;
@@ -529,6 +534,7 @@ Class.subclass( Page.Base, "Page.Home", {
 					'<div id="d_home_jt_elapsed_'+job.id+'">' + self.getNiceJobElapsedTime(job) + '</div>',
 					'<div id="d_home_jt_progress_'+job.id+'">' + self.getNiceJobProgressBar(job) + '</div>',
 					'<div id="d_home_jt_remaining_'+job.id+'">' + self.getNiceJobRemainingTime(job) + '</div>',
+					`<div style="width:180px;max-width:180px;" id="d_home_jt_perf_${job.id}"> ${job.cpu ? short_float(job.cpu.current) + '% | ' + get_text_from_bytes(job.mem.current) + ' | ' + get_text_from_bytes(job.log_file_size) : ''} </div>`,
 					'<div style="width:180px;max-width:180px;" id="d_home_jt_memo_'+job.id+'">' + '</div>',
 					actions.join(' | ')
 				];
@@ -724,6 +730,10 @@ Class.subclass( Page.Base, "Page.Home", {
 						if(String(job.memo).startsWith('WARN:')) memoClass = 'color_label yellow'
 						if(String(job.memo).startsWith('ERR:')) memoClass = 'color_label red'
 						$('#d_home_jt_memo_' + job.id).html(`<span class="${memoClass}">${encode_entities(job.memo)}</span>`);
+					}
+
+					if(job.cpu) {
+						$('#d_home_jt_perf_' + job.id).text(short_float(job.cpu.current) + '% | ' + get_text_from_bytes(job.mem.current) + ' | ' + get_text_from_bytes(job.log_file_size))
 					}
 					
 					// update progress bar without redrawing it (so animation doesn't jitter)
