@@ -526,7 +526,7 @@ toggle_token: function () {
 		var sEdges = []
 		var catMap = Object.fromEntries(app.categories.map(i => [i.id, i]))
 
-		let events = this.events || app.schedule
+		let events =  app.schedule || []
 		let currEvent = this.event || {} // will exist for "edit event" mode
 		
 
@@ -534,8 +534,8 @@ toggle_token: function () {
 			let jobGroup = job.enabled ? job.category : 'disabled';
 			let jobCat = catMap[job.category] || {} ;
 
-			if(job.id === currEvent.id) job.graph_icon = $("#fe_ee_graph_icon").val()
-			let code = parseInt(job.graph_icon, 16) || 61713
+			let iconCd = job.id === currEvent.id ? $("#fe_ee_graph_icon").val() : job.graph_icon
+			let code = parseInt(iconCd, 16) || 61713
 			if(Array.isArray(job.workflow)) code = 61563 
 			let jobIcon = String.fromCodePoint(code);
 
