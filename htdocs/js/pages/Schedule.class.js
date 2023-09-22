@@ -534,7 +534,7 @@ toggle_token: function () {
 			let jobGroup = job.enabled ? job.category : 'disabled';
 			let jobCat = catMap[job.category] || {} ;
 
-			let iconCd = job.id === currEvent.id ? $("#fe_ee_graph_icon").val() : job.graph_icon
+			let iconCd = job.id === currEvent.id ? $("#fe_ee_graph_icon").val() || job.graph_icon : job.graph_icon
 			let code = parseInt(iconCd, 16) || 61713
 			if(Array.isArray(job.workflow)) code = 61563 
 			let jobIcon = String.fromCodePoint(code);
@@ -547,8 +547,8 @@ toggle_token: function () {
 				group: jobGroup,
 				shape: 'icon',
 				icon: {face: "'FontAwesome'", code: jobIcon, color: jobColor }
-
 			 })
+
 			if (job.chain) sEdges.push({ from: job.id, to: job.chain, arrows: "to", color: "green", length: 160 })
 			if (job.chain_error) sEdges.push({ from: job.id, to: job.chain_error, arrows: "to", color: "red", length: 160 })
             
