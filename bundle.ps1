@@ -119,9 +119,9 @@ Copy-Item -Force htdocs/css/style.css `
 
 # FONTS
 Copy-Item -Force `
-  node_modules/font-awesome/fonts/* `
-  , node_modules/@mdi/font/fonts/*.woff `
-  , node_modules/pixl-webapp/fonts/*.woff `
+  node_modules/font-awesome/fonts/*.woff2 `
+  , node_modules/@mdi/font/fonts/*.woff2 `
+  , node_modules/pixl-webapp/fonts/*.woff2 `
   $Path/htdocs/fonts/
 
 # code mirror css (combo)

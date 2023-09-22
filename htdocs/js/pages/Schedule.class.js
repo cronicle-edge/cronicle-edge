@@ -97,6 +97,11 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		
 	},
 
+	update_graph_icon_label: function() {
+		let code = parseInt($('#fe_ee_graph_icon').val(), 16) || 61713
+		$("#fe_ee_graph_icon_label").text(' ' + String.fromCodePoint(code))
+	},
+
 	///  filelist
 
 	extension_map: {
@@ -521,12 +526,18 @@ toggle_token: function () {
 		var sEdges = []
 		var catMap = Object.fromEntries(app.categories.map(i => [i.id, i]))
 
-		this.events.forEach((job, index) => {
+		let events =  app.schedule || []
+		let currEvent = this.event || {} // will exist for "edit event" mode
+		
+
+		events.forEach((job, index) => {
 			let jobGroup = job.enabled ? job.category : 'disabled';
 			let jobCat = catMap[job.category] || {} ;
 
-			if(Array.isArray(job.workflow)) job.graph_icon = 'f07b' 
-			let jobIcon = String.fromCharCode(parseInt(job.graph_icon || 'f111', 16));
+			let iconCd = job.id === currEvent.id ? $("#fe_ee_graph_icon").val() : job.graph_icon
+			let code = parseInt(iconCd, 16) || 61713
+			if(Array.isArray(job.workflow)) code = 61563 
+			let jobIcon = String.fromCodePoint(code);
 
 			let jobColor = job.enabled ? (jobCat.gcolor || "#3498DB" ) : "lightgray" // #3f7ed5
 			sNodes.push({ 
@@ -580,6 +591,9 @@ toggle_token: function () {
 		}
 
 		let net = new vis.Network(document.getElementById("schedule_graph2"), sGraph, options)
+		if(currEvent.id) {
+			net.selectNodes([currEvent.id])
+		}
 
 		// allow delete event by pressing del key
 		$(document).keyup(function (e) {
@@ -607,6 +621,7 @@ toggle_token: function () {
 		// render table of events with filters and search
 		this.div.removeClass('loading');
 		app.setWindowTitle("Scheduled Events");
+		const self = this
 
 		var size = get_inner_window_size();
 		var col_width = Math.floor(((size.width * 0.9) + 200) / 8);
@@ -632,6 +647,7 @@ toggle_token: function () {
 			'Target',
 			'Timing',
 			'Last Run',
+			'Modified', 
 			'Actions'
 		];
 
@@ -754,18 +770,24 @@ toggle_token: function () {
 			item.plugin_title = plugin ? plugin.title : 'No Plugin';
 		});
 
-		// sort events by title ascending
-		this.events = this.events.sort(function (a, b) {
-			var key = group_by ? (group_by + '_title') : 'title';
-			if (group_by && (a[key].toLowerCase() == b[key].toLowerCase())) key = 'title';
-			return a[key].toLowerCase().localeCompare(b[key].toLowerCase());
-			// return (b.title < a.title) ? 1 : -1;
-		});
+		if (group_by === 'modified') {
+			this.events.sort((a, b) => self.alt_sort * (b.modified - a.modified)) // default Z->A. if alt_sort is set then A-Z
+		}
+		else {
+			// sort events by title ascending
+			this.events = this.events.sort(function (a, b) {
+				var key = group_by ? (group_by + '_title') : 'title';
+				if (group_by && (a[key].toLowerCase() == b[key].toLowerCase())) key = 'title';
+				return self.alt_sort*a[key].toLowerCase().localeCompare(b[key].toLowerCase());
+				// return (b.title < a.title) ? 1 : -1;
+			});
+		}
 
 		// header center (group by buttons)
 		cols.headerRight = `
 		<div class="schedule_group_button_container">
-		<i class="fa fa-clock-o ${ group_by ? '' : 'selected' }" title="Sort by Title" onMouseUp="$P().change_group_by(\'\')"></i>
+		<i class="fa fa-sort-alpha-asc ${ group_by ? '' : 'selected' }" title="Sort by Title" onMouseUp="$P().change_group_by(\'\')"></i>
+		<i class="fa fa-clock-o ${ group_by == 'modified' ? 'selected' : ''}" title="Sort by Modified" onMouseUp="$P().change_group_by(\'modified\')"></i>	
 		<i class="fa fa-folder-open-o ${group_by == 'category' ? 'selected' : ''}" title="Group by Category" onMouseUp="$P().change_group_by(\'category\')"></i>
 		<i class="fa fa-plug ${ group_by == 'plugin' ? 'selected' : ''}" title="Group by Plugin" onMouseUp="$P().change_group_by(\'plugin\')"></i>
 		<i class="mdi mdi-server-network ${((group_by == 'group') ? 'selected' : '')}" title="Group by Target" onMouseUp="$P().change_group_by(\'group\')"></i>
@@ -774,7 +796,6 @@ toggle_token: function () {
 		</div>
 		`
 		// render table
-		var self = this;
 		var last_group = '';
 
 		var htmlTab = this.getBasicTable2(this.events, cols, 'event', function (item, idx) {
@@ -832,6 +853,8 @@ toggle_token: function () {
 				niceTiming = `<span title="${inactiveTitle}"><s>${niceTiming}</s>`
 				if(item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`
 			}
+
+			let now = Date.now()/1000
 			
 			var tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
@@ -841,6 +864,7 @@ toggle_token: function () {
 				self.getNiceGroup(group, item.target, col_width),
 				niceTiming + chainInfo,
 				'<span id="ss_' + item.id + '" onMouseUp="$P().jump_to_last_job('+idx+')">' + status_html + '</span>',
+				get_text_from_seconds(now - item.modified, true, true ), //modified
 				actions.join('&nbsp;|&nbsp;')
 			];
 
@@ -938,7 +962,12 @@ toggle_token: function () {
 		} );
 	},
 
+	alt_sort: 1,
+
 	change_group_by: function (group_by) {
+		// toggle sort order for title and time
+		if (group_by === app.getPref('schedule_group_by')) this.alt_sort *= -1
+		else this.alt_sort = 1
 		// change grop by setting and refresh schedule display
 		app.setPref('schedule_group_by', group_by);
 		this.gosub_events(this.args);
@@ -1795,10 +1824,11 @@ toggle_token: function () {
 		html += get_form_table_spacer();
 
 		// graph icon
-		let faOpts = Object.keys(app.fa_icons).map(k => `<option value='${k}'>&#x${k}; ${app.fa_icons[k]}</option>`).join("\n")
-		html += get_form_table_row('Graph Icon', `<select id="fe_ee_graph_icon" style="font-family:fontAwesome">${faOpts}</select>`);
-		html += `<script>$('#fe_ee_graph_icon').val('${event.graph_icon || 'f111'}') </script>`
-		html += get_form_table_caption("Select icon to display event node on graph view");
+		let giTitle = "Specify the hex code of fontAwsome or Unicode character. The default value is F111 (FA circle)"
+		let giLabel = `<label for="fe_ee_graph_icon"><i style="font-family: FontAwesome; font-style: normal;  font-weight: 900; vertical-align: middle" onclick="$P().show_graph()" id="fe_ee_graph_icon_label"/></label>`
+		html += get_form_table_row('Graph Icon', `<input id="fe_ee_graph_icon" oninput="$P().update_graph_icon_label()" size=5 title="${giTitle}" value="${event.graph_icon || ''}"/>${giLabel}`);
+		html += get_form_table_caption("hex code");
+		html += '<script>$P().update_graph_icon_label()</script>'
 		html += get_form_table_spacer();
 
 		// notes
@@ -2667,7 +2697,7 @@ toggle_token: function () {
 		// event silent
 		event.silent = $('#fe_ee_silent').is(':checked') ? 1 : 0;
 		//graph icon 
-		event.graph_icon = $('#fe_ee_graph_icon').val() || 'f111';
+		event.graph_icon = $('#fe_ee_graph_icon').val()  //|| 'f111';
 		//args
 		event.args = $('#fe_ee_args').val()
 		event.ticks = $('#fe_ee_ticks').val()

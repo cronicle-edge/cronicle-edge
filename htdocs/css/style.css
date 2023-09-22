@@ -726,3 +726,7 @@ td.table_label {
 			height: 450px;
 			border: solid 1px #ddd;
 		}
+
+		span.red2 {
+			background-color: #ac394d;
+		}
