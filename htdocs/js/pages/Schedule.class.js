@@ -526,10 +526,15 @@ toggle_token: function () {
 		var sEdges = []
 		var catMap = Object.fromEntries(app.categories.map(i => [i.id, i]))
 
-		this.events.forEach((job, index) => {
+		let events = this.events || app.schedule
+		let currEvent = this.event || {} // will exist for "edit event" mode
+		
+
+		events.forEach((job, index) => {
 			let jobGroup = job.enabled ? job.category : 'disabled';
 			let jobCat = catMap[job.category] || {} ;
 
+			if(job.id === currEvent.id) job.graph_icon = $("#fe_ee_graph_icon").val()
 			let code = parseInt(job.graph_icon, 16) || 61713
 			if(Array.isArray(job.workflow)) code = 61563 
 			let jobIcon = String.fromCodePoint(code);
@@ -586,6 +591,9 @@ toggle_token: function () {
 		}
 
 		let net = new vis.Network(document.getElementById("schedule_graph2"), sGraph, options)
+		if(currEvent.id) {
+			net.selectNodes([currEvent.id])
+		}
 
 		// allow delete event by pressing del key
 		$(document).keyup(function (e) {
@@ -1817,7 +1825,7 @@ toggle_token: function () {
 
 		// graph icon
 		let giTitle = "Specify the hex code of fontAwsome or Unicode character. The default value is F111 (FA circle)"
-		let giLabel = `<label for="fe_ee_graph_icon"><i style="font-family: FontAwesome; font-style: normal;  font-weight: 900; vertical-align: middle" id="fe_ee_graph_icon_label"/></label>`
+		let giLabel = `<label for="fe_ee_graph_icon"><i style="font-family: FontAwesome; font-style: normal;  font-weight: 900; vertical-align: middle" onclick="$P().show_graph()" id="fe_ee_graph_icon_label"/></label>`
 		html += get_form_table_row('Graph Icon', `<input id="fe_ee_graph_icon" oninput="$P().update_graph_icon_label()" size=5 title="${giTitle}" value="${event.graph_icon || ''}"/>${giLabel}`);
 		html += get_form_table_caption("hex code");
 		html += '<script>$P().update_graph_icon_label()</script>'
