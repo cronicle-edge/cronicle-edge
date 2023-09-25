@@ -144,7 +144,7 @@ stream.on('json', function (job) {
 			print(` \n ├───────> starting \u001b[1m${task.title}\u001b[22m${task.arg ? ': ' + task.arg : ''}`);
 
 			try {
-				let job = await getJson(baseUrl + '/api/app/run_event', { id: task.id, arg: task.arg || 0 });
+				let job = await getJson(baseUrl + '/api/app/run_event', { id: task.id, arg: task.arg || 0, args: task.arg || 0  });
 				if (job.data.queue) throw new Error("Event has beed added to internal queue and will run independently from this WF")
 				jobStatus[job.data.ids[0]] = {
 					event: task.id
@@ -206,6 +206,10 @@ stream.on('json', function (job) {
 				}
 
 				if (!(resp.data.jobs[j]) && !(rerunList[j])) {  // if job is not in active job list or rerun queue - mark as completed
+                    
+					// this should be at the top of "if", to avoid infinite loop (bug on early 1.7.x)
+					jobStatus[j].completed = true 
+					pendingJobs -= 1
 
 					//if(rerunList[j]) print(`job ${j} is still running on background`)
 
@@ -241,9 +245,6 @@ stream.on('json', function (job) {
 							continue
 						}
 
-						jobStatus[j].completed = true
-						pendingJobs -= 1
-
 						let compl = jd.data.job;
 						if (compl) {
 							if (compl.code == 0) { jstat = '\u001b[32m⬤\u001b[39m' }
@@ -274,7 +275,7 @@ stream.on('json', function (job) {
 						msg += `\n ├───────> starting \u001b[1m${task.title}\u001b[22m${task.arg ? ': ' + task.arg : ''}`;
 
 						try {
-							let job = await getJson(baseUrl + '/api/app/run_event', { id: task.id, arg: task.arg || 0 });
+							let job = await getJson(baseUrl + '/api/app/run_event', { id: task.id, arg: task.arg || 0, args: task.arg || 0  });
 							if (job.data.queue) throw new Error("Event has beed added to internal queue and will run independently from this WF")
 							jobStatus[job.data.ids[0]] = {
 								event: task.id
@@ -329,18 +330,34 @@ stream.on('json', function (job) {
 			perf[perf_key] = jobStatus[key].elapsed || 0
 		})
 
+		function getNiceTitle(job, id) {
+			let title = '<b> ' + job.seq + ' :: ' + (job.title || 'Unknown') + '</b>'
+			// if(id) title = `${id} :: ${title} `
+			// if(job.arg) title = title + ' :: ' + job.arg
+			if(job.arg) title = title + '@' + job.arg
+			return he.encode(title)
+		}
+
+		function getNiceStatus(job) {
+			return job.code ? (job.code == 255 ? '<span style="color:orange"><b>⚠️</b></span>' : '<span style="color:red"><b>✗</b></span>') : '<span style="color:green"><b>✔</b></span>'
+		}
+
 		var table = {
 			title: "Workflow Events",
 			header: [
-				"#", "title", "job", "started at", "elapsed", "status", "description"
+				"#", "title", "arg", "status", "job", "view log", "started at", "elapsed", "description"
 			],
 			rows: Object.keys(jobStatus).map(key => [
 				jobStatus[key].seq,
-				`<span style="${jobStatus[key].code % 255 ? 'color:red' : ''}"><b>${he.encode(jobStatus[key].title) || '[Unknown]'}</b></span>` + (jobStatus[key].arg ? ': ' + he.encode(jobStatus[key].arg) : ''),
-				key === jobStatus[key].event ? '' : `<a href="/#JobDetails?id=${key}" target="_blank">${key}</a>`,
+				
+				`<span style="${jobStatus[key].code % 255 ? 'color:red' : ''}"><b>${he.encode(jobStatus[key].title) || '[Unknown]'}</b></span>`,  //title
+				(jobStatus[key].arg ? he.encode(jobStatus[key].arg) : ''),  // arg
+				
+				key === jobStatus[key].event ? '' : `<a href="/#JobDetails?id=${key}" target="_blank">${key}</a>`,  // joblink
+				getNiceStatus(jobStatus[key]), // status
+				key === jobStatus[key].event ? '' : `<i id="view_${key}" onclick="this.className = this.className == 'fa fa-eye' ? 'fa fa-eye-slash' : 'fa fa-eye'; $P().get_log_to_grid('${getNiceTitle(jobStatus[key], key)}', '${key}')" style="cursor:pointer" class="fa fa-eye"></i>`,
 				jobStatus[key].start,
 				niceInterval(jobStatus[key].elapsed),
-				jobStatus[key].code ? (jobStatus[key].code == 255 ? '<span style="color:orange"><b>⚠️</b></span>' : '<span style="color:red"><b>✗</b></span>') : '<span style="color:green"><b>✔</b></span>',
 				//jobStatus[key].code ? `${he.encode(jobStatus[key].description)}`.substring(0,120) : ''
 				`${he.encode(jobStatus[key].description)}`.substring(0, 120)
 

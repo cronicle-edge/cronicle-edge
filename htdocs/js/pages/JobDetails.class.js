@@ -374,6 +374,48 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 			if (job.html.caption) html += '<div class="caption" style="margin-top:4px; text-align:center;">' + job.html.caption + '</div>';
 		}
 
+		// log grid
+
+		html += `
+		<style>
+
+		.grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 20px;
+        }
+
+        .grid-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+			word-wrap: break-word;
+			overflow: hidden;
+			white-space: normal;
+        }
+
+        .grid-title {   
+			/* font-weight: bold;        */
+			font-size: 1.6em;
+        }
+		</style>
+		<script>
+        // Get all grid items
+        function addNewItem(id, text) {
+
+            const newItem = document.createElement('div');
+            newItem.className = 'grid-item'; // Apply any necessary classes
+            newItem.innerHTML = '<div class="grid-title">text1</div><pre>' + text + '</pre>';
+            const gridContainer = document.getElementById('log_grid');
+            gridContainer.appendChild(newItem);
+
+        }
+
+    </script>
+		<div id="log_grid" class="grid-container"></div>
+		
+		`
+
 		// job log (IFRAME)
 		html += '<div class="subtitle" style="margin-top:15px;">';
 		html += 'Console Output';
@@ -665,6 +707,30 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		// download job log file
 		var job = this.job;
 		window.location = '/api/app/get_job_log?id=' + job.id + '&download=1' + '&session_id=' + localStorage.session_id;
+	},
+
+	unsetLogIcon(id) {
+		let el = document.getElementById('view_' + id)
+		if(el) el.className = 'fa fa-eye'
+	},
+
+	get_log_to_grid: function(title, id) {
+		if(!title) return
+		if(!id) id = title 
+		let curr = document.getElementById('log_' + id)
+		if(curr) { curr.remove(); return }
+
+		$.get('/api/app/get_job_log?id=' + id, (resp)=>{
+			let size = this.args.tail || 25
+			data = new AnsiUp().ansi_to_html(resp.split("\n").slice(-1*size - 4, -4).join("\n"))
+			const newItem = document.createElement('div');
+			newItem.setAttribute('id', 'log_' + id)
+            newItem.className = 'grid-item'; // Apply any necessary classes
+            newItem.innerHTML = `<div class="grid-title">${title}<i class="fa fa-window-close" style="float:right; cursor: pointer" onclick="$P().unsetLogIcon('${id}');this.parentNode.parentNode.remove()"></i></div> <pre>${data}</pre>`;
+            const gridContainer = document.getElementById('log_grid');
+            gridContainer.appendChild(newItem);
+			
+		})
 	},
 
 	do_view_inline_log: function () {
