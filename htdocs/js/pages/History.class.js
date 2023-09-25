@@ -92,7 +92,7 @@ Class.subclass( Page.Base, "Page.History", {
 			resp.rows = newRows
 		} //
 		
-		var cols = ['Job ID', 'Event Name', 'Category', 'Plugin', 'Hostname', 'Result', 'Start Date/Time', 'Elapsed Time'];
+		var cols = ['Job ID', 'Event Name', 'Category', 'Plugin', 'Hostname',  'Result', 'Start Date/Time', 'Elapsed Time'];
 		
 		var self = this;
 		var num_visible_items = 0;
@@ -110,10 +110,11 @@ Class.subclass( Page.Base, "Page.History", {
 			var event = find_object( app.schedule, { id: job.event } );
 			var event_link = '(None)';
 			if (event && job.id) {
-				event_link = '<div class="td_big"><a href="#History?sub=event_history&id='+job.event+'">' + self.getNiceEvent('<b>' + (event.title || job.event) + '</b>', col_width + 40) + '</a></div>';
+				jobArg = job.arg ? ' :: ' + job.arg.substring(0,40) : ''
+				event_link = '<div class="td_big"><a href="#History?sub=event_history&id='+job.event+'">' + self.getNiceEvent((event.title || job.event) + jobArg, col_width + 40) + '</a></div>';
 			}
 			else if (job.event_title) {
-				event_link = self.getNiceEvent(job.event_title, col_width + 40);
+				event_link = self.getNiceEvent(job.event_title + jobArg , col_width + 40);
 			}
 			
 			var cat = job.category ? find_object( app.categories, { id: job.category } ) : null;
@@ -134,11 +135,12 @@ Class.subclass( Page.Base, "Page.History", {
 			
 			var tds = [
 				job_link,
-				event_link,
+				event_link ,				
 				self.getNiceCategory( cat, col_width ),
 				self.getNicePlugin( plugin, col_width ),
-				self.getNiceGroup( null, job.hostname, col_width ),
+				self.getNiceGroup( null, job.hostname, col_width ),				
 				jobStatus,
+				// job.arg ? `<div class="ellip" style="max-width:40">${String(job.arg).substring(0,40)}</div>`  : '', // argument
 				get_nice_date_time( job.time_start, false, true ),
 				get_text_from_seconds( job.elapsed, true, false )
 				// actions.join(' | ')
