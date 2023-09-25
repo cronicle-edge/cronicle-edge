@@ -521,20 +521,22 @@ toggle_token: function () {
 	},
 
 	render_schedule_graph: function () {
-		
+				
 		var sNodes = []
 		var sEdges = []
 		var catMap = Object.fromEntries(app.categories.map(i => [i.id, i]))
 
 		let events =  app.schedule || []
 		let currEvent = this.event || {} // will exist for "edit event" mode
+		const args  = this.args || {};
 		
 
 		events.forEach((job, index) => {
 			let jobGroup = job.enabled ? job.category : 'disabled';
 			let jobCat = catMap[job.category] || {} ;
 
-			let iconCd = job.id === currEvent.id ? $("#fe_ee_graph_icon").val() || job.graph_icon : job.graph_icon
+			// if in event edit mode - use current icon for preview
+			let iconCd = args.sub == 'edit_event' &&  job.id === currEvent.id ? $("#fe_ee_graph_icon").val() : job.graph_icon
 			let code = parseInt(iconCd, 16) || 61713
 			if(Array.isArray(job.workflow)) code = 61563 
 			let jobIcon = String.fromCodePoint(code);
