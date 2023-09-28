@@ -749,16 +749,27 @@ toggle_token: function () {
 
 		// Scheduled Event page:
 
+		let miniButtons = '<div style="float:right;" class="subtitle_widget"><i style="width:20px;cursor:pointer;margin-right: 20px" class="fa fa-pie-chart" title="Show Event Graph" onMouseUp="$P().show_graph()"></i></div>'
+
+		if (app.isAdmin()) {
+			miniButtons += '<div style="float:right;" class="subtitle_widget"><i style="width:20px;cursor:pointer;" class="fa fa-download" title="Backup" onMouseUp="$P().export_schedule()"></i></div>'
+		}
+
+		if (app.hasPrivilege('create_events')) {
+			miniButtons += '<div style="float:right;" class="subtitle_widget"><i style="width:20px;cursor:pointer;" class="fa fa-random" title="Random Event" onMouseUp="$P().do_random_event()"></i></div>'
+			miniButtons += '<div style="float:right;" class="subtitle_widget"><i style="width:20px;cursor:pointer;" class="fa fa fa-plus-circle" title="Add Event" onMouseUp="$P().edit_event(-1)"></i></div>'
+		}
+
 		html += `
 		<div style="padding:20px 20px 20px 20px">
-		<div class="subtitle">	Scheduled Events ${cycleWarning} </div>
-		<div class="subtitle_widget"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="10" placeholder="Find events..." style="border:0px;" value="${escape_text_field_value(args.keywords)}"/></div>
-		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_target" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Servers</option>${this.render_target_menu_options(args.target)}</select></div>
-		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>${render_menu_options(app.plugins, args.plugin, false)}</select></div>
-		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>${render_menu_options(app.categories, args.category, false)}</select>
-		<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>${render_menu_options( [[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"], ["chained", "Chained"]], args.enabled, false )}</select></div>
-		<div class="clear"></div>
-		</div>
+		 <div class="subtitle">	Scheduled Events ${cycleWarning} 
+		  <div class="subtitle_widget"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="10" placeholder="Find events..." style="border:0px;" value="${escape_text_field_value(args.keywords)}"/></div>
+		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_target" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Servers</option>${this.render_target_menu_options(args.target)}</select></div>
+		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>${render_menu_options(app.plugins, args.plugin, false)}</select></div>
+		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>${render_menu_options(app.categories, args.category, false)}</select></div>
+		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>${render_menu_options( [[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"], ["chained", "Chained"]], args.enabled, false )}</select></div>
+          ${miniButtons}
+		 <div class="clear"></div>
 		</div>
 		`
 		// prep events for sort
@@ -859,7 +870,7 @@ toggle_token: function () {
 			let now = Date.now()/1000
 			
 			var tds = [
-				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
+				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ', this)" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
 				'<div class="td_big"><span class="link" onMouseUp="$P().edit_event(' + idx + ')">' + evt_name + '</span></div>',
 				self.getNiceCategory(cat, col_width),
 				self.getNicePlugin(plugin, col_width),
@@ -981,22 +992,40 @@ toggle_token: function () {
 		this.change_group_by(app.getPref('schedule_group_by'))
 	},
 
-	change_event_enabled: function (idx) {
+	change_event_enabled: function (idx, box) {
 		// toggle event on / off
 		var event = this.events[idx];
-		event.enabled = event.enabled ? 0 : 1;
 
-		var stub = {
-			id: event.id,
-			title: event.title,
-			enabled: event.enabled,
-			catch_up: event.catch_up || false
-		};
+		let action = event.enabled ? 'Disable' : 'Enable'
+		let msg = `Are you sure you want to ${action} <b>${event.title}</b> event?`
 
-		app.api.post('app/update_event', stub, function (resp) {
-			$('#' + event.id).toggleClass('disabled')
-			app.showMessage('success', "Event '" + event.title + "' has been " + (event.enabled ? 'enabled' : 'disabled') + ".");
+		app.confirm(`<span style="color:red">${action} Event</span>`, msg, action, function (result) {
+			if (result) {
+
+				event.enabled = event.enabled ? 0 : 1;
+
+				var stub = {
+					id: event.id,
+					title: event.title,
+					enabled: event.enabled,
+					catch_up: event.catch_up || false
+				};
+				
+				app.showProgress(1.0, "Updating Event...");
+
+				app.api.post('app/update_event', stub, function (resp) {
+					app.hideProgress();
+					app.showMessage('success', "Event '" + event.title + "' has been " + action + "d.");
+					$('#' + event.id).toggleClass('disabled');
+				});	
+			
+			}
+			else {
+               if(box) box.checked = !box.checked 
+			}			
+			
 		});
+		
 	},
 
 	run_event: function (event_idx, e) {
@@ -1275,8 +1304,10 @@ toggle_token: function () {
 		<div style="padding:20px;">
 		<div class="subtitle">
 		Editing Event &ldquo;${event.title}&rdquo;
+		<div class="subtitle_widget"><a style="cursor:pointer" onclick="$P().do_copy_event()"><i class="fa fa-clone">&nbsp;</i><b>Copy</b></a></div>
 		<div class="subtitle_widget" style="margin-left:5px;"><a href="#History?sub=event_history&id=${event.id}"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to History</b></a></div>
 		<div class="subtitle_widget"><a href="#History?sub=event_stats&id=${event.id}"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to Stats</b></a></div>
+		
 		<div class="clear"></div>
 		</div>
 		</div>
@@ -1342,6 +1373,7 @@ toggle_token: function () {
 		delete event.created;
 		delete event.modified;
 		delete event.username;
+		delete event.timing;
 
 		event.title = "Copy of " + event.title;
 

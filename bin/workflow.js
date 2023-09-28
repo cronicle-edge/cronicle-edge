@@ -7,6 +7,8 @@ const he = require('he');
 const {EOL} = require('os')
 const JSONStream = require('pixl-json-stream');
 
+let bullet = '>' // '⬤'
+
 if (!process.env['WF_SIGNATURE']) throw new Error('WF Signature is not set')
 request.setHeader('x-wf-signature', process.env['WF_SIGNATURE'])
 request.setHeader('x-wf-id', process.env['JOB_ID'])
@@ -21,7 +23,7 @@ let jobStatus = {}  // a map of launched jobs
 let finishingJobs = {} // a map for 
 
 let errorCount = 0
-let wfStatus = 'running'
+let shuttingDown = false
 let max_errors = parseInt(process.env['WF_MAXERR']);
 
 const print = (text) => {
@@ -48,6 +50,13 @@ function getJson(url, data) {
 function sleep(millis) { return new Promise(resolve => setTimeout(resolve, millis)) }
 
 async function abortPending() {
+
+	if(shuttingDown) return
+	shuttingDown = true
+    
+	print(' │')
+	print('Caught SIGTERM/Disconnect, aborting pending jobs');
+
 	for (let j in jobStatus) {
 		try {
 			if (!(jobStatus[j].completed)) {
@@ -59,17 +68,19 @@ async function abortPending() {
 			print('Failed to abort job: ' + j + ': ' + e.message);
 		}
 	}
+	print(' │')
 }
 
-
 // handle termination
-process.on('SIGTERM', async function () {
-	print("Caught SIGTERM, aborting pending jobs");
+process.on('SIGTERM', abortPending)
+process.on('disconnect', abortPending)
 
-	wfStatus = 'abort';
-	await abortPending();
-
-});
+function hasActiveJob(jobs) {
+	for(j in jobs) {
+		if(!jobs[j].completed) return true		
+	}
+	return false
+}
 
 // -------------------------- MAIN --------------------------------------------------------------//
 
@@ -117,7 +128,7 @@ stream.on('json', function (job) {
 		for (let id in r.data.jobs) { currActive.push(r.data.jobs[id].event) }
 
 		print(`	\u001b[1mJob Schedule [Concurrency: ${concur}, From Step: ${startFrom}]\u001b[22m`);
-		print(`\n RUNNING(${taskList.length}): `)
+		print(`${EOL} RUNNING(${taskList.length}): `)
 
 		let lineLen = 0;
 		taskList.forEach(e => {
@@ -141,7 +152,7 @@ stream.on('json', function (job) {
 		// launch first batch of jobs
 		for (let q = 0; q < concur; q++) {
 			let task = taskList[q];
-			print(` \n ├───────> starting \u001b[1m${task.title}\u001b[22m${task.arg ? ': ' + task.arg : ''}`);
+			print(` ${EOL} ├───────> starting \u001b[1m${task.title}\u001b[22m${task.arg ? ': ' + task.arg : ''}`);
 
 			try {
 				let job = await getJson(baseUrl + '/api/app/run_event', { id: task.id, arg: task.arg || 0, args: task.arg || 0  });
@@ -179,7 +190,7 @@ stream.on('json', function (job) {
 
 		let next = concur;
 		// begin polling
-		while (pendingJobs) {
+		while (pendingJobs > 0 && hasActiveJob(jobStatus)) {
 
 			await sleep(1000);
 
@@ -201,7 +212,7 @@ stream.on('json', function (job) {
 				if (rerunList[j] && jobStatus[j].rerunid !== rerunList[j].id) {
 					jobStatus[j].rerunid = rerunList[j].id
 					let attLeft = rerunList[j].retries ? `retries left: ${rerunList[j].retries}` : 'last attempt'
-					print(` ├───── ⚠️ ${jobStatus[j].title} failed, will retry at ${niceInterval(rerunList[j].when, true)} [${attLeft}] \n │`)  //${niceInterval(rerunList[j].when, true)}
+					print(` ├───── ⚠️ ${jobStatus[j].title} failed, will retry at ${niceInterval(rerunList[j].when, true)} [${attLeft}] ${EOL} │`)  //${niceInterval(rerunList[j].when, true)}
 					continue
 				}
 
@@ -217,7 +228,7 @@ stream.on('json', function (job) {
 
 
 					// if job failed to start
-					if (jobStatus[j].code) { msg = ` │ \u001b[31m⬤\u001b[39m ${jobStatus[j].title}: \u001b[31m${jobStatus[j].description}\u001b[39m` }
+					if (jobStatus[j].code) { msg = ` │ \u001b[31m${bullet}\u001b[39m ${jobStatus[j].title}: \u001b[31m${jobStatus[j].description}\u001b[39m` }
 					// normal handling - look up job stats in history
 					else {
 						// check job status
@@ -247,13 +258,13 @@ stream.on('json', function (job) {
 
 						let compl = jd.data.job;
 						if (compl) {
-							if (compl.code == 0) { jstat = '\u001b[32m⬤\u001b[39m' }
-							else if (compl.code == 255) { jstat = '\u001b[33m⬤\u001b[39m'; desc = `\n │    warn: \u001b[33m${compl.description}\u001b[39m  ` }
+							if (compl.code == 0) { jstat = `\u001b[32m${bullet}\u001b[39m` }
+							else if (compl.code == 255) { jstat = `\u001b[33m${bullet}\u001b[39m`; desc = `${EOL} │    warn: \u001b[33m${compl.description}\u001b[39m  ` }
 							else {
 								errorCount += 1;
-								jstat = '\u001b[31m⬤\u001b[39m';
-								desc = `\n │    Error: \u001b[31m${compl.description}\u001b[39m  `
-								if (max_errors && errorCount >= max_errors) wfStatus = 'abort'; // prevent launching new jobs
+								jstat = `\u001b[31m${bullet}\u001b[39m`;
+								desc = `${EOL} │    Error: \u001b[31m${compl.description}\u001b[39m  `
+								if (max_errors && errorCount >= max_errors) shuttingDown = true; // prevent launching new jobs
 
 							}
 							jobStatus[j].elapsed = compl.elapsed
@@ -262,17 +273,17 @@ stream.on('json', function (job) {
 						}
 						let prog = `[${taskList.length - pendingJobs}/${taskList.length}]`
 						let arg = jobStatus[j].arg ? ': ' + jobStatus[j].arg : ''
-						msg = ` │ ${jstat} ${jobStatus[j].title + arg} (job ${j}) completed ${prog} at ${(new Date()).toLocaleTimeString()}\n │      \u001b[33melapsed in ${niceInterval(jobStatus[j].elapsed)}\u001b[39m  ${desc}`
+						msg = ` │ ${jstat} ${jobStatus[j].title + arg} (job ${j}) completed ${prog} at ${(new Date()).toLocaleTimeString()}${EOL} │      \u001b[33melapsed in ${niceInterval(jobStatus[j].elapsed)}\u001b[39m  ${desc}`
 					}
 
-					msg += '\n │'
+					msg += EOL + ' │'
 
 					// starting next job in queue
-					if (next < taskList.length && wfStatus != 'abort') {
+					if (next < taskList.length && !shuttingDown) {
 
 						let task = taskList[next]
 
-						msg += `\n ├───────> starting \u001b[1m${task.title}\u001b[22m${task.arg ? ': ' + task.arg : ''}`;
+						msg += `${EOL} ├───────> starting \u001b[1m${task.title}\u001b[22m${task.arg ? ': ' + task.arg : ''}`;
 
 						try {
 							let job = await getJson(baseUrl + '/api/app/run_event', { id: task.id, arg: task.arg || 0, args: task.arg || 0  });
@@ -307,8 +318,8 @@ stream.on('json', function (job) {
 					print(msg);
 
 					if (max_errors && errorCount >= max_errors) {
-						print(" │\n ⚠️ Error count exceeded maximum, aborting workflow...")
-						wfStatus = 'abort';
+						print(` │${EOL} ⚠️ Error count exceeded maximum, aborting workflow...`)
+						shuttingDown = true;
 						await abortPending();
 						throw new Error("WF Error count exceeded maximum");
 
@@ -318,9 +329,11 @@ stream.on('json', function (job) {
 					stream.write({ progress: (1 - pendingJobs / taskList.length) })
 				}
 			}
+            
 		}
-
-		print(`\n\u001b[1m\u001b[32mWorkflow Completed\u001b[39m\u001b[22m @${(new Date()).toLocaleString()}  `)
+        
+		if(shuttingDown) print(`${EOL}\u001b[1m\u001b[31mWorkflow Aborted\u001b[39m\u001b[22m @${(new Date()).toLocaleString()}  `)
+		else print(`${EOL}\u001b[1m\u001b[32mWorkflow Completed\u001b[39m\u001b[22m @${(new Date()).toLocaleString()}  `)
 
 		// print performance
 		let perf = {}
@@ -345,7 +358,7 @@ stream.on('json', function (job) {
 		var table = {
 			title: "Workflow Events",
 			header: [
-				"#", "title", "arg", "status", "job", "view log", "started at", "elapsed", "description"
+				"#", "title", "arg", "job", "status", "view log", "started at", "elapsed", "description"
 			],
 			rows: Object.keys(jobStatus).map(key => [
 				jobStatus[key].seq,
@@ -371,6 +384,9 @@ stream.on('json', function (job) {
 		if (errorCount > 0) result = { complete: 1, code: (wf_strict ? 1 : 255), description: `WF - ${errorCount} out of ${taskList.length} jobs reported error` }
 		if (errorCount == taskList.length) result = { complete: 1, code: 1, description: "WF - All jobs failed" }
 		stream.write(result)
+
+		shuttingDown = true
+		if(process.connected) process.disconnect()
 
 	};
 
