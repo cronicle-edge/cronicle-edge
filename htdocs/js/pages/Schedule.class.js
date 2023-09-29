@@ -598,14 +598,16 @@ toggle_token: function () {
 		}
 
 		// allow delete event by pressing del key
-		$(document).keyup(function (e) {
-			if (e.keyCode == 46) { // delete button pressed
-				var eventId = net.getSelectedNodes()[0]
-				if(! eventId) return;
-				var idx = $P().events.findIndex(i => i.id === eventId)
-				if (eventId) $P().delete_event(idx)
-			}
-		})
+
+			// $(document).keyup(function (e) {
+			// 	if (e.keyCode == 46) { // delete button pressed
+			// 		var eventId = net.getSelectedNodes()[0]
+			// 		if (!eventId) return;
+			// 		var idx = $P().events.findIndex(i => i.id === eventId)
+			// 		if (eventId) $P().delete_event(idx)
+			// 	}
+			// })
+		
 
 		// open event edit page on double click
 		net.on("doubleClick", function (params) {
@@ -749,15 +751,15 @@ toggle_token: function () {
 
 		// Scheduled Event page:
 
-		let miniButtons = '<div style="float:right;" class="subtitle_widget"><i style="width:20px;cursor:pointer;margin-right: 20px" class="fa fa-pie-chart" title="Show Event Graph" onMouseUp="$P().show_graph()"></i></div>'
+		let miniButtons = '<div style="float:right;" class="subtitle_widget"><a><i style="width:20px;cursor:pointer;margin-right: 20px" class="fa fa-pie-chart" title="Show Event Graph" onMouseUp="$P().show_graph()"></i></a></div>'
 
 		if (app.isAdmin()) {
-			miniButtons += '<div style="float:right;" class="subtitle_widget"><i style="width:20px;cursor:pointer;" class="fa fa-download" title="Backup" onMouseUp="$P().export_schedule()"></i></div>'
+			miniButtons += '<div style="float:right;" class="subtitle_widget"><a><i style="width:20px;cursor:pointer;" class="fa fa-download" title="Backup" onMouseUp="$P().export_schedule()"></i></a></div>'
 		}
 
 		if (app.hasPrivilege('create_events')) {
-			miniButtons += '<div style="float:right;" class="subtitle_widget"><i style="width:20px;cursor:pointer;" class="fa fa-random" title="Random Event" onMouseUp="$P().do_random_event()"></i></div>'
-			miniButtons += '<div style="float:right;" class="subtitle_widget"><i style="width:20px;cursor:pointer;" class="fa fa fa-plus-circle" title="Add Event" onMouseUp="$P().edit_event(-1)"></i></div>'
+			miniButtons += '<div style="float:right;" class="subtitle_widget"><a><i style="width:20px;cursor:pointer;" class="fa fa-random" title="Random Event" onMouseUp="$P().do_random_event()"></i><a/></div>'
+			miniButtons += '<div style="float:right;" class="subtitle_widget"><a><i style="width:20px;cursor:pointer;" class="fa fa fa-plus-circle" title="Add Event" onMouseUp="$P().edit_event(-1)"></i></a></div>'
 		}
 
 		html += `
@@ -995,37 +997,55 @@ toggle_token: function () {
 	change_event_enabled: function (idx, box) {
 		// toggle event on / off
 		var event = this.events[idx];
-
-		let action = event.enabled ? 'Disable' : 'Enable'
-		let msg = `Are you sure you want to ${action} <b>${event.title}</b> event?`
-
-		app.confirm(`<span style="color:red">${action} Event</span>`, msg, action, function (result) {
-			if (result) {
-
-				event.enabled = event.enabled ? 0 : 1;
-
-				var stub = {
-					id: event.id,
-					title: event.title,
-					enabled: event.enabled,
-					catch_up: event.catch_up || false
-				};
-				
-				app.showProgress(1.0, "Updating Event...");
-
-				app.api.post('app/update_event', stub, function (resp) {
-					app.hideProgress();
-					app.showMessage('success', "Event '" + event.title + "' has been " + action + "d.");
-					$('#' + event.id).toggleClass('disabled');
-				});	
-			
-			}
-			else {
-               if(box) box.checked = !box.checked 
-			}			
-			
-		});
 		
+		if (this.isAdmin()) { // for admins - toggle state right away (old way)
+			event.enabled = event.enabled ? 0 : 1;
+			var stub = {
+				id: event.id,
+				title: event.title,
+				enabled: event.enabled,
+				catch_up: event.catch_up || false
+			};
+
+			app.api.post('app/update_event', stub, function (resp) {
+				$('#' + event.id).toggleClass('disabled')
+				app.showMessage('success', "Event '" + event.title + "' has been " + (event.enabled ? 'enabled' : 'disabled') + ".");
+			});
+
+		}
+		else { // for non-admin ask to confirm first
+			let action = event.enabled ? 'Disable' : 'Enable'
+			let msg = `Are you sure you want to ${action} <b>${event.title}</b> event?`
+	
+			app.confirm(`<span style="color:red">${action} Event</span>`, msg, action, function (result) {
+				if (result) {
+	
+					event.enabled = event.enabled ? 0 : 1;
+	
+					var stub = {
+						id: event.id,
+						title: event.title,
+						enabled: event.enabled,
+						catch_up: event.catch_up || false
+					};
+					
+					app.showProgress(1.0, "Updating Event...");
+	
+					app.api.post('app/update_event', stub, function (resp) {
+						app.hideProgress();
+						app.showMessage('success', "Event '" + event.title + "' has been " + action + "d.");
+						$('#' + event.id).toggleClass('disabled');
+					});	
+				
+				}
+				else {
+				   if(box) box.checked = !box.checked 
+				}			
+				
+			});
+            
+		}
+
 	},
 
 	run_event: function (event_idx, e) {
