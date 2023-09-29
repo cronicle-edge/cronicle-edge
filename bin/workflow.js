@@ -358,19 +358,18 @@ stream.on('json', function (job) {
 		var table = {
 			title: "Workflow Events",
 			header: [
-				"#", "title", "arg", "job", "status", "view log", "started at", "elapsed", "description"
+				"#", "title", "arg", "job", "started at", "elapsed", "status", "view log",  "description"
 			],
 			rows: Object.keys(jobStatus).map(key => [
 				jobStatus[key].seq,
 				
 				`<span style="${jobStatus[key].code % 255 ? 'color:red' : ''}"><b>${he.encode(jobStatus[key].title) || '[Unknown]'}</b></span>`,  //title
-				(jobStatus[key].arg ? he.encode(jobStatus[key].arg) : ''),  // arg
-				
+				(jobStatus[key].arg ? he.encode(jobStatus[key].arg) : ''),  // arg			
 				key === jobStatus[key].event ? '' : `<a href="/#JobDetails?id=${key}" target="_blank">${key}</a>`,  // joblink
-				getNiceStatus(jobStatus[key]), // status
-				key === jobStatus[key].event ? '' : `<i id="view_${key}" onclick="this.className = this.className == 'fa fa-eye' ? 'fa fa-eye-slash' : 'fa fa-eye'; $P().get_log_to_grid('${getNiceTitle(jobStatus[key], key)}', '${key}')" style="cursor:pointer" class="fa fa-eye"></i>`,
 				jobStatus[key].start,
 				niceInterval(jobStatus[key].elapsed),
+				getNiceStatus(jobStatus[key]), // status
+				key === jobStatus[key].event ? '' : `<i id="view_${key}" onclick="this.className = this.className == 'fa fa-eye' ? 'fa fa-eye-slash' : 'fa fa-eye'; $P().get_log_to_grid('${getNiceTitle(jobStatus[key], key)}', '${key}')" style="cursor:pointer" class="fa fa-eye"></i>`,
 				//jobStatus[key].code ? `${he.encode(jobStatus[key].description)}`.substring(0,120) : ''
 				`${he.encode(jobStatus[key].description)}`.substring(0, 120)
 
