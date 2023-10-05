@@ -765,7 +765,7 @@ toggle_token: function () {
 		html += `
 		<div style="padding:20px 20px 20px 20px">
 		 <div class="subtitle">	Scheduled Events ${cycleWarning} 
-		  <div class="subtitle_widget"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="10" placeholder="Find events..." style="border:0px;" value="${escape_text_field_value(args.keywords)}"/></div>
+		  <div class="subtitle_widget"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="10" placeholder="Find events..." style="border:0px;border-radius:5px" value="${escape_text_field_value(args.keywords)}"/></div>
 		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_target" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Servers</option>${this.render_target_menu_options(args.target)}</select></div>
 		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>${render_menu_options(app.plugins, args.plugin, false)}</select></div>
 		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>${render_menu_options(app.categories, args.category, false)}</select></div>
@@ -2715,25 +2715,41 @@ toggle_token: function () {
 		let left = "admiring;adoring;affectionate;agitated;amazing;angry;awesome;beautiful;blissful;bold;boring;brave;busy;charming;clever;cool;compassionate;competent;condescending;confident;cranky;crazy;dazzling;determined;distracted;dreamy;eager;ecstatic;elastic;elated;elegant;eloquent;epic;exciting;fervent;festive;flamboyant;focused;friendly;frosty;funny;gallant;gifted;goofy;gracious;great;happy;hardcore;heuristic;hopeful;hungry;infallible;inspiring;interesting;intelligent;jolly;jovial;keen;kind;laughing;loving;lucid;magical;mystifying;modest;musing;naughty;nervous;nice;nifty;nostalgic;objective;optimistic;peaceful;pedantic;pensive;practical;priceless;quirky;quizzical;recursing;relaxed;reverent;romantic;sad;serene;sharp;silly;sleepy;stoic;strange;stupefied;suspicious;sweet;tender;thirsty;trusting;unruffled;upbeat;vibrant;vigilant;vigorous;wizardly;wonderful;xenodochial;youthful;zealous;zen".split(";");
 		let right = "albattani;allen;almeida;antonelli;agnesi;archimedes;ardinghelli;aryabhata;austin;babbage;banach;banzai;bardeen;bartik;bassi;beaver;bell;benz;bhabha;bhaskara;black;blackburn;blackwell;bohr;booth;borg;bose;bouman;boyd;brahmagupta;brattain;brown;buck;burnell;cannon;carson;cartwright;carver;cerf;chandrasekhar;chaplygin;chatelet;chatterjee;chebyshev;cohen;chaum;clarke;colden;cori;cray;curran;curie;darwin;davinci;dewdney;dhawan;diffie;dijkstra;dirac;driscoll;dubinsky;easley;edison;einstein;elbakyan;elgamal;elion;ellis;engelbart;euclid;euler;faraday;feistel;fermat;fermi;feynman;franklin;gagarin;galileo;galois;ganguly;gates;gauss;germain;goldberg;goldstine;goldwasser;golick;goodall;gould;greider;grothendieck;haibt;hamilton;haslett;hawking;hellman;heisenberg;hermann;herschel;hertz;heyrovsky;hodgkin;hofstadter;hoover;hopper;hugle;hypatia;ishizaka;jackson;jang;jemison;jennings;jepsen;johnson;joliot;jones;kalam;kapitsa;kare;keldysh;keller;kepler;khayyam;khorana".split(";")
 		let event_title = tools.randArray(left) + '_' + tools.randArray(right);
-		return {
-			"enabled": 1,
-			params: {
-				"duration": "5-20",
-				"progress": 1,
-				"burn": tools.randArray([0, 1]),
-				"action": "Random",
-				"secret": "Will not be shown in Event UI",
-			},
-			"timing": { "minutes": [Math.floor(Math.random() * 60)], "hours": [Math.floor(Math.random() * 24)] },
-			"max_children": 1, "timeout": 3600, "catch_up": 0, "queue_max": 1000, "timezone": "America/New_York",
-			"plugin": "testplug",
-			"title": event_title,
-			"category": "general",
-			"target": "allgrp", "algo": "random", "multiplex": 0, "stagger": 0, "retries": 0,
-			"retry_delay": 0, "detached": 0, "queue": 0, "chain": "", "chain_error": "", "notify_success": "", "notify_fail": "", "web_hook": "", "cpu_limit": 0, "cpu_sustain": 0,
-			"memory_limit": 0, "memory_sustain": 0, "log_max_size": 0, "notes": "Randomly Generated Job",
-			"session_id": localStorage.session_id,
+		let template = app.schedule.find(e => e.title == 'template')
+
+		let evt = {}
+
+		if (template) {
+			evt = JSON.parse(JSON.stringify(template))
+			evt.title = event_title
+			evt.session_id = localStorage.session_id
+			delete evt.id
+			delete evt.modified
+			delete evt.created
 		}
+		else {
+			evt = {
+				"enabled": 1,
+				params: {
+					"duration": "5-20",
+					"progress": 1,
+					"burn": tools.randArray([0, 1]),
+					"action": "Random",
+					"secret": "Will not be shown in Event UI",
+				},
+				"timing": { "minutes": [Math.floor(Math.random() * 60)], "hours": [Math.floor(Math.random() * 24)] },
+				"max_children": 1, "timeout": 3600, "catch_up": 0, "queue_max": 1000, "timezone": "America/New_York",
+				"plugin": "testplug",
+				"title": event_title,
+				"category": "general",
+				"target": "allgrp", "algo": "random", "multiplex": 0, "stagger": 0, "retries": 0,
+				"retry_delay": 0, "detached": 0, "queue": 0, "chain": "", "chain_error": "", "notify_success": "", "notify_fail": "", "web_hook": "", "cpu_limit": 0, "cpu_sustain": 0,
+				"memory_limit": 0, "memory_sustain": 0, "log_max_size": 0, "notes": "Randomly Generated Job",
+				"session_id": localStorage.session_id,
+			}
+		}
+
+		return evt
 
 	},
 
