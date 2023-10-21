@@ -1,6 +1,6 @@
 {
 	"name": "cronicle-edge",
-	"version": "1.7.4.2",
+	"version": "1.7.4.3",
 	"description": "A simple, distributed task scheduler and runner with a web based UI.",
 	"author": "Joseph Huckaby <jhuckaby@gmail.com>",
 	"homepage": "https://github.com/jhuckaby/Cronicle",
@@ -27,7 +27,7 @@
 	"dependencies": {
 		"@iarna/toml": "^2.2.5",
 		"@mdi/font": "2.1.99",
-		"activedirectory2": "^2.1.0",
+		"activedirectory2": "2.1.0",
 		"ansi_up": "^5.1.0",
 		"async": "2.6.4",
 		"bcrypt-node": "0.1.0",
