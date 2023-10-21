@@ -247,10 +247,17 @@ stream.on('json', function (job) {
 						catch (e) {
 							// you get here if job is no longer active, but still has no log stored. 
 							// in this case just indicate that ob is finishing up and keep waiting for log info.
-							if (finishingJobs[j]) { finishingJobs[j] += 1 }
+							if (finishingJobs[j]) {
+								 finishingJobs[j] += 1 
+
+								 if(finishingJobs[j] < 5) print(print(e.message))
+								 else {throw new Error("status waiting timeout")}
+								
+								}
 							else {
 								finishingJobs[j] = 1
 								print(` ├───────> Job ${j} is finishing up`)
+								
 							}
 							// print(" │  ---- DEBUG: ----:", e.message) // just for testing
 							continue
