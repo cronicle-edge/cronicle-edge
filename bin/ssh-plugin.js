@@ -11,7 +11,7 @@ const print = (text) => {
 	process.stdout.write(text + EOL);
 }
 
-let hostInfo = process.env['SSH_HOST'] || process.env['JOB_ARG'] || ''
+let hostInfo = process.env['JOB_ARG'] || process.env['SSH_HOST'] || ''
 
 let json = parseInt(process.env['JSON'] || '')
 
@@ -108,7 +108,7 @@ function printJSONmessage(complete, code, desc) {
             child.kill('SIGTERM');
         });
 
-        child.stdin.write(script + EOL)
+        child.stdin.write(script + "\n")
         child.stdin.end()
     }
 
@@ -206,7 +206,7 @@ function printJSONmessage(complete, code, desc) {
                     }
                 });
 
-                stream.stdin.write(script + EOL)
+                stream.stdin.write(script + "\n")
                 stream.stdin.end()
             });
         }).connect(conf)
