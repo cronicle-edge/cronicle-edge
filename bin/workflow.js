@@ -228,6 +228,7 @@ stream.on('json', function (job) {
 
 
 					// if job failed to start
+
 					if (jobStatus[j].code) { msg = ` │ \u001b[31m${bullet}\u001b[39m ${jobStatus[j].title}: \u001b[31m${jobStatus[j].description}\u001b[39m` }
 					// normal handling - look up job stats in history
 					else {
@@ -242,18 +243,43 @@ stream.on('json', function (job) {
 						try {
 							await sleep(lag);
 							jd = await getJson(baseUrl + '/api/app/get_job_details', { id: j })
-							// emulate error
+							// emulate random error
+							// if (parseInt(Math.random()*5 + 1) > 3) throw new Error("get_job api is not available (emulating error)")
 						}
 						catch (e) {
 							// you get here if job is no longer active, but still has no log stored. 
 							// in this case just indicate that ob is finishing up and keep waiting for log info.
-							if (finishingJobs[j]) { finishingJobs[j] += 1 }
+							if (finishingJobs[j]) { 
+								finishingJobs[j] += 1							
+							}
 							else {
 								finishingJobs[j] = 1
-								print(` ├───────> Job ${j} is finishing up`)
+								print(` ├───────> ${jobStatus[j].title} (${j}) is completed, waiting or status`)
 							}
+                            
+							// if cannot retreive job detail, mark job as "incomplete" and retry on the few next cycles before reporting an error
+							if(finishingJobs[j] < 5) {
+								jobStatus[j].completed = false 
+								pendingJobs += 1
+								// print(` │ ⚠️ ${j}: ${finishingJobs[j]}`) // debug
+								continue
+							}
+							else {
+								print(` │ ⚠️ Failed to retreive data from get_job_details due to: ${e.message}`)
+								jd = {
+									data: {
+										job: {
+											code: 1,
+											description: "failed to retreive job state (check job logs)",
+											elapsed: 0
+										}
+									}
+								}
+							}
+
 							// print(" │  ---- DEBUG: ----:", e.message) // just for testing
-							continue
+							// if(finishingJobs[j] >)
+							// continue
 						}
 
 						let compl = jd.data.job;
