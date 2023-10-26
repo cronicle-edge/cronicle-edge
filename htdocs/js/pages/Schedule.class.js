@@ -292,7 +292,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	
 render_wf_event_list: function () {
 	let cols = ['#', "Run", '@', 'Id', 'Title', 'Argument', ' '];
-	let wf_events = this.wf || [] 
+	let wf_events = this.wf || []
 
 	let table = '<table id="wf_event_list_table" class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
 	   
@@ -1759,7 +1759,11 @@ toggle_token: function () {
 			'<div class="caption">Jobs will be queued that cannot run immediately.</div>' +
 
 			'<div style="margin-top:10px"><input type="checkbox" id="fe_ee_silent" value="1" ' + (event.silent ? 'checked="checked"' : '') + '/><label for="fe_ee_silent">Silent</label>' +
-			'<div class="caption">Hide job from common reporting (for maintenance/debug).</div>'
+			'<div class="caption">Hide job from common reporting (for maintenance/debug).</div>' +
+
+			'<div style="margin-top:10px"><input type="checkbox" id="fe_ee_concurrent_arg" value="1" ' + (event.concurrent_arg ? 'checked="checked"' : '') + '/><label for="fe_ee_concurrent_arg">Argument Concurrency</label>' +
+			'<div class="caption">Apply concurrency setting to event/argument combination, allowing concurrent job for each distinct argument passed by WF.</div>'
+
 		);
 		html += get_form_table_spacer();
 
@@ -2766,6 +2770,10 @@ toggle_token: function () {
 
 		// event silent
 		event.silent = $('#fe_ee_silent').is(':checked') ? 1 : 0;
+
+		// argument concurrency
+		event.concurrent_arg = $('#fe_ee_concurrent_arg').is(':checked') ? 1 : 0;
+
 		//graph icon 
 		event.graph_icon = $('#fe_ee_graph_icon').val()  //|| 'f111';
 		//args
@@ -2797,7 +2805,7 @@ toggle_token: function () {
 		event.plugin = $('#fe_ee_plugin').val();
 		if (!event.plugin) return quiet ? false : app.badField('fe_ee_plugin', "Please select a Plugin for the event.");
 
-		// workflow 
+		// workflow
 		if (event.plugin == 'workflow' && Array.isArray(this.wf)) {
 			event.workflow = this.wf || []
 		} 
