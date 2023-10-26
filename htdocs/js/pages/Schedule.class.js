@@ -124,7 +124,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	render_file_list: function () {
 		let cols = ['File Name', ' '];
-		let files = this.files || []
+		let files = this.event.files || []
 
 		if (files.length === 0) {
 			document.getElementById('fe_ee_pp_file_list').innerHTML = ''
@@ -150,8 +150,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	file_add: function () {
 
 		let self = this;
-
-		let files = self.files || []
+		if(!self.event.files) self.event.files = []
+		let files = self.event.files
 	
 		// FILE EDITOR ON SHELLPLUG'
 		let html = '<table>' + 
@@ -215,8 +215,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	 file_edit: function (/** @type  {number} */ i) {
 		
 		let self = this
-		if(!Array.isArray(self.files)) return // sanity check
-		let file = self.files[i]
+		if(!Array.isArray(self.event.files)) return // sanity check
+		let file = self.event.files[i]
 		if(!file) return // sanity check
 
 		let html = '<table>' + 
@@ -273,7 +273,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	 file_delete: function ( /** @type {number} */ i) {
 		let self = this
-		let arr = self.files  // this.event.params['wf_events'] || [] 
+		let arr = self.event.files  // this.event.params['wf_events'] || [] 
 		if (!Array.isArray(arr)) return
 		arr.splice(i, 1)
 		self.render_file_list()
@@ -292,7 +292,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	
 render_wf_event_list: function () {
 	let cols = ['#', "Run", '@', 'Id', 'Title', 'Argument', ' '];
-	let wf_events = this.wf || []
+	let wf_events = this.event.workflow || []
 
 	let table = '<table id="wf_event_list_table" class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
 	   
@@ -337,48 +337,58 @@ render_wf_event_list: function () {
    // '<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
 
 wf_event_down: function (/** @type {number} */ i) {
-   let arr = this.wf // ;  this.event.params['wf_events']
+   let arr = this.event.workflow // ;  this.event.params['wf_events']
    if(!Array.isArray(arr) || typeof i !=='number' || i >= arr.length - 1) return
    [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
    this.render_wf_event_list()
 },
 
 wf_event_up: function ( /** @type {number} */ i) {
-   let arr = this.wf // this.event.params['wf_events'] || []
-   if(!Array.isArray(arr) || typeof i !=='number' || i === 0 || i >= arr.length) return
-   [arr[i], arr[i-1]] = [arr[i-1], arr[i]];
+   let self = this
+   let workflow = self.event.workflow || []
+   let arr = self.event.workflow // this.event.params['wf_events'] || []
+   if(!Array.isArray(workflow) || typeof i !=='number' || i === 0 || i >= arr.length) return
+   [workflow[i], workflow[i-1]] = [workflow[i-1], workflow[i]];
    this.render_wf_event_list()
 },
-   wf_event_delete: function ( /** @type {number} */ i) {
+
+wf_event_delete: function ( /** @type {number} */ i) {
    let self = this
-   let arr = self.wf  // this.event.params['wf_events'] || [] 
-   if (!Array.isArray(arr)) return
-   arr.splice(i, 1)
+   let workflow = self.event.workflow || []
+   let opts = self.event.options || {}
+   workflow.splice(i, 1)
+   // let arr = self.event.workflow  // this.event.params['wf_events'] || [] 
+//    if (!Array.isArray(workflow)) return
+//    arr.splice(i, 1)
    self.render_wf_event_list()
-   $('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+   $('#wf_start_from_step').html(render_menu_options(workflow.map((e, i) => i + 1), opts.wf_start_from_step || 1))
    },
 
 wf_toggle_event_state: function (idx) {
    let self = this
-   let evt = self.wf[idx]
+   let workflow = self.event.workflow || []
+   let evt = workflow[idx]
    evt.disabled = !evt.disabled
    this.render_wf_event_list()
    },
 
 wf_update_start: function () {
-   this.opts.wf_start_from_step = parseInt($("#wf_start_from_step :selected").text()) || 1
+   if(!this.event.options) this.event.options = {}
+   this.event.options.wf_start_from_step = parseInt($("#wf_start_from_step :selected").text()) || 1
    this.render_wf_event_list()
 },
 
 wf_event_add_cat: function () {
 	let self = this;
+	// let workflow = self.event.workflow || []
 	let cat = self.event.category || $('#fe_ee_cat').val() || '';
-	self.wf = (app.schedule || [])
-	    .filter(e => e.id != self.event.id && e.category === cat)
+	let opts = self.event.options || {}
+	self.event.workflow = (app.schedule || [])
+	    .filter(e => e.id != self.event.id && e.category === cat && e.plugin != 'workflow')
 		.map(e => { return { id: e.id, title: e.title, arg: "", wait: false } })
 	
 	// update startFrom menu
-	$('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+	$('#wf_start_from_step').html(render_menu_options(self.event.workflow.map((e, i) => i + 1), opts.wf_start_from_step || 1))
 	self.render_wf_event_list() // refresh event list
 
 },
@@ -387,11 +397,10 @@ wf_event_add: function () {
    let self = this;
    let all_events = (app.schedule || []).map(e => { return { id: e.id, title: e.title, arg: "", wait: false } }).filter(e => e.id != self.event.id)
    
-   if(!self.wf) self.wf = []
-   
-   /** @type {[WFEvent]}*/
-   let curr =  self.wf
-   let event_menu = render_menu_options(all_events, curr.length > 0 ? curr[curr.length - 1].id : all_events[0].id)
+   if(!self.event.workflow) self.event.workflow = []
+   let wf = self.event.workflow
+   let opts = self.event.options || {}
+   let event_menu = render_menu_options(all_events, wf.length > 0 ? wf[wf.length - 1].id : all_events[0].id)
 
    let el_style = 'width: 240px; font-size:16px;'
    let html = '<table>' +  //<option value="">(Select Event)</option>
@@ -411,12 +420,13 @@ wf_event_add: function () {
 			   if (!evt) { app.showMessage('error', "Please select valid event") }
 			   else {
 				   evt.arg = $('#fe_ee_pp_wf_evt_arg').val()
-				   self.wf.push(evt)
-			   }
+				   self.event.workflow.push(evt)
+				   console.log('added to wf: ', evt)
+				}
 			   Dialog.hide();
 
 			// update startFrom menu
-			$('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+			$('#wf_start_from_step').html(render_menu_options(wf.map((e, i) => i + 1), opts.wf_start_from_step || 1))
 			self.render_wf_event_list() // refresh event list
 
 			   
@@ -428,7 +438,7 @@ wf_event_add: function () {
 wf_event_edit: function (idx) {
    // show dialog to edit or add wf event
    let self = this;
-   let evt = self.wf[idx] //self.wf.event_list[idx]
+   let evt = self.event.workflow[idx] //self.wf.event_list[idx]
    let event_list = render_menu_options([evt], evt.id)
    let el_style = 'width: 240px;  font-size:16px;'
    let html = '<table>' +
@@ -441,7 +451,7 @@ wf_event_edit: function (idx) {
 	   app.clearError();
 
 	   if (result) {
-			   let evt = self.wf[idx]
+			   let evt = self.event.workflow[idx]
 			   evt.arg = $('#fe_ee_pp_wf_evt_arg').val()		
 		   
 		   Dialog.hide();		
@@ -1172,9 +1182,9 @@ toggle_token: function () {
 		app.setWindowTitle("Add New Event");
 		this.div.removeClass('loading');
 
-		this.wf = [] // wf placeholder
-		this.files = []
-		this.opts = {}
+		// this.wf = [] // wf placeholder
+		// this.files = [] 
+		// this.opts = {}
 
 		html += this.getSidebarTabs('new_event',
 			[
@@ -1293,9 +1303,9 @@ toggle_token: function () {
 		var event = find_object(app.schedule, { id: args.id });
 		if (!event) return app.doError("Could not locate Event with ID: " + args.id);
 
-		this.wf = event.workflow || []
-		this.files = event.files || []
-		this.opts = event.options || {}
+		// this.wf = event.workflow || []
+		// this.files = event.files || []
+		// this.opts = event.options || {}
 
 		// check for autosave recovery
 		if (app.autosave_event) {
@@ -2613,10 +2623,12 @@ toggle_token: function () {
 							break;
 
 						case 'eventlist':
+						let workflow = this.event.workflow || []
+						let opts = this.event.options || {}
 						html += `<div class="plugin_params_label">${param.title}</div>
 						  <div class="plugin_params_content" style="margin:10px 10px 10px 10px"> <span> Start From Step: </span>
 						    <select onChange="$P().wf_update_start()" id="wf_start_from_step" style="margin:5px" >
-							  ${render_menu_options(this.wf.map((e, i) => i + 1), this.opts.wf_start_from_step || 1)}
+							  ${render_menu_options(workflow.map((e, i) => i + 1), opts.wf_start_from_step || 1)}
 						    </select>
 					      </div>
 					      <div id="fe_ee_pp_evt_list"></div>
@@ -2799,22 +2811,22 @@ toggle_token: function () {
 		}
 
 		// opts
-		event.options = this.opts || {}
+		event.options = event.options || {}
 
 		// plugin
 		event.plugin = $('#fe_ee_plugin').val();
 		if (!event.plugin) return quiet ? false : app.badField('fe_ee_plugin', "Please select a Plugin for the event.");
 
 		// workflow
-		if (event.plugin == 'workflow' && Array.isArray(this.wf)) {
-			event.workflow = this.wf || []
-		} 
-		else {
-			event.workflow = undefined // erase wf info if event plugin is not workflow anymore
-		}
+		// if (event.plugin == 'workflow' && Array.isArray(event.workflow)) {
+		// 	event.workflow = event.workflow || []
+		// } 
+		// else {
+		// 	event.workflow = undefined // erase wf info if event plugin is not workflow anymore
+		// }
 
 		// files 
-		event.files = Array.isArray(this.files) ? this.files : undefined
+		event.files = Array.isArray(this.event.files) ? this.event.files : undefined
 
 		// plugin params
 		event.params = {};
