@@ -58,6 +58,8 @@ stream.on('json', function(job) {
 	else {
 		duration = parseInt( job.params.duration );
 	}
+	// check WF passed duration argument
+	if(parseInt(process.env['JOB_ARG'])) duration = parseInt(process.env['JOB_ARG'])
 	
 	var timer = setInterval( function() {
 		var now = Tools.timeNow();
