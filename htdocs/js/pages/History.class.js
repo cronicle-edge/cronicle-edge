@@ -92,7 +92,7 @@ Class.subclass( Page.Base, "Page.History", {
 			resp.rows = newRows
 		} //
 		
-		var cols = ['Job ID', 'Event Name', 'Category', 'Plugin', 'Hostname',  'Result', 'Start Date/Time', 'Elapsed Time'];
+		var cols = ['Job ID', 'Event Name', 'Argument', 'Category', 'Plugin', 'Hostname',  'Result', 'Start Date/Time', 'Elapsed Time'];
 		
 		var self = this;
 		var num_visible_items = 0;
@@ -110,11 +110,10 @@ Class.subclass( Page.Base, "Page.History", {
 			var event = find_object( app.schedule, { id: job.event } );
 			var event_link = '(None)';
 			if (event && job.id) {
-				jobArg = job.arg ? ' :: ' + job.arg.substring(0,40) : ''
-				event_link = '<div class="td_big"><a href="#History?sub=event_history&id='+job.event+'">' + self.getNiceEvent((event.title || job.event) + jobArg, col_width + 40) + '</a></div>';
+				event_link = '<div class="td_big"><a href="#History?sub=event_history&id='+job.event+'">' + self.getNiceEvent((event.title || job.event), col_width + 40) + '</a></div>';
 			}
 			else if (job.event_title) {
-				event_link = self.getNiceEvent(job.event_title + jobArg , col_width + 40);
+				event_link = self.getNiceEvent(job.event_title, col_width + 40);
 			}
 			
 			var cat = job.category ? find_object( app.categories, { id: job.category } ) : null;
@@ -134,8 +133,9 @@ Class.subclass( Page.Base, "Page.History", {
 			if(job.code == 255) {jobStatus = `<span class="color_label yellow" title="${errorTitle}"><i class="fa fa-warning">&nbsp;</i>Warning</span>`}
 			
 			var tds = [
-				job_link,
-				event_link ,				
+				job_link,				
+				event_link ,
+				self.getNiceArgument(job.arg, 40),				
 				self.getNiceCategory( cat, col_width ),
 				self.getNicePlugin( plugin, col_width ),
 				self.getNiceGroup( null, job.hostname, col_width ),				
@@ -719,7 +719,7 @@ Class.subclass( Page.Base, "Page.History", {
 		);
 		html += '<div style="padding:20px 20px 30px 20px">';
 		
-		var cols = ['Job ID', 'Hostname', 'Result', 'Memo', 'Start Date/Time', 'Elapsed Time', 'Avg CPU', 'Avg Mem'];
+		var cols = ['Job ID', 'Argument', 'Hostname', 'Result', 'Memo', 'Start Date/Time', 'Elapsed Time', 'Avg CPU', 'Avg Mem'];
 		
 		html += '<div class="subtitle">';
 			html += 'Event History: ' + event.title;
@@ -747,6 +747,7 @@ Class.subclass( Page.Base, "Page.History", {
 
 			var tds = [
 				`<div class="td_big" style="white-space:nowrap;">${href}<i class="fa fa-pie-chart">&nbsp;</i><b>${job.id.substring(0, 11)}</b></span></div>`,
+				self.getNiceArgument(job.arg, 40),
 				self.getNiceGroup( null, job.hostname, col_width ),
 				jobStatusHist,
 				job.memo,
