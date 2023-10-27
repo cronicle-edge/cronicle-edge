@@ -421,7 +421,7 @@ wf_event_add: function () {
 			   else {
 				   evt.arg = $('#fe_ee_pp_wf_evt_arg').val()
 				   self.event.workflow.push(evt)
-				   console.log('added to wf: ', evt)
+				//    console.log('added to wf: ', evt)
 				}
 			   Dialog.hide();
 
