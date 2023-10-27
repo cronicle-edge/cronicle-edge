@@ -286,7 +286,7 @@ module.exports = Class.create({
 				try { body = JSON.parse(body); }
 				catch (e) {
 					self.logError('s3', "Failed to parse JSON record: " + key + ": " + e);
-					console.log(body)
+					// console.log(body)
 					callback(e, null);
 					return;
 				}
