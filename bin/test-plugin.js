@@ -58,8 +58,8 @@ stream.on('json', function(job) {
 	else {
 		duration = parseInt( job.params.duration );
 	}
-	// check WF passed duration argument
-	if(parseInt(process.env['JOB_ARG'])) duration = parseInt(process.env['JOB_ARG'])
+	// check if WF passed duration argument
+	if(parseInt(job.params.ARG1)) duration = parseInt(job.params.ARG1)
 	
 	var timer = setInterval( function() {
 		var now = Tools.timeNow();
@@ -125,6 +125,10 @@ stream.on('json', function(job) {
 			};
 
 			if(job.params.action == 'Random') job.params.action = ['Success', 'Success', 'Success', 'Failure', 'Success', 'Crash'][Math.round(Math.random()*5)]
+
+			// if WF arument is passed overwrite exit code/cation
+			let code = parseInt(job.params.ARG2);
+			if(code >= 0) job.params.action = code > 0 ? "Failure" : "Success"
 			
 			switch (job.params.action) {
 				case 'Success':
@@ -143,7 +147,7 @@ stream.on('json', function(job) {
 					logger.debug(9, "Simulating a failure response");
 					stream.write({
 						complete: 1,
-						code: 999,
+						code: code || 999,
 						description: "Simulating an error message here.  Something went wrong!",
 						perf: perf.summarize()
 					});
