@@ -44,7 +44,7 @@ or build custom version using [DockerfileClassic](https://github.com/cronicle-ed
 Refer to [1.5.14 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.5.14) for more details.
 
 ### Config tab
-You can now set any config right from GUI and without restarting cronicle. You can set custom configuration keys that would override values you have set in `config.json``. You can set nested keys via dot notation  (e.g. `params.sql.query``). You can also use multi-line values as config value. Please note - that does not apply to storage and webserver config. You also cannot get or set secret key.
+You can now set any config right from GUI and without restarting cronicle. You can set custom configuration keys that would override values you have set in `config.json`. You can set nested keys via dot notation  (e.g. `params.sql.query`). You can also use multi-line values as config value. Please note - that does not apply to storage and webserver config. You also cannot get or set secret key.
 
 ### Global Env / Secrets
 On Config Tab you can also specify environment variables using "KEY = VALUE" syntax (dotenv style). Those variables will be available while executing shellplug events. You can also encrypt this data turning this feature into "secret management". Data is encrypted using AES256 and cronicle secret key. For the best result set `secret_key` as docker secret, use https proxy between clients and manager nodes, and set log level config to be <= 6.
@@ -102,7 +102,7 @@ You can generate a token to run specific event instead of creating global API ke
  - Github - HMAC signature check is supported. You can set `git_hub_key` config to verify signature. If not set cronicle will use `secret_key` (if x-signature-header is included in the request).
  - Gitlab - you can use cronicle API key as web hook secret key, but you can always bake API key or token in web hook url.
  - You can also automatically execute "git add / git commit / git push remote branch" on clicking backup button or even on each metadata update. First you need to set git repo (with auth) in your data folder. Then use related configs (there is an example in demo configs).
- - Before starting new Docker container you can also set `GIT_REPO`` variable, so manager entrypoint will attempt to use this repo to setup data folder instead of running standard set up.
+ - Before starting new Docker container you can also set `GIT_REPO` variable, so manager entrypoint will attempt to use this repo to setup data folder instead of running standard set up.
 
 ### Hybrid schedule
 You can extend cron schedule by specifying extra minute ticks. This is helpful for uneven/one-time schedules. If you just specify hours/minutes without the date (e.g. 16:45 or 3PM), it will trigger job to run every day at that time. You can use full timestamp to run the job at specific time just once (e.g. 2021-01-01  16:45).
