@@ -478,7 +478,7 @@ Class.subclass( Page.Base, "Page.Home", {
 			return (a.time_start < b.time_start) ? 1 : -1;
 		} );
 		
-		var cols = ['Job ID', 'Event Name', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Performance', 'Memo', 'Actions'];
+		var cols = ['Job ID', 'Event Name', 'Argument', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Performance', 'Memo', 'Actions'];
 		
 		// render table
 		var self = this;
@@ -492,12 +492,16 @@ Class.subclass( Page.Base, "Page.Home", {
 			// var group = item.target ? find_object( app.server_groups || [], { id: item.target } ) : null;
 			var plugin = job.plugin ? find_object( app.plugins || [], { id: job.plugin } ) : { title: 'n/a' };
 			var tds = null;
-			
+
+			let nice_event = self.getNiceEvent( job.event_title, col_width )
+			let nice_arg = self.getNiceArgument(job.arg, 30)
+
 			if (job.pending && job.log_file) {
 				// job in retry delay
 				tds = [
 					'<div class="td_big"><span class="link" onMouseUp="$P().go_job_details('+idx+')">' + self.getNiceJob(job.id) + '</span></div>',
-					self.getNiceEvent( job.event_title, col_width ),
+					nice_event,
+					nice_arg,
 					self.getNiceCategory( cat, col_width ),
 					// self.getNicePlugin( plugin ),
 					self.getNiceGroup( null, job.hostname, col_width ),
@@ -512,8 +516,9 @@ Class.subclass( Page.Base, "Page.Home", {
 			else if (job.pending) {
 				// multiplex stagger delay
 				tds = [
-					'<div class="td_big">' + self.getNiceJob(job.id) + '</div>',
-					self.getNiceEvent( job.event_title, col_width ),
+					'<div class="td_big">' + self.getNiceJob(job.id ) + '</div>',
+					nice_event,
+					nice_arg,
 					self.getNiceCategory( cat, col_width ),
 					// self.getNicePlugin( plugin ),
 					self.getNiceGroup( null, job.hostname, col_width ),
@@ -529,7 +534,8 @@ Class.subclass( Page.Base, "Page.Home", {
 				// active job
 				tds = [
 					'<div class="td_big"><span class="link" onMouseUp="$P().go_job_details('+idx+')">' + self.getNiceJob(job.id) + '</span></div>',
-					self.getNiceEvent( job.event_title, col_width ),
+					nice_event,
+					nice_arg,
 					self.getNiceCategory( cat, col_width ),
 					// self.getNicePlugin( plugin ),
 					self.getNiceGroup( null, job.hostname, col_width ),

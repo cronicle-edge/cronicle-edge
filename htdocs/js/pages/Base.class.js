@@ -160,6 +160,14 @@ Class.subclass(Page, "Page.Base", {
 		return html;
 	},
 
+	getNiceArgument: function(arg, maxWidth) {
+		let nice_arg = `${arg || ''}`
+		if(nice_arg.length > maxWidth) {
+			nice_arg = `<span title="${nice_arg}">${nice_arg.substring(0,maxWidth-3)}...</span>`
+		}
+		return nice_arg
+	},
+
 	setGroupVisible: function (group, visible) {
 		// set web groups of form fields visible or invisible, 
 		// according to manager checkbox for each section
