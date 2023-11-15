@@ -395,7 +395,7 @@ wf_event_add_cat: function () {
 
 wf_event_add: function () {
    let self = this;
-   let all_events = (app.schedule || []).map(e => { return { id: e.id, title: e.title, arg: "", wait: false } }).filter(e => e.id != self.event.id)
+   let all_events = (self.events.length > 0 ? self.events : app.schedule).map(e => { return { id: e.id, title: e.title, arg: "", wait: false } }).filter(e => e.id != self.event.id)
    
    if(!self.event.workflow) self.event.workflow = []
    let wf = self.event.workflow
@@ -530,13 +530,13 @@ toggle_token: function () {
 		return html;
 	},
 
-	render_schedule_graph: function () {
+	render_schedule_graph: function (events) {
 				
 		var sNodes = []
 		var sEdges = []
 		var catMap = Object.fromEntries(app.categories.map(i => [i.id, i]))
 
-		let events =  app.schedule || []
+		if(!events) events =  app.schedule || []
 		let currEvent = this.event || {} // will exist for "edit event" mode
 		const args  = this.args || {};
 		
