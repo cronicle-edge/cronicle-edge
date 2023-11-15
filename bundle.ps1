@@ -356,6 +356,11 @@ if($Lmdb.IsPresent) {
   Write-Host " * Lmdb cannot be fully bundled. lmdb package is installed in the dist folder using npm"
 }
 
+if($Restart.IsPresent) {
+  Write-Host "Running in dev mode. Version: $env:CRONICLE_dev_version `n"
+  exit 0
+}
+
 if($env:Path.indexOf("$FullPath\bin") -lt 0) { $env:Path = $env:Path + ";$FullPath\bin"; Write-Host "$Path\bin is added to path variable"}
 
 Write-Host "

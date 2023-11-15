@@ -370,6 +370,11 @@ if [ "$level" = 1 ]; then
   echo " - If not running this on linux, copy OS proper binary from node_modules/classic-level/prebuilds to $dist/bin/engines/prebuilds/"
 fi 
 
+if [ "$restart" = 1 ]; then
+ echo "Running in dev mode. Version: $CRONICLE_dev_version"
+ exit 0
+fi
+
 cat << EOF
 
 Before you begin:
