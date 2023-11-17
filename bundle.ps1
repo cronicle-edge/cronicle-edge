@@ -48,6 +48,8 @@ $minify = "--minify=true"
 $ESBuildLogLevel = "warning"
 $npmLogLevel = "warn"
 
+if($Restart.IsPresent) { $minify = "--minify=false" }
+
 if ($Dev.IsPresent) { 
   $minify = "--minify=false" 
   $ESBuildLogLevel = "info"  
@@ -347,7 +349,7 @@ if($Restart.IsPresent) {
 # --- Print setup info / stats
 Write-Host "`n-------------------------------------------------------------------------------------------------------------------------------------------`n"
 Write-Host "Bundle is ready: $FullPath `n" -ForegroundColor Green
-Write-Host "Minified: $(!$Dev.IsPresent)"
+Write-Host "Minified: $($minify -like '*true*' )"
 Write-Host "Engines bundled: $engines"
 if($SQL.IsPresent) {
   Write-Host " * SQL bundle includes mysql and postgres drivers. You can additionally install sqlite3, oracledb, tedious (for mssql)"
