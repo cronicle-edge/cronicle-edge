@@ -394,9 +394,20 @@ wf_event_add_cat: function () {
 },
 
 wf_event_add: function () {
+	
    let self = this;
-   let all_events = (app.schedule || []).map(e => { return { id: e.id, title: e.title, arg: "", wait: false } }).filter(e => e.id != self.event.id)
-   
+   let catMap = app.categories.reduce((map,obj) => {map[obj.id] = obj.title; return map}, {})
+
+   let sortEvents = (a, b) => {
+	   if (a.catid == self.event.category) return -1
+	   if (b.catid == self.event.category) return 1
+	   return a.cat.localeCompare(b.cat)
+   }
+   let all_events = (self.events || app.schedule )
+		.map(e => { return { id: e.id, title: `${catMap[e.category] || '(N/A)'}: ${e.title}`, arg: "", wait: false, cat: catMap[e.category] || '(N/A)', catid: e.category } })
+		.filter(e => e.id != self.event.id)
+		.sort(sortEvents)
+
    if(!self.event.workflow) self.event.workflow = []
    let wf = self.event.workflow
    let opts = self.event.options || {}
@@ -530,13 +541,13 @@ toggle_token: function () {
 		return html;
 	},
 
-	render_schedule_graph: function () {
+	render_schedule_graph: function (events) {
 				
 		var sNodes = []
 		var sEdges = []
 		var catMap = Object.fromEntries(app.categories.map(i => [i.id, i]))
 
-		let events =  app.schedule || []
+		if(!events) events =  app.schedule || []
 		let currEvent = this.event || {} // will exist for "edit event" mode
 		const args  = this.args || {};
 		

@@ -41,6 +41,8 @@ Class.subclass( Page.Base, "Page.Home", {
 			  <option value="100">Last 100</option>
 			  <option value="120">Last 120</option>
 			  <option value="150">Last 150</option>
+			  <option value="250">Last 250</option>
+			  <option value="500">Last 500</option>
 			  </select>	  
 		  </div>
 		  <div class="subtitle_widget"><span id="chart_times" ></span></div>
@@ -55,7 +57,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		let ui = app.config.ui || {}
 		let lmt = Number(app.getPref('job_chart_limit') || ui.job_chart_limit || 50)
 		let scale = app.getPref('job_chart_scale') || ui.job_chart_scale || 'linear'
-		let lmtActual = [10, 25, 35, 50, 100, 120, 150].includes(lmt) ? lmt : 50
+		let lmtActual = [10, 25, 35, 50, 100, 120, 150, 250, 500].includes(lmt) ? lmt : 50
 		  $('#fe_cmp_job_chart_scale').val(scale)
 		  $('#fe_cmp_job_chart_limit').val(lmtActual)
 	   </script>
@@ -164,6 +166,7 @@ Class.subclass( Page.Base, "Page.Home", {
 
 		let errBg = stats.jobs_completed > 0 && (stats.jobs_failed || 0)/stats.jobs_completed > (parseFloat(ui.err_rate) || 0.03) ? 'red2' : 'gray'
 		let errTitle = Object.entries(stats.errorLog || {}).slice(0,20).sort((a,b)=> a[1] < b[1] ? 1 : -1).map(e=>`${e[0]}:\t<b>${e[1]}</b>`).join("\n")
+		let errLink = `style="cursor:pointer" onclick='Nav.go("History?sub=error_history")'`
 
 		html += ` 
 				<fieldset style="margin-top:0px; margin-right:0px; padding-top:10px;"><legend>Server Stats</legend>
@@ -171,7 +174,9 @@ Class.subclass( Page.Base, "Page.Home", {
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>CATEGORIES:&nbsp;<b> <span class="color_label gray">${app.categories.length}</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>PLUGINS:&nbsp;<b> <span class="color_label gray">${app.plugins.length}</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>JOBS COMPLETED TODAY:&nbsp;<b> <span class="color_label gray">${stats.jobs_completed || 0 }</span>&nbsp;</div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>FAILED:&nbsp;<b> <span title="${errTitle}" class="color_label ${errBg}">${stats.jobs_failed || 0}</span>&nbsp;</div>
+				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>FAILED:&nbsp;<b> 
+				    <span style="cursor:pointer" onclick='Nav.go("History?sub=error_history")' title="${errTitle}" class="color_label ${errBg}">${stats.jobs_failed || 0}</span>&nbsp;
+				  </div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>SUCCESS RATE:&nbsp;<b> <span class="color_label gray">${pct( (stats.jobs_completed || 0) - (stats.jobs_failed || 0), stats.jobs_completed || 1 ) }</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>AVG LOG SIZE:&nbsp;<b> <span class="color_label gray"> 2K</span>&nbsp;</div>
   

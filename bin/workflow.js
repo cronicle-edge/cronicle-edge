@@ -99,7 +99,11 @@ stream.on('json', function (job) {
 
 	let wf_strict = parseInt(process.env['WF_STRICT']) || 0 // report error on any job failure (warning is default)
 
-	taskList = (job.workflow || []).map((e, i) => { e.stepId = i + 1; return e })
+	taskList = (job.workflow || []).map((e, i) => { 
+		e.stepId = i + 1;
+		e.arg = e.arg || process.env['JOB_ARG'] || 0 ; // use WFs arg as the default for child's args
+		return e 
+	})
 
 	let opts = job.options || {}
 
@@ -321,7 +325,7 @@ stream.on('json', function (job) {
 						msg += `${EOL} ├───────> starting \u001b[1m${task.title}\u001b[22m${task.arg ? ': ' + task.arg : ''}`;
 
 						try {
-							let job = await getJson(baseUrl + '/api/app/run_event', { id: task.id, arg: task.arg || 0, args: task.arg || 0  });
+							let job = await getJson(baseUrl + '/api/app/run_event', { id: task.id, arg: task.arg, args: task.arg });
 							if (job.data.queue) throw new Error("Event has beed added to internal queue and will run independently from this WF")
 							jobStatus[job.data.ids[0]] = {
 								event: task.id

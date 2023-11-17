@@ -48,6 +48,8 @@ $minify = "--minify=true"
 $ESBuildLogLevel = "warning"
 $npmLogLevel = "warn"
 
+if($Restart.IsPresent) { $minify = "--minify=false" }
+
 if ($Dev.IsPresent) { 
   $minify = "--minify=false" 
   $ESBuildLogLevel = "info"  
@@ -347,13 +349,18 @@ if($Restart.IsPresent) {
 # --- Print setup info / stats
 Write-Host "`n-------------------------------------------------------------------------------------------------------------------------------------------`n"
 Write-Host "Bundle is ready: $FullPath `n" -ForegroundColor Green
-Write-Host "Minified: $(!$Dev.IsPresent)"
+Write-Host "Minified: $($minify -like '*true*' )"
 Write-Host "Engines bundled: $engines"
 if($SQL.IsPresent) {
   Write-Host " * SQL bundle includes mysql and postgres drivers. You can additionally install sqlite3, oracledb, tedious (for mssql)"
 }
 if($Lmdb.IsPresent) {
   Write-Host " * Lmdb cannot be fully bundled. lmdb package is installed in the dist folder using npm"
+}
+
+if($Restart.IsPresent) {
+  Write-Host "Running in dev mode. Version: $env:CRONICLE_dev_version `n"
+  exit 0
 }
 
 if($env:Path.indexOf("$FullPath\bin") -lt 0) { $env:Path = $env:Path + ";$FullPath\bin"; Write-Host "$Path\bin is added to path variable"}

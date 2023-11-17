@@ -165,6 +165,129 @@ Class.subclass( Page.Base, "Page.History", {
 		this.div.find('#d_history_table').html( html );
 	},
 	
+	gosub_error_history: function(args) {
+		// show history
+		app.setWindowTitle( "Error History" );
+		
+		var html = '';
+		// html += '<div style="padding:5px 15px 15px 15px;">';
+		html += '<div style="padding:20px 20px 30px 20px">';
+		
+		html += '<div class="subtitle">';
+			html += 'Error History';
+
+			html += '<div class="clear"></div>';
+		html += '</div>';
+		
+		html += '<div id="d_error_history_table"></div>';
+		html += '</div>'; // padding
+		this.div.html( html );
+
+		var args = this.args;
+		var evtLimit = parseInt($("#fe_hist_eventlimit").val())
+		if (!args.offset) args.offset = 0;
+		if (!evtLimit) args.limit = 25;
+		if(evtLimit)  args.limit = parseInt(evtLimit*100);
+		app.api.post( 'app/get_errors', copy_object(args), this.receive_error_history.bind(this) );
+		
+	},
+
+	receive_error_history: function(resp) {
+		// receive page of history from server, render it
+		this.lastErrorHistoryResp = resp;
+		
+		var html = '';
+		this.div.removeClass('loading');
+
+		html += this.getSidebarTabs( 'error_history',
+		[
+			['history', "All Completed"],
+			// ['event_history', "Event History"],
+			// ['event_stats', "Event Stats"],
+			['error_history', "Error History"],
+		]
+	    );
+		
+		var size = get_inner_window_size();
+		var col_width = Math.floor( ((size.width * 0.9) - 50) / 8 );
+		
+		this.events = [];
+		if (resp.rows) this.events = resp.rows;
+
+		var cols = ['Job ID', 'Event Name', 'Argument', 'Category', 'Plugin', 'Hostname', 'Code', 'Description', 'Start Date/Time', 'Elapsed Time'];
+		
+		var self = this;
+		var num_visible_items = 0;
+		
+		html += this.getPaginatedTable( resp, cols, 'event', function(job, idx) {
+			/*var actions = [
+				'<a href="#JobDetails?id='+job.id+'"><b>Job&nbsp;Details</b></a>',
+				'<a href="#History?sub=event_history&id='+job.event+'"><b>Event&nbsp;History</b></a>'
+			];*/
+			
+			// suppress row view if job was deleted
+			if (job.action != 'job_complete') return null;
+			num_visible_items++;
+			
+			var event = find_object( app.schedule, { id: job.event } );
+			var event_link = '(None)';
+
+			if (event && job.id) {
+				let niceEvent = self.getNiceEvent((event.title || job.event), col_width + 40) 
+				if(self.args.id) event_link = `<div class="td_big"> ${niceEvent}</div>` // no hyperlink if already filtered by id
+				else { event_link = `<div class="td_big"><a href="#History?sub=error_history&id=${job.event}">${niceEvent}</a></div>` }
+			}
+			else if (job.event_title) {
+				event_link = self.getNiceEvent(job.event_title, col_width + 40);
+			}
+			
+			var cat = job.category ? find_object( app.categories, { id: job.category } ) : null;
+			if (!cat && job.category_title) cat = { id: job.category, title: job.category_title };
+			
+			var plugin = job.plugin ? find_object( app.plugins, { id: job.plugin } ) : null;
+			if (!plugin && job.plugin_title) plugin = { id: job.plugin, title: job.plugin_title };
+			
+			let job_expired = time_now() > job.expires_at
+			let href = job_expired ? '' : '<a href="#JobDetails?id='+job.id+'">'
+
+			var job_link = '<div class="td_big">--</div>';
+			if (job.id) job_link = `<div class="td_big">${href}` + self.getNiceJob('<b>' + job.id + '</b>') + '</a></div>';
+		
+
+			var tds = [
+				job_link,				
+				event_link ,
+				self.getNiceArgument(job.arg, 40),				
+				self.getNiceCategory( cat, col_width ),
+				self.getNicePlugin( plugin, col_width ),
+				self.getNiceGroup( null, job.hostname, col_width ),				
+				job.code,
+				job.description,
+				// job.arg ? `<div class="ellip" style="max-width:40">${String(job.arg).substring(0,40)}</div>`  : '', // argument
+				get_nice_date_time( job.time_start, false, true ),
+				get_text_from_seconds( job.elapsed, true, false )
+				// actions.join(' | ')
+			];
+			
+			if (!job.id || job_expired) tds.className = 'disabled';
+			
+			if (cat && cat.color) {
+				if (tds.className) tds.className += ' '; else tds.className = '';
+				tds.className += cat.color;
+			}
+			
+			return tds;
+		} );
+		
+		if (resp.rows && resp.rows.length && !num_visible_items) {
+			html += '<tr><td colspan="'+cols.length+'" align="center" style="padding-top:10px; padding-bottom:10px; font-weight:bold;">';
+			html += 'All items were deleted on this page.';
+			html += '</td></tr>';
+		}
+		
+		this.div.find('#d_error_history_table').html( html );
+	},
+
 	jump_to_event_history: function() {
 		// make a selection from the event filter menu
 		var id = $('#fe_hist_event').val();
@@ -206,9 +329,10 @@ Class.subclass( Page.Base, "Page.History", {
 		
 		html += this.getSidebarTabs( 'event_stats',
 			[
-				['history', "All Completed"],
+				['history', "All Completed"],				
+				['event_history&id=' + args.id, "Event History"],
 				['event_stats', "Event Stats"],
-				['event_history&id=' + args.id, "Event History"]
+				['error_history', "Error History"],
 			]
 		);
 		html += '<div style="padding:20px 20px 30px 20px">';
@@ -713,8 +837,9 @@ Class.subclass( Page.Base, "Page.History", {
 		html += this.getSidebarTabs( 'event_history',
 			[
 				['history', "All Completed"],
+				['event_history', "Event History"],
 				['event_stats&id=' + args.id, "Event Stats"],
-				['event_history', "Event History"]
+				['error_history', "Error History"],
 			]
 		);
 		html += '<div style="padding:20px 20px 30px 20px">';
@@ -787,6 +912,12 @@ Class.subclass( Page.Base, "Page.History", {
 			case 'history':
 				if (this.lastHistoryResp) {
 					this.receive_history( this.lastHistoryResp );
+				}
+			break;
+
+			case 'error_history':
+				if (this.lastErrorHistoryResp) {
+					this.receive_history( this.lastErrorHistoryResp );
 				}
 			break;
 			
