@@ -12,7 +12,8 @@
 
 
 const Component = require("pixl-server/component");
-const { knex, Knex } = require('knex')
+const { knex, Knex } = require('knex');
+const knexStringcase = require('knex-stringcase');
 const { Readable } = require('stream');
 
 module.exports = class SQLEngine extends Component {
@@ -64,7 +65,16 @@ module.exports = class SQLEngine extends Component {
         const self = this;
         const sql_config = this.config.get();
 
-        this.db = knex(sql_config)
+        this.client = sql_config.client
+        if (this.client === 'oracledb') {
+              sql_config.stringcase = 'uppercase';
+              sql_config.appStringcase = 'lowercase';
+              const knex_config = knexStringcase(sql_config)
+              this.db = knex(knex_config)
+        }
+        else {
+              this.db = knex(sql_config)
+        }
 
         this.db.client.pool.on('createSuccess', () => {
             self.logDebug(3, "SQL connected successfully")           
@@ -72,8 +82,7 @@ module.exports = class SQLEngine extends Component {
 
         this.tableName = sql_config.table || 'cronicle'
 
-        this.client = sql_config.client
-        
+             
         if (this.client === 'mssql') {
             this.getBlobSizeFn = 'len(V)'
             this.mergeStmt = `
@@ -93,10 +102,10 @@ module.exports = class SQLEngine extends Component {
            BEGIN 
                k := ?;
                b := ?;
-               MERGE INTO "${this.tableName}" T
+               MERGE INTO ${this.tableName} T
                USING (SELECT k AS K FROM DUAL) S
                ON (s.K = t.K)
-               WHEN MATCHED THEN UPDATE SET t.V = b, t."updated" = CURRENT_TIMESTAMP
+               WHEN MATCHED THEN UPDATE SET t.V = b, t.updated = CURRENT_TIMESTAMP
                WHEN NOT MATCHED THEN INSERT (K, V) VALUES (s.K, b );
            END;     
             `
@@ -218,7 +227,7 @@ module.exports = class SQLEngine extends Component {
         this.logDebug(9, "Fetching SQL Object: " + key);
 
         try {
-            let data = (await this.db(this.tableName).where('K', key).select(["K as key", 'V as value']))[0] // expected {key: key, value: value}
+            let data = (await this.db(this.tableName).where('K', key).select(['K as key', 'V as value']))[0] // expected {key: key, value: value}
             let result = (data || {}).value
             if (result) {
                 if (self.storage.isBinaryKey(key)) {
