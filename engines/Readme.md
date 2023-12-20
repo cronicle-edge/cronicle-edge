@@ -92,7 +92,7 @@ npm i level
 
 ## SQL 
 ```bash
- npm i knex
+ npm i knex knex-stringcase
 ```
 ###  sqlite:
 ```bash

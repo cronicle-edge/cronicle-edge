@@ -71,14 +71,13 @@ if($All.IsPresent) {
 }
 # -------------------------
 
-if (!(Get-Command esbuild -ErrorAction SilentlyContinue)) { npm i esbuild -g --loglevel warn }
-
 if (!(Test-Path .\node_modules) -or $Force.IsPresent) {
    Write-Host "`n---- Installing npm packages`n"
    npm install --loglevel $npmLogLevel
    Write-Host "`n-----------------------------------------" 
    }
 
+if (!(Get-Command esbuild -ErrorAction SilentlyContinue)) { $env:Path += "$PSScriptRoot\node_modules\esbuild\bin\"}
 
 # ---- set up bin and htdocs folders on dist (will overwrite)
 Copy-Item -Force -r htdocs $Path/
@@ -273,7 +272,7 @@ if ($Level.IsPresent) {
 if ($SQL.IsPresent) {
   Write-Host "     - bundling SQL Engine*`n"
   $engines += ", SQL"
-  npm i knex pg pg-query-stream mysql2 --no-save --loglevel silent 
+  npm i knex knex-stringcase pg pg-query-stream mysql2 --no-save --loglevel silent 
   # SQL engine bundle up knex, mysql2 and pg. You can install sqlite3, oracledb, tedious separetly
   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 `
     --external:mysql  --external:tedious --external:pg-native --external:better-sqlite3  `
