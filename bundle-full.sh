@@ -2,7 +2,7 @@ DIST="${1:-dist}"
 
 npm i esbuild -g 
 # add some extra packages for plugin/engin bundling
-npm i level redis@3.1.2 ssh2-sftp-client @aws-sdk/client-s3 @aws-sdk/lib-storage knex pg pg-query-stream mysql2 
+npm i level redis@3.1.2 ssh2-sftp-client @aws-sdk/client-s3 @aws-sdk/lib-storage knex knex-stringcase pg pg-query-stream mysql2 
 mkdir -p $DIST && cp -r htdocs $DIST/
 
 # external js

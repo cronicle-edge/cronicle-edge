@@ -1,6 +1,8 @@
 #!/bin/bash
 
-cd "$(dirname "$0")"
+#SCRIPT_DIR="$(dirname "$0")"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "Script directory: $SCRIPT_DIR"
 
 usage() {
     echo "Usage: $0 /path/to/dist [--s3 | --lmdb | --level | --sftp | --sql | --dev | --verbose]"
@@ -101,16 +103,18 @@ fi
 
 # ---------------------------------------------------------
 
-# install esbuild if needed
-if ! command -v esbuild &>/dev/null; then
-  writehead "Installing esbuild"
-  npm i esbuild -g --loglevel $npmLogLevel
-fi
-
 # skip "npm install" if node_modules exist already
 if [ ! -d "node_modules" ] || [ "$force" = 1 ]; then
   writehead "Installing npm packages"
   npm install --loglevel $npmLogLevel
+fi
+
+# install esbuild if needed
+if ! command -v esbuild &>/dev/null; then
+  # writehead "Installing esbuild"
+  # npm i esbuild --loglevel $npmLogLevel
+  # esbuild is now a part on package.json
+  export PATH="$PATH:$SCRIPT_DIR/node_modules/esbuild/bin"
 fi
 
 # ----------------
@@ -288,7 +292,7 @@ fi
 
 if [ "$sql" = 1 ]; then
    printf "      - bundling SQL Engine [mysql/postgres]\n"
-   npm i knex pg pg-query-stream mysql2 --no-save --loglevel silent
+   npm i knex knex-stringcase pg pg-query-stream mysql2 --no-save --loglevel silent
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
      --external:mysql  --external:tedious --external:pg-native --external:better-sqlite3  \
      --outdir=$dist/bin/engines engines/SQL.js
