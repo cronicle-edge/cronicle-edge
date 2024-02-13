@@ -73,19 +73,28 @@ module.exports = class SQLEngine extends Component {
         this.tableName = sql_config.table || 'cronicle'
 
         this.client = sql_config.client
-        
+
+        // some column name aliases to adjust to default DB case
+        let CREATED = 'created'
+        let UPDATED = 'updated'
+                
         if (this.client === 'mssql') {
             this.getBlobSizeFn = 'len(V)'
             this.mergeStmt = `
-            MERGE INTO "${this.tableName}" T 
+            MERGE INTO ${this.tableName} T 
             USING (SELECT ? as K, ? as V ) S
             ON (s.K = t.K)
-            WHEN MATCHED THEN UPDATE SET t.V = s.V, t."updated" = CURRENT_TIMESTAMP
+            WHEN MATCHED THEN UPDATE SET t.V = s.V, t.UPDATED = CURRENT_TIMESTAMP
             WHEN NOT MATCHED THEN INSERT (K, V) VALUES (s.K, s.V);     
             `
         }
-
+        
         if (this.client === 'oracledb') { // need to pass large blob via variable to avoid "too long" error
+            if (!sql_config.keep_case) { // adjust oracle to uppercase by default
+                CREATED = 'CREATED'
+                UPDATED = 'UPDATED'
+                this.tableName = this.tableName.toUpperCase()
+            }
             this.mergeStmt = `
             DECLARE
             k VARCHAR(256);
@@ -96,7 +105,7 @@ module.exports = class SQLEngine extends Component {
                MERGE INTO "${this.tableName}" T
                USING (SELECT k AS K FROM DUAL) S
                ON (s.K = t.K)
-               WHEN MATCHED THEN UPDATE SET t.V = b, t."updated" = CURRENT_TIMESTAMP
+               WHEN MATCHED THEN UPDATE SET t.V = b, t."${UPDATED}" = CURRENT_TIMESTAMP
                WHEN NOT MATCHED THEN INSERT (K, V) VALUES (s.K, b );
            END;     
             `
@@ -109,9 +118,9 @@ module.exports = class SQLEngine extends Component {
                 table.string('K', 256).primary();
                 // default BLOB size for mysql is limited with 64KB
                 this.client.startsWith('mysql') ? table.specificType('V', 'longblob') : table.binary('V');
-                table.dateTime('created').defaultTo(this.db.fn.now());
-                table.dateTime('updated').defaultTo(this.db.fn.now());
-                table.index(['updated']);
+                table.dateTime(CREATED).defaultTo(this.db.fn.now());
+                table.dateTime(UPDATED).defaultTo(this.db.fn.now());
+                table.index([UPDATED]);
             })          
         }
 
