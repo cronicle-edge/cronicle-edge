@@ -6,6 +6,12 @@ if [ -f "$HOMEDIR/logs/cronicled.pid" ]; then
   rm "$HOMEDIR/logs/cronicled.pid"
 fi
 
+# check for custom nodejs binary
+if [ -f $HOMEDIR/nodejs/bin/node ]; then
+      export PATH="$HOMEDIR/nodejs/bin:$PATH"
+      echo "using custom node version: $(node -v)"
+fi
+
 BINARY="node $HOMEDIR/lib/main.js"
 # check if bundle exist
 if [ -f "$HOMEDIR/bin/cronicle.js" ]; then

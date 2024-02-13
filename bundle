@@ -22,6 +22,8 @@ while (( "$#" )); do
         --lmdb )  lmdb=1 ;;
         --level ) level=1 ;;
         --sql )   sql=1 ;;
+        --oracle ) oracle=1 ;;
+        --mssql ) mssql=1 ;;
         --dev | -d )  dev=1 ;; # avoid minification, add verbosity
         --verbose | -v )  verbose=1 ;;
         --force | -f )  force=1 ;; # reinstall npm packages
@@ -103,8 +105,9 @@ fi
 
 # install esbuild if needed
 if ! command -v esbuild &>/dev/null; then
-  writehead "Installing esbuild"
-  npm i esbuild -g --loglevel $npmLogLevel
+  # writehead "Installing esbuild"
+  # npm i esbuild -g --loglevel $npmLogLevel
+  export PATH="./node_modules/esbuild/bin:$PATH"
 fi
 
 # skip "npm install" if node_modules exist already
@@ -291,6 +294,18 @@ if [ "$sql" = 1 ]; then
    npm i knex pg pg-query-stream mysql2 --no-save --loglevel silent
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
      --external:mysql  --external:tedious --external:pg-native --external:better-sqlite3  \
+     --outdir=$dist/bin/engines engines/SQL.js
+elif [ "$oracle" = 1 ]; then
+   printf "      - bundling SQL Engine [oracle]\n"
+   npm i knex oracledb --no-save --loglevel silent
+   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
+     --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:tedious --external:pg-native --external:better-sqlite3  \
+     --outdir=$dist/bin/engines engines/SQL.js
+elif [ "$mssql" = 1 ]; then
+   printf "      - bundling SQL Engine [mssql]\n"
+   npm i knex tedious --no-save --loglevel silent
+   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
+     --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:oracledb --external:pg-native --external:better-sqlite3  \
      --outdir=$dist/bin/engines engines/SQL.js
 fi
 
