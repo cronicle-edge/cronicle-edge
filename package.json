@@ -36,6 +36,7 @@
 		"diff": "^5.0.0",
 		"dockerode": "^3.3.2",
 		"dotenv": "^8.2.0",
+		"esbuild": "^0.20.0",
 		"font-awesome": "4.7.0",
 		"glob": "5.0.15",
 		"graphlib": "^2.1.8",
