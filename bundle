@@ -31,6 +31,8 @@ while (( "$#" )); do
         --sql )   sql=1 ;;
         --oracle ) oracle=1 ;;
         --mssql ) mssql=1 ;;
+        --mysql ) mysql=1 ;;
+        --pgsql ) pgsql=1 ;;
         --test ) test=1 ;; # run unit test at the end
         --dev | -d )  dev=1 ;; # avoid minification, add verbosity
         --verbose | -v )  verbose=1 ;;
@@ -297,25 +299,74 @@ if [ "$sftp" = 1 ]; then
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --loader:.node=file --outdir=$dist/bin/engines engines/Sftp.js
 fi
 
+
+# ----- SQL Storage Engine
+sqlDrivers=()
+sqlArgs=("--bundle" "--minify" "--platform=node" "--outdir=$dist/bin/engines")
+# exclude unused drivers
+sqlArgs+=("--external:better-sqlite3" "--external:mysql" "--external:sqlite3")
+
 if [ "$sql" = 1 ]; then
-   printf "      - bundling SQL Engine [mysql/postgres]\n"
-   npm i knex pg pg-query-stream mysql2 --no-save --loglevel silent
-   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
-     --external:mysql  --external:tedious --external:pg-native --external:better-sqlite3  \
-     --outdir=$dist/bin/engines engines/SQL.js
-elif [ "$oracle" = 1 ]; then
-   printf "      - bundling SQL Engine [oracle]\n"
-   npm i knex oracledb --no-save --loglevel silent
-   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
-     --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:tedious --external:pg-native --external:better-sqlite3  \
-     --outdir=$dist/bin/engines engines/SQL.js
-elif [ "$mssql" = 1 ]; then
-   printf "      - bundling SQL Engine [mssql]\n"
-   npm i knex tedious --no-save --loglevel silent
-   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
-     --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:oracledb --external:pg-native --external:better-sqlite3  \
-     --outdir=$dist/bin/engines engines/SQL.js
+  oracle=1
+  mssql=1
+  mysql=1
+  pgsql=1
 fi
+
+if [ "$mysql" = 1 ]; then
+  sqlDrivers+=("mysql2")
+else
+  sqlArgs+=("--external:mysql2")
+fi
+
+if [ "$pgsql" = 1 ]; then
+  sqlDrivers+=("pg" "pg-query-stream")
+else
+  sqlArgs+=("--external:pg" "--external:pg-query-stream")
+fi
+
+if [ "$oracle" = 1 ]; then
+  sqlDrivers+=("oracledb")
+else
+  sqlArgs+=("--external:oracledb")
+fi
+
+if [ "$mssql" = 1 ]; then
+  sqlDrivers+=("tedious")
+else
+  sqlArgs+=("--external:tedious")
+fi
+
+if [ ${#sqlDrivers[@]} -gt 0 ]; then
+  sqlInstall=("install" "--no-save" "--loglevel" "silent" "knex")
+  sqlInstall+=("${sqlDrivers[@]}")
+
+  sqlArgs+=("engines/SQL.js")
+
+  echo "      - bundling SQL Engine [${sqlDrivers[@]}]"
+  npm "${sqlInstall[@]}"
+  esbuild "${sqlArgs[@]}"
+fi
+
+# if [ "$sql" = 1 ]; then
+#    printf "      - bundling SQL Engine [mysql/postgres]\n"
+#    npm i knex pg pg-query-stream mysql2 --no-save --loglevel silent
+#    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
+#      --external:mysql  --external:tedious --external:pg-native --external:better-sqlite3  \
+#      --outdir=$dist/bin/engines engines/SQL.js
+# elif [ "$oracle" = 1 ]; then
+#    printf "      - bundling SQL Engine [oracle]\n"
+#    npm i knex oracledb --no-save --loglevel silent
+#    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
+#      --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:tedious --external:pg-native --external:better-sqlite3  \
+#      --outdir=$dist/bin/engines engines/SQL.js
+# elif [ "$mssql" = 1 ]; then
+#    printf "      - bundling SQL Engine [mssql]\n"
+#    npm i knex tedious --no-save --loglevel silent
+#    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 \
+#      --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:oracledb --external:pg-native --external:better-sqlite3  \
+#      --outdir=$dist/bin/engines engines/SQL.js
+# fi
 
 if [ "$redis" = 1 ]; then
    printf "      - bundling Redis Engine \n"

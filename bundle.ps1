@@ -4,9 +4,11 @@
 param(
   [Parameter(Position = 0)][String]$Path = "dist", # install directory
   [switch]$S3, # bundle s3 engine
-  [switch]$SQL, # bundle sql engine with mysql/pgsql
-  [switch]$Oracle, # bundle sql engine with Oracle (oracledb)
+  [switch]$SQL, # bundle sql engine with mysql/pgsql/oracle/mssql
+  [switch]$Oracle, # bundle sql engine with oracle (oracledb)
   [switch]$MSSQL, # bundle sql engine with mssql (tedious)
+  [switch]$Mysql, # bundle sql engine with mysql (mysql2)
+  [switch]$Pgsql, # bundle sql engine with postgres (pg)
   [switch]$Redis, # bundle redis engine
   [switch]$Level, # bundle level db engine
   [switch]$Lmdb, # bundle lmdb engine *
@@ -277,31 +279,55 @@ if ($Level.IsPresent) {
   Copy-Item -Force node_modules\classic-level\prebuilds\win32-x64\node.napi.node $lmdbDir
 }
 
-if ($SQL.IsPresent) {
-  Write-Host "     - bundling SQL Engine [Mysql(mysql2)/postgres(pg)]*`n"
-  $engines += ", SQL(mysql/pg)"
-  npm i knex pg pg-query-stream mysql2 --no-save --loglevel silent 
-  # SQL engine bundle up knex, mysql2 and pg. You can install sqlite3, oracledb, tedious separetly
-  esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 `
-    --external:mysql  --external:tedious --external:pg-native --external:better-sqlite3  `
-    --outdir=$Path/bin/engines engines/SQL.js
+# BUNDLE SQL DRIVERS IF NEEDED
+
+$sqlDrivers = [System.Collections.ArrayList]::new()
+$sqlArgs = [System.Collections.ArrayList]::new(@("--bundle", "--minify", "--platform=node", "--outdir=$Path/bin/engines"))
+# exclude unused drivers
+$sqlArgs.AddRange(@("--external:better-sqlite3", "--external:mysql", "--external:sqlite3"))
+
+if($SQL) { $Oracle = $MSSQL = $Mysql = $Pgsql = $true }
+
+$Mysql ? $sqlDrivers.Add("mysql2"): $sqlArgs.Add("--external:mysql2") | Out-Null
+$Pgsql ? $sqlDrivers.AddRange(@("pg", "pg-query-stream")) : $sqlArgs.AddRange(@("--external:pg", "--external:pg-query-stream")) | Out-Null
+$Oracle ? $sqlDrivers.Add("oracledb") : $sqlArgs.Add("--external:oracledb") | Out-Null
+$MSSQL ? $sqlDrivers.Add("tedious") : $sqlArgs.Add("--external:tedious") | Out-Null
+
+if($sqlDrivers.Count -gt 0) {
+  $sqlInstall = [System.Collections.ArrayList]::new(@("install", "--no-save", "--loglevel", "silent", "knex"))
+  $sqlInstall.AddRange($sqlDrivers) | Out-Null
+  $sqlArgs.Add("engines/SQL.js") | Out-Null
+
+  Write-Host "     - bundling SQL Engine [$($sqlDrivers -join ",")]"
+  & npm $sqlInstall
+  & esbuild $sqlArgs
 }
-elseif ($Oracle.IsPresent) {
-  Write-Host "     - bundling SQL Engine [Oracle(oracledb)]*`n"
-  $engines += ", SQL(oracle)"
-  npm i knex oracledb --no-save --loglevel silent
-  esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 `
-    --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:tedious --external:pg-native --external:better-sqlite3 `
-    --outdir=$Path/bin/engines engines/SQL.js
-}
-elseif ($MSSQL.IsPresent) {
-  Write-Host "     - bundling SQL Engine [mssql(tedious)]*`n"
-  $engines += ", SQL(mssql)"
-  npm i knex tedious --no-save --loglevel silent
-  esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 `
-    --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:oracledb --external:pg-native --external:better-sqlite3 `
-    --outdir=$Path/bin/engines engines/SQL.js
-}
+
+# if ($SQL.IsPresent) {
+#   Write-Host "     - bundling SQL Engine [Mysql(mysql2)/postgres(pg)]*`n"
+#   $engines += ", SQL(mysql/pg)"
+#   npm i knex pg pg-query-stream mysql2 --no-save --loglevel silent 
+#   # SQL engine bundle up knex, mysql2 and pg. You can install sqlite3, oracledb, tedious separetly
+#   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 `
+#     --external:mysql  --external:tedious --external:pg-native --external:better-sqlite3  `
+#     --outdir=$Path/bin/engines engines/SQL.js
+# }
+# elseif ($Oracle.IsPresent) {
+#   Write-Host "     - bundling SQL Engine [Oracle(oracledb)]*`n"
+#   $engines += ", SQL(oracle)"
+#   npm i knex oracledb --no-save --loglevel silent
+#   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 `
+#     --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:tedious --external:pg-native --external:better-sqlite3 `
+#     --outdir=$Path/bin/engines engines/SQL.js
+# }
+# elseif ($MSSQL.IsPresent) {
+#   Write-Host "     - bundling SQL Engine [mssql(tedious)]*`n"
+#   $engines += ", SQL(mssql)"
+#   npm i knex tedious --no-save --loglevel silent
+#   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 `
+#     --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:oracledb --external:pg-native --external:better-sqlite3 `
+#     --outdir=$Path/bin/engines engines/SQL.js
+# }
 
 # Lmdb, need to install lmdb separetly (npm i lmdb)
 if($Lmdb.IsPresent) {
