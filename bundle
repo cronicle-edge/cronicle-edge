@@ -11,6 +11,13 @@ writehead() {
     printf "\n ---- $1 [$(date +"%T")]\n"    
 }
 
+
+# check for custom nodejs binary
+if [ -f $PWD/nodejs/bin/node ]; then
+      export PATH="$PWD/nodejs/bin:$PATH"
+      echo "using custom node version: $(node -v)"
+fi
+
 # -------------------- ARG CHECK 
 x=0 
 dist="dist"  # default
@@ -24,6 +31,7 @@ while (( "$#" )); do
         --sql )   sql=1 ;;
         --oracle ) oracle=1 ;;
         --mssql ) mssql=1 ;;
+        --test ) test=1 ;; # run unit test at the end
         --dev | -d )  dev=1 ;; # avoid minification, add verbosity
         --verbose | -v )  verbose=1 ;;
         --force | -f )  force=1 ;; # reinstall npm packages
@@ -315,7 +323,6 @@ if [ "$redis" = 1 ]; then
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/engines engines/Redis.js
 fi
 
-
 # --- CRONICLE.JS
 writehead "Bundling cronicle.js"
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=node --outfile=$dist/bin/cronicle.js lib/main.js
@@ -419,3 +426,13 @@ To remove service:
 ---------------------------------------------------------------------------------------------------------------------------------------
 
 EOF
+
+#  OPTIONAL UNIT TEST
+if [ "$test" = 1 ]; then
+  writehead " Bundling unit test files"
+  esbuild --bundle --log-level=info --minify=false --platform=node --outdir=$dist/bin lib/test.js
+  writehead " Running tests"
+  node node_modules/pixl-unit/unit.js $dist/bin/test.js
+  # remove test files
+  rm $dist/bin/test.js
+fi
