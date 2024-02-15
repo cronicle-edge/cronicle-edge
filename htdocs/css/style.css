@@ -621,6 +621,14 @@ td.table_label {
 			background-color: #400 !important;
 		}
 
+		body.dark .data_table tr.blue td {
+			background-color: #101215 !important;
+		}
+
+		body.dark .data_table tr.yellow td {
+			background-color: #483d33 !important;
+		}
+
 		body.dark div.plugin_params_label {
 			text-shadow: none
 		}
