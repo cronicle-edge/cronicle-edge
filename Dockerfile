@@ -3,7 +3,9 @@
 # test run: docker run --rm -it  -p 3019:3012 -e CRONICLE_manager=1 cronicle:bundle bash
 # then type manager or worker
 
-# cronicle/base-alpine is defined in Docker/DockerBaseAlpine.dockerfile
+# cronicle/base-alpine: 
+# FROM alpine:3.19.1
+# RUN apk add --no-cache bash nodejs tini util-linux bash openssl procps coreutils curl tar jq
 
 FROM cronicle/base-alpine as build
 RUN apk add --no-cache npm 
