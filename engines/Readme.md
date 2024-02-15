@@ -6,14 +6,22 @@ https://github.com/cronicle-edge/edge-storage-engine
 
 ## S3
 ```bash
+# install driver
 npm i @aws-sdk/client-s3 @aws-sdk/lib-storage
+
+# or bundle:
+./bundle --s3
+
+# spin up test S3 server (minio)
+docker run -it -p 9000:9000 -p 9001:9001 --entrypoint sh minio/minio -c 'mkdir -p /export/cronicle && minio server /export --console-address ":9001"'
+
 ```
 
 ```json
     "Storage": {
         "engine": "S3",
         "AWS": {
-            "endpoint": "http://minio:9000",
+            "endpoint": "http://localhost:9000",
             "endpointPrefix": false,
             "forcePathStyle": true,
             "region": "us-east-1",
@@ -32,14 +40,21 @@ npm i @aws-sdk/client-s3 @aws-sdk/lib-storage
         "S3": {
             "fileExtensions": true,
             "params": {
-                "Bucket": "demo"
+                "Bucket": "cronicle"
             }
         }
     },
 ```
 ## SFTP:
 ```bash
+# install driver
 npm i ssh2-sftp-client
+
+# bundle:
+./bundle --sftp
+
+# spin up test sftp server:
+docker run --rm --name sftp -p 8080:8080 -p 2022:22 -it atmoz/sftp  'cron:cronpass:::cronicle'
 ```
 
 ```json
@@ -49,13 +64,13 @@ npm i ssh2-sftp-client
 		"concurrency": 4,
 		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
 		"Sftp": {
-			"base_dir": "data",
+			"base_dir": "cronicle",
 			"key_namespaces": 1,
 			"connection": {
-				"host": "192.168.0.1",
-				"port": 22,
-				"username": "root",
-				"password": "P@ssword"
+				"host": "localhost",
+				"port": 2022,
+				"username": "cron",
+				"password": "cronpass"
 			}
 		}
 	},
@@ -64,7 +79,11 @@ npm i ssh2-sftp-client
 
 ## Lmdb:
 ```bash
+# install driver:
 npm i lmdb
+
+# bundle (need to install driver in dist folder upon bundling):
+./bundle --lmdb
 ```
 
 ```json
@@ -77,7 +96,11 @@ npm i lmdb
     },
 ```
 ```bash
+# install driver:
 npm i level
+
+# bundle:
+./bundle --level
 ```
 ## Level:
 ```json
@@ -102,6 +125,9 @@ To bundle common sql drivers (mysql/pgsql/oracle/mssql) in a single engine:
 ```bash
 # install sqlite driver
  npm i sqlite3 
+
+# bundle (install driver in dist folder upon bundling completion)
+./bundle --sqlite
 ```
 
 ```json

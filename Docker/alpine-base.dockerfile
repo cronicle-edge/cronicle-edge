@@ -1,4 +1,4 @@
-# build: docker build --no-cache -t cronicle/base-alpine -f Docker/DockerfileBaseAlpine.dockerfile .
+# build: docker build --no-cache -t cronicle/base-alpine -f Docker/alpine-base.dockerfile .
 # docker tag cronicle/base-alpine cronicle/base-alpine:v3.19.1
 # docker push cronicle/base-alpine 
 # docker push cronicle/base-alpine:v3.19.1

@@ -9,6 +9,7 @@ param(
   [switch]$MSSQL, # bundle sql engine with mssql (tedious)
   [switch]$Mysql, # bundle sql engine with mysql (mysql2)
   [switch]$Pgsql, # bundle sql engine with postgres (pg)
+  [switch]$Sqlite, # for sqlite just bundle plain SQL engine
   [switch]$Redis, # bundle redis engine
   [switch]$Level, # bundle level db engine
   [switch]$Lmdb, # bundle lmdb engine *
@@ -293,7 +294,8 @@ $Pgsql ? $sqlDrivers.AddRange(@("pg", "pg-query-stream")) : $sqlArgs.AddRange(@(
 $Oracle ? $sqlDrivers.Add("oracledb") : $sqlArgs.Add("--external:oracledb") | Out-Null
 $MSSQL ? $sqlDrivers.Add("tedious") : $sqlArgs.Add("--external:tedious") | Out-Null
 
-if($sqlDrivers.Count -gt 0) {
+# bundle SQL engine if at least 1 SQL driver selected
+if($sqlDrivers.Count -gt 0 -OR $Sqlite) {
   $sqlInstall = [System.Collections.ArrayList]::new(@("install", "--no-save", "--loglevel", "silent", "knex"))
   $sqlInstall.AddRange($sqlDrivers) | Out-Null
   $sqlArgs.Add("engines/SQL.js") | Out-Null
@@ -303,40 +305,12 @@ if($sqlDrivers.Count -gt 0) {
   & esbuild $sqlArgs
 }
 
-# if ($SQL.IsPresent) {
-#   Write-Host "     - bundling SQL Engine [Mysql(mysql2)/postgres(pg)]*`n"
-#   $engines += ", SQL(mysql/pg)"
-#   npm i knex pg pg-query-stream mysql2 --no-save --loglevel silent 
-#   # SQL engine bundle up knex, mysql2 and pg. You can install sqlite3, oracledb, tedious separetly
-#   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 `
-#     --external:mysql  --external:tedious --external:pg-native --external:better-sqlite3  `
-#     --outdir=$Path/bin/engines engines/SQL.js
-# }
-# elseif ($Oracle.IsPresent) {
-#   Write-Host "     - bundling SQL Engine [Oracle(oracledb)]*`n"
-#   $engines += ", SQL(oracle)"
-#   npm i knex oracledb --no-save --loglevel silent
-#   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 `
-#     --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:tedious --external:pg-native --external:better-sqlite3 `
-#     --outdir=$Path/bin/engines engines/SQL.js
-# }
-# elseif ($MSSQL.IsPresent) {
-#   Write-Host "     - bundling SQL Engine [mssql(tedious)]*`n"
-#   $engines += ", SQL(mssql)"
-#   npm i knex tedious --no-save --loglevel silent
-#   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --external:oracledb --external:sqlite3 `
-#     --external:mysql --external:pg-query-stream --external:mysql2  --external:pg --external:oracledb --external:pg-native --external:better-sqlite3 `
-#     --outdir=$Path/bin/engines engines/SQL.js
-# }
-
 # Lmdb, need to install lmdb separetly (npm i lmdb)
 if($Lmdb.IsPresent) {
   Write-Host "     - bundling Lmdb Engine*`n"
   $engines += ", Lmdb"
   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines --external:lmdb engines/Lmdb.js 
 }
-
-
 
 #### ------- SET UP CONFIGS ----- only do it if config folder doesnt exist #
 if (!(Test-Path $Path/conf)) {
