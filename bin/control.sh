@@ -34,6 +34,11 @@ if [ -f "$HOMEDIR/bin/cronicle.js" ]; then
     BINARY="$HOMEDIR/bin/cronicle.js"
 fi
 
+# check for custom nodejs binary
+if [ -f $HOMEDIR/nodejs/bin/node ]; then
+      export PATH="$HOMEDIR/nodejs/bin:$PATH"
+fi
+
 #
 # the path to your PID file
 PIDFILE=$HOMEDIR/logs/cronicled.pid

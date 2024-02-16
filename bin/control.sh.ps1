@@ -46,7 +46,10 @@ if (!$Command) {
 }
 # $conf = Get-Content "$PSScriptRoot\..\conf\config.json" | ConvertFrom-Json -Depth 10
 
-
+if(Test-Path $PSScriptRoot\..\nodejs\node.exe) {
+    $env:Path =  "$PSScriptRoot\..\nodejs\;$env:Path;"
+    # Write-Warning "Using custom node version $(node -v)"
+  }
 
 # ===========================   LOGS / LS commands first  (no need to check process) ==========================================
 

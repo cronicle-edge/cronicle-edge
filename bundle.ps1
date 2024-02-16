@@ -20,6 +20,7 @@ param(
   [Switch]$Tools, # bundle repair/migrate tools
   [Switch]$All, # bundle all storage engines and tools
   [switch]$V, # verbose
+  [switch]$Test, # run unit test at the end
   [ValidateSet("warning", "debug", "info", "warning", "error","silent")][string]$ESBuildLogLevel = "warning"
 
 )
@@ -78,6 +79,12 @@ if($All.IsPresent) {
 # -------------------------
 
 # if (!(Get-Command esbuild -ErrorAction SilentlyContinue)) { npm i esbuild -g --loglevel warn }
+
+if(Test-Path $PSScriptRoot\nodejs\node.exe) {
+  $env:Path =  "$PSScriptRoot\nodejs\;$env:Path;"
+  Write-Warning "Using custom node version $(node -v)"
+  # exit 0
+}
 
 if (!(Test-Path .\node_modules) -or $Force.IsPresent) {
    Write-Host "`n---- Installing npm packages`n"
@@ -418,3 +425,11 @@ to remove service:
   node bin\uninstall.js
 
 "
+if($Test.IsPresent) {
+
+  Write-Host "Running unit test"
+  Write-Host "build test script"
+  esbuild --bundle --outdir=$Path/bin/ --platform=node lib/test.js
+  node .\node_modules\pixl-unit\unit.js $Path\bin\test.js 
+  Remove-Item $Path\bin\test.js 
+}
