@@ -6,7 +6,7 @@ const Keyv = require('keyv');
 var mongoDBClient = null;
 var keyv = null;
 module.exports = Class.create({
-    __name: 'MongoEngine',
+    __name: 'MongoDB',
     __parent: Component,
     defaultConfig:{
         host:"",
@@ -19,7 +19,7 @@ module.exports = Class.create({
     startup: function(callback) {
         // setup initial connection
         var self = this;
-        this.logDebug(2, "Setting up MongoEngine");
+        this.logDebug(2, "Setting up MongoDB");
         // Connecting to MongoDB
         keyv = new Keyv(this.config.get('host'));
         keyv.on('error', err => {});
@@ -149,7 +149,7 @@ module.exports = Class.create({
         callback();
     },
     shutdown: function(callback) {
-        this.logDebug(2, "Shutting down MongoEngine");
+        this.logDebug(2, "Shutting down MongoDB");
         callback();
     }
 });
