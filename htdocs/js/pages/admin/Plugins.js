@@ -388,7 +388,7 @@ Class.add( Page.Admin, {
 		// advanced options
 		var adv_expanded = !!(plugin.cwd || plugin.uid);
 		html += get_form_table_row( 'Advanced', 
-			'<div style="font-size:13px;'+(adv_expanded ? 'display:none;' : '')+'"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Advanced Options</span></div>' + 
+			'<div autocomplete="off" style="font-size:13px;'+(adv_expanded ? 'display:none;' : '')+'"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Advanced Options</span></div>' + 
 			'<fieldset style="padding:10px 10px 0 10px; margin-bottom:5px;'+(adv_expanded ? '' : 'display:none;')+'"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Advanced Options</legend>' + 
 				'<div class="plugin_params_label">Working Directory (CWD):</div>' + 
 				'<div class="plugin_params_content"><input type="text" id="fe_ep_cwd" size="50" value="'+escape_text_field_value(plugin.cwd)+'" placeholder="" spellcheck="false"/></div>' + 
@@ -434,8 +434,10 @@ Class.add( Page.Admin, {
 		for (var idx = 0, len = params.length; idx < len; idx++) {
 			var param = params[idx];
 			var actions = [
+				'<span class="link" onMouseUp="$P().up_plugin_param('+idx+')"><b>Up</b></span>',
+				'<span class="link" onMouseUp="$P().down_plugin_param('+idx+')"><b>Down</b></span>',
 				'<span class="link" onMouseUp="$P().edit_plugin_param('+idx+')"><b>Edit</b></span>',
-				'<span class="link" onMouseUp="$P().delete_plugin_param('+idx+')"><b>Delete</b></span>'
+				'<span class="link" onMouseUp="$P().delete_plugin_param('+idx+')"><b>Delete</b></span>',				
 			];
 			html += '<tr>';
 			html += '<td><span class="link" style="font-family:monospace; font-weight:bold; white-space:nowrap;" onMouseUp="$P().edit_plugin_param('+idx+')"><i class="fa fa-cog">&nbsp;&nbsp;</i>' + param.id + '</span></td>';
@@ -682,6 +684,26 @@ Class.add( Page.Admin, {
 		// delete selected plugin param, but do not save
 		// don't prompt either, giving a UX hint that save did not occur
 		this.plugin.params.splice( idx, 1 );
+		this.refresh_plugin_params();
+	},
+
+	up_plugin_param: function(idx) {
+		// move app parameter
+		if( !parseInt(idx)) return
+		let arr = this.plugin.params
+		let curr = arr[idx]
+		arr[idx] = arr[idx-1]
+		arr[idx-1] = curr
+		this.refresh_plugin_params();
+	},
+
+	down_plugin_param: function(idx) {
+		// move app parameter
+		let arr = this.plugin.params
+		if(parseInt(idx) >= arr.length - 1) return
+		let curr = arr[idx]
+		arr[idx] = arr[idx+1]
+		arr[idx+1] = curr
 		this.refresh_plugin_params();
 	},
 	
