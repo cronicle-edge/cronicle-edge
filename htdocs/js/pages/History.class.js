@@ -184,10 +184,10 @@ Class.subclass( Page.Base, "Page.History", {
 		this.div.html( html );
 
 		var args = this.args;
-		var evtLimit = parseInt($("#fe_hist_eventlimit").val())
+		// var evtLimit = parseInt($("#fe_hist_eventlimit").val())
 		if (!args.offset) args.offset = 0;
-		if (!evtLimit) args.limit = 25;
-		if(evtLimit)  args.limit = parseInt(evtLimit*100);
+		if (!args.limit) args.limit = 25;
+		// if(evtLimit)  args.limit = parseInt(evtLimit*100);
 		app.api.post( 'app/get_errors', copy_object(args), this.receive_error_history.bind(this) );
 		
 	},
@@ -262,7 +262,7 @@ Class.subclass( Page.Base, "Page.History", {
 				self.getNicePlugin( plugin, col_width ),
 				self.getNiceGroup( null, job.hostname, col_width ),				
 				job.code,
-				job.description,
+				encode_entities(job.description || job.memo),
 				// job.arg ? `<div class="ellip" style="max-width:40">${String(job.arg).substring(0,40)}</div>`  : '', // argument
 				get_nice_date_time( job.time_start, false, true ),
 				get_text_from_seconds( job.elapsed, true, false )
@@ -875,7 +875,7 @@ Class.subclass( Page.Base, "Page.History", {
 				self.getNiceArgument(job.arg, 40),
 				self.getNiceGroup( null, job.hostname, col_width ),
 				jobStatusHist,
-				job.memo,
+				encode_entities(job.memo),
 				get_nice_date_time( job.time_start, false, true ),
 				get_text_from_seconds( job.elapsed, true, false ),
 				'' + cpu_avg + '%',
