@@ -47,13 +47,22 @@ stream.on('json', function(job) {
 	if (params.headers) {
 		// allow headers to be substituted using [placeholders]
 		params.headers = Tools.sub( params.headers, job );
-		
+	
 		print("\nRequest Headers:\n" + params.headers.trim() + "\n");
 		params.headers.replace(/\r\n/g, "\n").trim().split(/\n/).forEach( function(pair) {
 			if (pair.match(/^([^\:]+)\:\s*(.+)$/)) {
 				request.setHeader( RegExp.$1, RegExp.$2 );
 			}
 		} );
+	}
+
+	// set athentication header if set via secrets
+	if(process.env['AUTH'])  {
+		process.env['AUTH'].replace(/\r\n/g, "\n").trim().split(/\n/).forEach( function(pair) {
+			if (pair.match(/^([^\:]+)\:\s*(.+)$/)) {
+				request.setHeader( RegExp.$1, RegExp.$2 );
+			}
+		})
 	}
 	
 	// follow redirects

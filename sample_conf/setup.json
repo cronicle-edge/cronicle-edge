@@ -89,7 +89,6 @@
 				{ "id":"script", "type":"textarea", "rows":10, "title":"Script", "value": "#!/bin/sh\n\necho \"Running SSHX job on $HOSTNAME\"\n\n# Specify conneciton info using URI format ([sftp://]user[:Password]@host[:port])\n# Can use directly or via ENV variable\n# URI/variable can also be passed via WF argument (if not specified in event)\n\n# If password in URI contains special character use escape characters (e.g. @ => %40)\n# You can also store password in PLUGIN_SECRET variable (instead of URI)\n# It can be set in plugin patameters on admin tab \n\n# If using ssh key\n# sftp://user@host:port?privateKey=/path/to/file&passphrase=Password)\n# You can also keep ssh key in [SSH Key] parameter\n\n# Kill Command parameter is used to properly handle job abortion\n# $$ is refering to PID of your script parent process (bootstrap script)\n" },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
 				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
-				{ "id":"ssh_key", "type":"textarea", "rows":5, "title":"SSH Key", "value": "" },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 }		
 			]
 		} ],
