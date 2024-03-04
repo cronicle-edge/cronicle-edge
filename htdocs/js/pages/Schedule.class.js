@@ -45,10 +45,10 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// app.api.post('app/export', this, function (resp) {
 		// 	//app.hideProgress();
 		const self = this
-		setTimeout(()=>{self.render_schedule_graph(self.events)}, 100)
-			app.show_info(`			  
+		setTimeout(() => { self.render_schedule_graph(self.events) }, 100)
+		app.show_info(`			  
 			  <div style="width: 90vw; height: 82vh" id="schedule_graph2"></div>		  
-			  `, '', function (result) {});
+			  `, '', function (result) { });
 	},
 
 	import_schedule: function (args) {
@@ -90,14 +90,14 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	},
 
 	render_time_options: function () {
-	   let theme = app.getPref('theme')
-	   let event = this.event
-	   $('#event_starttime').datetimepicker({ value: event.start_time ? new Date(event.start_time) : null, format: 'Y-m-d H:i', theme: theme}) ;
-	   $('#event_endtime').datetimepicker({ value: event.end_time ? new Date(event.end_time) : null, format: 'Y-m-d H:i', theme: theme});
-		
+		let theme = app.getPref('theme')
+		let event = this.event
+		$('#event_starttime').datetimepicker({ value: event.start_time ? new Date(event.start_time) : null, format: 'Y-m-d H:i', theme: theme });
+		$('#event_endtime').datetimepicker({ value: event.end_time ? new Date(event.end_time) : null, format: 'Y-m-d H:i', theme: theme });
+
 	},
 
-	update_graph_icon_label: function() {
+	update_graph_icon_label: function () {
 		let code = parseInt($('#fe_ee_graph_icon').val(), 16) || 61713
 		$("#fe_ee_graph_icon_label").text(' ' + String.fromCodePoint(code))
 	},
@@ -129,7 +129,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		if (files.length === 0) {
 			document.getElementById('fe_ee_pp_file_list').innerHTML = ''
 			return
-		} 
+		}
 
 		let table = '<table id="wf_event_list_table" class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
 
@@ -150,15 +150,15 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	file_add: function () {
 
 		let self = this;
-		if(!self.event.files) self.event.files = []
+		if (!self.event.files) self.event.files = []
 		let files = self.event.files
-	
+
 		// FILE EDITOR ON SHELLPLUG'
-		let html = '<table>' + 
-		get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="" spellcheck="false"/>`) +
-		get_form_table_spacer() +
-		get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110"></textarea>`) +
-		`</table>
+		let html = '<table>' +
+			get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="" spellcheck="false"/>`) +
+			get_form_table_spacer() +
+			get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110"></textarea>`) +
+			`</table>
 		<script> 
 
 		  setTimeout(()=> {
@@ -168,7 +168,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			lineWrapping: false,
 			scrollbarStyle: "overlay",
 			lineNumbers: true,
-			theme: "${app.getPref('theme') == 'dark' ?  'gruvbox-dark' : 'default' }",
+			theme: "${app.getPref('theme') == 'dark' ? 'gruvbox-dark' : 'default'}",
 			matchBrackets: true,
 			gutters: [''],
 			lint: true
@@ -182,16 +182,16 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	}, 30);
 		</script>`
-	  
+
 		app.confirm(html, '', "Save", function (result) {
-			
+
 			app.clearError();
-	 
+
 			if (result) {
 
 				let name = $("#fe_ee_pp_file_name").val()
-				
-				if (!name || files.map(e=>e.name).indexOf(name) > -1) {
+
+				if (!name || files.map(e => e.name).indexOf(name) > -1) {
 					app.showMessage('error', "Invalid Name")
 				}
 				else {
@@ -201,29 +201,29 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 
 				Dialog.hide();
-	 
-				 // update startFrom menu
-				 //$('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
-				 self.render_file_list() // refresh file list
-	 
-					
-	 
-				} // user clicked add
-			}); // app.confirm
-	 },
 
-	 file_edit: function (/** @type  {number} */ i) {
-		
+				// update startFrom menu
+				//$('#wf_start_from_step').html(render_menu_options(self.wf.map((e, i) => i + 1), self.opts.wf_start_from_step || 1))
+				self.render_file_list() // refresh file list
+
+
+
+			} // user clicked add
+		}); // app.confirm
+	},
+
+	file_edit: function (/** @type  {number} */ i) {
+
 		let self = this
-		if(!Array.isArray(self.event.files)) return // sanity check
+		if (!Array.isArray(self.event.files)) return // sanity check
 		let file = self.event.files[i]
-		if(!file) return // sanity check
+		if (!file) return // sanity check
 
-		let html = '<table>' + 
-		get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="${file.name}" spellcheck="false">`) +
-		get_form_table_spacer() +
-		get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110">${file.content}</textarea>`) +
-		`</table>
+		let html = '<table>' +
+			get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="${file.name}" spellcheck="false">`) +
+			get_form_table_spacer() +
+			get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110">${file.content}</textarea>`) +
+			`</table>
 		<script> 
 
 		  setTimeout(()=> {
@@ -233,7 +233,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			lineWrapping: false,
 			scrollbarStyle: "overlay",
 			lineNumbers: true,
-			theme: "${app.getPref('theme') == 'dark' ?  'gruvbox-dark' : 'default' }",
+			theme: "${app.getPref('theme') == 'dark' ? 'gruvbox-dark' : 'default'}",
 			matchBrackets: true,
 			gutters: [''],
 			lint: true
@@ -247,15 +247,15 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	}, 30);
 		</script>`
-	  
+
 		app.confirm(html, '', "Save", function (result) {
-			
+
 			app.clearError();
-	 
+
 			if (result) {
 
 				let name = $("#fe_ee_pp_file_name").val()
-				
+
 				if (!name.trim()) {
 					app.showMessage('error', "Invalid Name")
 				}
@@ -265,218 +265,218 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				}
 
 				Dialog.hide();
-	    		 self.render_file_list() // refresh file list
+				self.render_file_list() // refresh file list
 
-				} // user clicked add
-			}); // app.confirm
-	 },
+			} // user clicked add
+		}); // app.confirm
+	},
 
-	 file_delete: function ( /** @type {number} */ i) {
+	file_delete: function ( /** @type {number} */ i) {
 		let self = this
 		let arr = self.event.files  // this.event.params['wf_events'] || [] 
 		if (!Array.isArray(arr)) return
 		arr.splice(i, 1)
 		self.render_file_list()
-		},	
+	},
 
 	//// workflow 
 
-/**
- * @typedef {Object} WFEvent
- * @property {string} id
- * @property {string} title
- * @property {string} arg
- * @property {boolean} wait
- * @property {boolean} disabled
- */
-	
-render_wf_event_list: function () {
-	let cols = ['#', "Run", '@', 'Id', 'Title', 'Argument', ' '];
-	let wf_events = this.event.workflow || []
+	/**
+	 * @typedef {Object} WFEvent
+	 * @property {string} id
+	 * @property {string} title
+	 * @property {string} arg
+	 * @property {boolean} wait
+	 * @property {boolean} disabled
+	 */
 
-	let table = '<table id="wf_event_list_table" class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
-	   
-   if (wf_events.length === 0) {
-	   table += '<tr><td></td><td></td><td></td><td></td><td><b>No event found</b></td><td></td></tr>'
-   }
-// '<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
-   let schedTitles = {};
-   (app.schedule || []).forEach(e => {
-	   schedTitles[e.id] = e.title
-   });
-	
-   let startFrom = parseInt($("#wf_start_from_step :selected").val());
+	render_wf_event_list: function () {
+		let cols = ['#', "Run", '@', 'Id', 'Title', 'Argument', ' '];
+		let wf_events = this.event.workflow || []
 
-   for (var idx = 0, len = wf_events.length; idx < len; idx++) {
-	   let actions = `<span class="link" onMouseUp="$P().wf_event_edit(${idx})"><b>Edit</b></span> |
+		let table = '<table id="wf_event_list_table" class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
+
+		if (wf_events.length === 0) {
+			table += '<tr><td></td><td></td><td></td><td></td><td><b>No event found</b></td><td></td></tr>'
+		}
+		// '<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
+		let schedTitles = {};
+		(app.schedule || []).forEach(e => {
+			schedTitles[e.id] = e.title
+		});
+
+		let startFrom = parseInt($("#wf_start_from_step :selected").val());
+
+		for (var idx = 0, len = wf_events.length; idx < len; idx++) {
+			let actions = `<span class="link" onMouseUp="$P().wf_event_edit(${idx})"><b>Edit</b></span> |
 	       <span class="link" onMouseUp="$P().wf_event_up(${idx})"><b>Up</b></span> | 
 		   <span class="link" onMouseUp = "$P().wf_event_down(${idx})" > <b>Down</b></span> | 
 		   <span class="link" onMouseUp = "$P().wf_event_delete(${idx})" > <b>Delete</b></span>
 		   `
-	   
-	   let wfe = wf_events[idx]
-	   let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;"><a href="/#Schedule?sub=edit_event&id=${wfe.id}" target="_blank">${wfe.id}</a></span>`
-	   let title = `${schedTitles[wfe.id] || '<span style="color:red">[Unknown]</span>'}`.substring(0, 40)
-	   let arg = wfe.arg || ''
-	   if (arg.length > 40) arg = arg.substring(0, 37) + '...'
-	   let argInfo = wfe.arg ? `<span title="refer to JOB_ARG env variable"><u>${encode_entities(arg)}<u></span>` : '-'
 
-	   table += `<tr class="${wfe.disabled ? 'disabled' : ''}">
+			let wfe = wf_events[idx]
+			let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;"><a href="/#Schedule?sub=edit_event&id=${wfe.id}" target="_blank">${wfe.id}</a></span>`
+			let title = `${schedTitles[wfe.id] || '<span style="color:red">[Unknown]</span>'}`.substring(0, 40)
+			let arg = wfe.arg || ''
+			if (arg.length > 40) arg = arg.substring(0, 37) + '...'
+			let argInfo = wfe.arg ? `<span title="refer to JOB_ARG env variable"><u>${encode_entities(arg)}<u></span>` : '-'
+
+			table += `<tr class="${wfe.disabled ? 'disabled' : ''}">
 	     <td>${idx + 1}</td>
 	     <td><input type="checkbox" onChange="$P().wf_toggle_event_state(${idx})" ${wfe.disabled ? '' : 'checked="checked"'} /></td>
 	     <td>${(idx + 1 == startFrom || startFrom > len && idx == 0) ? '<span style="color:green">▶</span>' : ''}</td>
 	     <td> ${eventId}</td><td>${title}</td><td style="text-align:center" >${argInfo}</td><td>${actions}</td>
 	     </tr>`
-   }
-	table += `</table>`
-	
-	document.getElementById('fe_ee_pp_evt_list').innerHTML = table
-   },
+		}
+		table += `</table>`
+
+		document.getElementById('fe_ee_pp_evt_list').innerHTML = table
+	},
 
 	// xxxxxx
-   // '<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
+	// '<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
 
-wf_event_down: function (/** @type {number} */ i) {
-   let arr = this.event.workflow // ;  this.event.params['wf_events']
-   if(!Array.isArray(arr) || typeof i !=='number' || i >= arr.length - 1) return
-   [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
-   this.render_wf_event_list()
-},
+	wf_event_down: function (/** @type {number} */ i) {
+		let arr = this.event.workflow // ;  this.event.params['wf_events']
+		if (!Array.isArray(arr) || typeof i !== 'number' || i >= arr.length - 1) return
+		[arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+		this.render_wf_event_list()
+	},
 
-wf_event_up: function ( /** @type {number} */ i) {
-   let self = this
-   let workflow = self.event.workflow || []
-   let arr = self.event.workflow // this.event.params['wf_events'] || []
-   if(!Array.isArray(workflow) || typeof i !=='number' || i === 0 || i >= arr.length) return
-   [workflow[i], workflow[i-1]] = [workflow[i-1], workflow[i]];
-   this.render_wf_event_list()
-},
+	wf_event_up: function ( /** @type {number} */ i) {
+		let self = this
+		let workflow = self.event.workflow || []
+		let arr = self.event.workflow // this.event.params['wf_events'] || []
+		if (!Array.isArray(workflow) || typeof i !== 'number' || i === 0 || i >= arr.length) return
+		[workflow[i], workflow[i - 1]] = [workflow[i - 1], workflow[i]];
+		this.render_wf_event_list()
+	},
 
-wf_event_delete: function ( /** @type {number} */ i) {
-   let self = this
-   let workflow = self.event.workflow || []
-   let opts = self.event.options || {}
-   workflow.splice(i, 1)
-   // let arr = self.event.workflow  // this.event.params['wf_events'] || [] 
-//    if (!Array.isArray(workflow)) return
-//    arr.splice(i, 1)
-   self.render_wf_event_list()
-   $('#wf_start_from_step').html(render_menu_options(workflow.map((e, i) => i + 1), opts.wf_start_from_step || 1))
-   },
+	wf_event_delete: function ( /** @type {number} */ i) {
+		let self = this
+		let workflow = self.event.workflow || []
+		let opts = self.event.options || {}
+		workflow.splice(i, 1)
+		// let arr = self.event.workflow  // this.event.params['wf_events'] || [] 
+		//    if (!Array.isArray(workflow)) return
+		//    arr.splice(i, 1)
+		self.render_wf_event_list()
+		$('#wf_start_from_step').html(render_menu_options(workflow.map((e, i) => i + 1), opts.wf_start_from_step || 1))
+	},
 
-wf_toggle_event_state: function (idx) {
-   let self = this
-   let workflow = self.event.workflow || []
-   let evt = workflow[idx]
-   evt.disabled = !evt.disabled
-   this.render_wf_event_list()
-   },
+	wf_toggle_event_state: function (idx) {
+		let self = this
+		let workflow = self.event.workflow || []
+		let evt = workflow[idx]
+		evt.disabled = !evt.disabled
+		this.render_wf_event_list()
+	},
 
-wf_update_start: function () {
-   if(!this.event.options) this.event.options = {}
-   this.event.options.wf_start_from_step = parseInt($("#wf_start_from_step :selected").text()) || 1
-   this.render_wf_event_list()
-},
+	wf_update_start: function () {
+		if (!this.event.options) this.event.options = {}
+		this.event.options.wf_start_from_step = parseInt($("#wf_start_from_step :selected").text()) || 1
+		this.render_wf_event_list()
+	},
 
-wf_event_add_cat: function () {
-	let self = this;
-	// let workflow = self.event.workflow || []
-	let cat = self.event.category || $('#fe_ee_cat').val() || '';
-	let opts = self.event.options || {}
-	self.event.workflow = (app.schedule || [])
-	    .filter(e => e.id != self.event.id && e.category === cat && e.plugin != 'workflow')
-		.map(e => { return { id: e.id, title: e.title, arg: "", wait: false } })
-	
-	// update startFrom menu
-	$('#wf_start_from_step').html(render_menu_options(self.event.workflow.map((e, i) => i + 1), opts.wf_start_from_step || 1))
-	self.render_wf_event_list() // refresh event list
+	wf_event_add_cat: function () {
+		let self = this;
+		// let workflow = self.event.workflow || []
+		let cat = self.event.category || $('#fe_ee_cat').val() || '';
+		let opts = self.event.options || {}
+		self.event.workflow = (app.schedule || [])
+			.filter(e => e.id != self.event.id && e.category === cat && e.plugin != 'workflow')
+			.map(e => { return { id: e.id, title: e.title, arg: "", wait: false } })
 
-},
+		// update startFrom menu
+		$('#wf_start_from_step').html(render_menu_options(self.event.workflow.map((e, i) => i + 1), opts.wf_start_from_step || 1))
+		self.render_wf_event_list() // refresh event list
 
-wf_event_add: function () {
-	
-   let self = this;
-   let catMap = app.categories.reduce((map,obj) => {map[obj.id] = obj.title; return map}, {})
+	},
 
-   let sortEvents = (a, b) => {
-	   if (a.catid == self.event.category) return -1
-	   if (b.catid == self.event.category) return 1
-	   return a.cat.localeCompare(b.cat)
-   }
-   let all_events = (self.events || app.schedule )
-		.map(e => { return { id: e.id, title: `${catMap[e.category] || '(N/A)'}: ${e.title}`, arg: "", wait: false, cat: catMap[e.category] || '(N/A)', catid: e.category } })
-		.filter(e => e.id != self.event.id)
-		.sort(sortEvents)
+	wf_event_add: function () {
 
-   if(!self.event.workflow) self.event.workflow = []
-   let wf = self.event.workflow
-   let opts = self.event.options || {}
-   let event_menu = render_menu_options(all_events, wf.length > 0 ? wf[wf.length - 1].id : all_events[0].id)
+		let self = this;
+		let catMap = app.categories.reduce((map, obj) => { map[obj.id] = obj.title; return map }, {})
 
-   let el_style = 'width: 240px; font-size:16px;'
-   let html = '<table>' +  //<option value="">(Select Event)</option>
-   get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}">${event_menu}</select>`) + 
-   get_form_table_spacer() +
-   get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="" spellcheck="false"/>`) +
-   get_form_table_spacer() +
-   get_form_table_row('Skip', `<input type="checkbox" style="cursor:pointer" id="fe_ee_pp_wf_evt_skip" />`) +
-	   '</table>'
- 
-	   app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i> Add Event', html, "Add", function (result) {
-		   app.clearError();
+		let sortEvents = (a, b) => {
+			if (a.catid == self.event.category) return -1
+			if (b.catid == self.event.category) return 1
+			return a.cat.localeCompare(b.cat)
+		}
+		let all_events = (self.events || app.schedule)
+			.map(e => { return { id: e.id, title: `${catMap[e.category] || '(N/A)'}: ${e.title}`, arg: "", wait: false, cat: catMap[e.category] || '(N/A)', catid: e.category } })
+			.filter(e => e.id != self.event.id)
+			.sort(sortEvents)
 
-		   if (result) {
+		if (!self.event.workflow) self.event.workflow = []
+		let wf = self.event.workflow
+		let opts = self.event.options || {}
+		let event_menu = render_menu_options(all_events, wf.length > 0 ? wf[wf.length - 1].id : all_events[0].id)
 
-			   let evt = find_object(all_events, {id: $('#fe_ee_pp_wf_select_event').find(":selected").val()})
-			   if (!evt) { app.showMessage('error', "Please select valid event") }
-			   else {
-				   evt.arg = $('#fe_ee_pp_wf_evt_arg').val()
-				   self.event.workflow.push(evt)
-				//    console.log('added to wf: ', evt)
+		let el_style = 'width: 240px; font-size:16px;'
+		let html = '<table>' +  //<option value="">(Select Event)</option>
+			get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}">${event_menu}</select>`) +
+			get_form_table_spacer() +
+			get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="" spellcheck="false"/>`) +
+			get_form_table_spacer() +
+			get_form_table_row('Skip', `<input type="checkbox" style="cursor:pointer" id="fe_ee_pp_wf_evt_skip" />`) +
+			'</table>'
+
+		app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i> Add Event', html, "Add", function (result) {
+			app.clearError();
+
+			if (result) {
+
+				let evt = find_object(all_events, { id: $('#fe_ee_pp_wf_select_event').find(":selected").val() })
+				if (!evt) { app.showMessage('error', "Please select valid event") }
+				else {
+					evt.arg = $('#fe_ee_pp_wf_evt_arg').val()
+					self.event.workflow.push(evt)
+					//    console.log('added to wf: ', evt)
 				}
-			   Dialog.hide();
+				Dialog.hide();
 
-			// update startFrom menu
-			$('#wf_start_from_step').html(render_menu_options(wf.map((e, i) => i + 1), opts.wf_start_from_step || 1))
-			self.render_wf_event_list() // refresh event list
+				// update startFrom menu
+				$('#wf_start_from_step').html(render_menu_options(wf.map((e, i) => i + 1), opts.wf_start_from_step || 1))
+				self.render_wf_event_list() // refresh event list
 
-			   
 
-		   } // user clicked add
-	   }); // app.confirm
-},
 
-wf_event_edit: function (idx) {
-   // show dialog to edit or add wf event
-   let self = this;
-   let evt = self.event.workflow[idx] //self.wf.event_list[idx]
-   let event_list = render_menu_options([evt], evt.id)
-   let el_style = 'width: 240px;  font-size:16px;'
-   let html = '<table>' +
-	   get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}" disabled>${event_list}</select>`) + 
-	   get_form_table_spacer() +
-	   get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="${evt.arg}" spellcheck="false"/>`) +
-	   '</table>'	
+			} // user clicked add
+		}); // app.confirm
+	},
 
-   app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i>Edit Event Options', html, "OK", function (result) {
-	   app.clearError();
+	wf_event_edit: function (idx) {
+		// show dialog to edit or add wf event
+		let self = this;
+		let evt = self.event.workflow[idx] //self.wf.event_list[idx]
+		let event_list = render_menu_options([evt], evt.id)
+		let el_style = 'width: 240px;  font-size:16px;'
+		let html = '<table>' +
+			get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}" disabled>${event_list}</select>`) +
+			get_form_table_spacer() +
+			get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="${evt.arg}" spellcheck="false"/>`) +
+			'</table>'
 
-	   if (result) {
-			   let evt = self.event.workflow[idx]
-			   evt.arg = $('#fe_ee_pp_wf_evt_arg').val()		
-		   
-		   Dialog.hide();		
-		   self.render_wf_event_list() // refresh event list
+		app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i>Edit Event Options', html, "OK", function (result) {
+			app.clearError();
 
-	   } // user clicked add
-   }); // app.confirm
+			if (result) {
+				let evt = self.event.workflow[idx]
+				evt.arg = $('#fe_ee_pp_wf_evt_arg').val()
 
-}, 
+				Dialog.hide();
+				self.render_wf_event_list() // refresh event list
 
-toggle_token: function () {
+			} // user clicked add
+		}); // app.confirm
+
+	},
+
+	toggle_token: function () {
 		if ($('#fe_ee_token').is(':checked')) {
 			$('#fe_ee_token_label').text("")
-			if(!this.event.salt) this.event.salt = hex_md5(get_unique_id()).substring(0, 8)
+			if (!this.event.salt) this.event.salt = hex_md5(get_unique_id()).substring(0, 8)
 			let apiUrl = window.location.origin + '/api/app/run_event?id=' + (this.event.id || 'eventId') + '&post_data=1'
 			app.api.post('app/get_event_token', this.event, resp => {
 				$('#fe_ee_token_val').text(resp.token ? ` ${apiUrl}&token=${resp.token}` : "(error)");
@@ -490,34 +490,34 @@ toggle_token: function () {
 		}
 	},
 
-	getBasicTable2: function(rows, cols, data_type, callback) {
+	getBasicTable2: function (rows, cols, data_type, callback) {
 		// get html for sorted table (fake pagination, for looks only)
 		var html = '';
-		
+
 		// pagination
 		html += '<div class="pagination">';
 		html += '<table cellspacing="0" cellpadding="0" border="0" width="100%" style="table-layout:fixed;"><tr>';
-		
+
 		html += '<td align="left" width="33%">';
 		if (cols.headerLeft) html += cols.headerLeft;
 		else html += commify(rows.length) + ' ' + pluralize(data_type, rows.length) + '';
 		html += '</td>';
-		
+
 		html += '<td align="center" width="34%">';
-			html += cols.headerCenter || '&nbsp;';
+		html += cols.headerCenter || '&nbsp;';
 		html += '</td>';
-		
+
 		html += '<td align="right" width="33%">';
-			html += cols.headerRight || 'Page 1 of 1';
+		html += cols.headerRight || 'Page 1 of 1';
 		html += '</td>';
-		
+
 		html += '</tr></table>';
 		html += '</div>';
-		
+
 		html += '<div style="margin-top:5px;">';
 		html += '<table class="data_table" width="100%">';
 		html += '<tr><th style="white-space:nowrap;">' + cols.join('</th><th style="white-space:nowrap;">') + '</th></tr>';
-		
+
 		for (var idx = 0, len = rows.length; idx < len; idx++) {
 			var row = rows[idx];
 			var tds = callback(row, idx);
@@ -528,79 +528,79 @@ toggle_token: function () {
 			html += '<td>' + tds.join('</td><td>') + '</td>';
 			html += '</tr>';
 		} // foreach row
-		
+
 		if (!rows.length) {
-			html += '<tr class="nohighlight"><td colspan="'+cols.length+'" align="center" style="padding-top:10px; padding-bottom:10px; font-weight:bold;">';
-			html += 'No '+pluralize(data_type)+' found.';
+			html += '<tr class="nohighlight"><td colspan="' + cols.length + '" align="center" style="padding-top:10px; padding-bottom:10px; font-weight:bold;">';
+			html += 'No ' + pluralize(data_type) + ' found.';
 			html += '</td></tr>';
 		}
-		
+
 		html += '</table>';
 		html += '</div>';
-		
+
 		return html;
 	},
 
 	render_schedule_graph: function (events) {
-				
+
 		var sNodes = []
 		var sEdges = []
 		var catMap = Object.fromEntries(app.categories.map(i => [i.id, i]))
 
-		if(!events) events =  app.schedule || []
+		if (!events) events = app.schedule || []
 		let currEvent = this.event || {} // will exist for "edit event" mode
-		const args  = this.args || {};
-		
+		const args = this.args || {};
+
 
 		events.forEach((job, index) => {
 			let jobGroup = job.enabled ? job.category : 'disabled';
-			let jobCat = catMap[job.category] || {} ;
+			let jobCat = catMap[job.category] || {};
 
 			// if in event edit mode - use current icon for preview
-			let iconCd = args.sub == 'edit_event' &&  job.id === currEvent.id ? $("#fe_ee_graph_icon").val() : job.graph_icon
+			let iconCd = args.sub == 'edit_event' && job.id === currEvent.id ? $("#fe_ee_graph_icon").val() : job.graph_icon
 			let code = parseInt(iconCd, 16) || 61713
-			if(Array.isArray(job.workflow)) code = 61563 
+			if (Array.isArray(job.workflow)) code = 61563
 			let jobIcon = String.fromCodePoint(code);
 
-			let jobColor = job.enabled ? (jobCat.gcolor || "#3498DB" ) : "lightgray" // #3f7ed5
-			sNodes.push({ 
+			let jobColor = job.enabled ? (jobCat.gcolor || "#3498DB") : "lightgray" // #3f7ed5
+			sNodes.push({
 				id: job.id,
 				label: ` ${job.title} \n ${jobCat.title}`,
-				font: `12px lato ${job.enabled ? '#777' : 'lightgray' }`,
+				font: `12px lato ${job.enabled ? '#777' : 'lightgray'}`,
 				group: jobGroup,
 				shape: 'icon',
-				icon: {face: "'FontAwesome'", code: jobIcon, color: jobColor }
-			 })
+				icon: { face: "'FontAwesome'", code: jobIcon, color: jobColor }
+			})
 
 			if (job.chain) sEdges.push({ from: job.id, to: job.chain, arrows: "to", color: "green", length: 160 })
 			if (job.chain_error) sEdges.push({ from: job.id, to: job.chain_error, arrows: "to", color: "red", length: 160 })
-            
+
 			// workflow plugin edges
-			if(Array.isArray(job.workflow)) {
-                let startFrom = (job.options || {}).wf_start_from_step || 1
+			if (Array.isArray(job.workflow)) {
+				let startFrom = (job.options || {}).wf_start_from_step || 1
 
 				let edgeWidth = {};
-				for( e of job.workflow) {
-					edgeWidth [e.id] = (edgeWidth [e.id] || 0) + 1
+				for (e of job.workflow) {
+					edgeWidth[e.id] = (edgeWidth[e.id] || 0) + 1
 				}
 
 				let wfMap = {}
 
-				for(let i = 0; i < job.workflow.length; i++) {
-                    let e = job.workflow[i]
+				for (let i = 0; i < job.workflow.length; i++) {
+					let e = job.workflow[i]
 
-					if(wfMap[e.id]) continue
+					if (wfMap[e.id]) continue
 					wfMap[e.id] = true
 
 					sEdges.push({
-						 from: job.id,
-						 to: e.id,
-						 arrows: "to",
-						 color: e.disabled || startFrom  > i+1 ? "gray" : "orange",
-						 length: 200,
-						 label: edgeWidth[e.id] > 1 ? `X${edgeWidth[e.id]}` : `${i+1}`,
-						 width: edgeWidth[e.id] > 4 ? 4 : edgeWidth[e.id]
-						 })
+						from: job.id,
+						to: e.id,
+						arrows: "to",
+						color: e.disabled || startFrom > i + 1 ? "gray" : "orange",
+						length: 200,
+						label: edgeWidth[e.id] > 1 ? `X${edgeWidth[e.id]}` : `${i + 1}`,
+						width: edgeWidth[e.id] > 4 ? 4 : edgeWidth[e.id]
+					})
 				}
 
 			}
@@ -614,21 +614,21 @@ toggle_token: function () {
 		}
 
 		let net = new vis.Network(document.getElementById("schedule_graph2"), sGraph, options)
-		if(currEvent.id) {
+		if (currEvent.id) {
 			net.selectNodes([currEvent.id])
 		}
 
 		// allow delete event by pressing del key
 
-			// $(document).keyup(function (e) {
-			// 	if (e.keyCode == 46) { // delete button pressed
-			// 		var eventId = net.getSelectedNodes()[0]
-			// 		if (!eventId) return;
-			// 		var idx = $P().events.findIndex(i => i.id === eventId)
-			// 		if (eventId) $P().delete_event(idx)
-			// 	}
-			// })
-		
+		// $(document).keyup(function (e) {
+		// 	if (e.keyCode == 46) { // delete button pressed
+		// 		var eventId = net.getSelectedNodes()[0]
+		// 		if (!eventId) return;
+		// 		var idx = $P().events.findIndex(i => i.id === eventId)
+		// 		if (eventId) $P().delete_event(idx)
+		// 	}
+		// })
+
 
 		// open event edit page on double click
 		net.on("doubleClick", function (params) {
@@ -672,7 +672,7 @@ toggle_token: function () {
 			'Target',
 			'Timing',
 			'Last Run',
-			'Modified', 
+			'Modified',
 			'Actions'
 		];
 
@@ -717,7 +717,7 @@ toggle_token: function () {
 				}
 			}
 
-			let filter =  app.filter.schedule || {} // persist schedule page filtering
+			let filter = app.filter.schedule || {} // persist schedule page filtering
 
 			// category filter
 			args.category = args.category || filter['category']
@@ -790,7 +790,7 @@ toggle_token: function () {
 		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_target" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Servers</option>${this.render_target_menu_options(args.target)}</select></div>
 		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>${render_menu_options(app.plugins, args.plugin, false)}</select></div>
 		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>${render_menu_options(app.categories, args.category, false)}</select></div>
-		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>${render_menu_options( [[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"], ["chained", "Chained"]], args.enabled, false )}</select></div>
+		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>${render_menu_options([[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"], ["chained", "Chained"]], args.enabled, false)}</select></div>
           ${miniButtons}
 		 <div class="clear"></div>
 		</div>
@@ -814,7 +814,7 @@ toggle_token: function () {
 			this.events = this.events.sort(function (a, b) {
 				var key = group_by ? (group_by + '_title') : 'title';
 				if (group_by && (a[key].toLowerCase() == b[key].toLowerCase())) key = 'title';
-				return self.alt_sort*a[key].toLowerCase().localeCompare(b[key].toLowerCase());
+				return self.alt_sort * a[key].toLowerCase().localeCompare(b[key].toLowerCase());
 				// return (b.title < a.title) ? 1 : -1;
 			});
 		}
@@ -822,10 +822,10 @@ toggle_token: function () {
 		// header center (group by buttons)
 		cols.headerRight = `
 		<div class="schedule_group_button_container">
-		<i class="fa fa-sort-alpha-asc ${ group_by ? '' : 'selected' }" title="Sort by Title" onMouseUp="$P().change_group_by(\'\')"></i>
-		<i class="fa fa-clock-o ${ group_by == 'modified' ? 'selected' : ''}" title="Sort by Modified" onMouseUp="$P().change_group_by(\'modified\')"></i>	
+		<i class="fa fa-sort-alpha-asc ${group_by ? '' : 'selected'}" title="Sort by Title" onMouseUp="$P().change_group_by(\'\')"></i>
+		<i class="fa fa-clock-o ${group_by == 'modified' ? 'selected' : ''}" title="Sort by Modified" onMouseUp="$P().change_group_by(\'modified\')"></i>	
 		<i class="fa fa-folder-open-o ${group_by == 'category' ? 'selected' : ''}" title="Group by Category" onMouseUp="$P().change_group_by(\'category\')"></i>
-		<i class="fa fa-plug ${ group_by == 'plugin' ? 'selected' : ''}" title="Group by Plugin" onMouseUp="$P().change_group_by(\'plugin\')"></i>
+		<i class="fa fa-plug ${group_by == 'plugin' ? 'selected' : ''}" title="Group by Plugin" onMouseUp="$P().change_group_by(\'plugin\')"></i>
 		<i class="mdi mdi-server-network ${((group_by == 'group') ? 'selected' : '')}" title="Group by Target" onMouseUp="$P().change_group_by(\'group\')"></i>
 		<i > </i>
 		<i class="${args.collapse ? 'fa fa-arrow-circle-right' : 'fa fa-arrow-circle-up'}" title="${args.collapse ? 'Expand' : 'Collapse'}" onclick="$P().toggle_group_by()"></i>
@@ -848,13 +848,13 @@ toggle_token: function () {
 			var group = item.target ? find_object(app.server_groups, { id: item.target }) : null;
 			var plugin = item.plugin ? find_object(app.plugins, { id: item.plugin }) : null;
 
-		// var jobs = find_objects( app.activeJobs, { event: item.id } );
-		var status_html = 'n/a';
-		if (app.state.jobCodes && (item.id in app.state.jobCodes)) {
-			var last_code = app.state.jobCodes[ item.id ];
-			status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
-			if(last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
-		}
+			// var jobs = find_objects( app.activeJobs, { event: item.id } );
+			var status_html = 'n/a';
+			if (app.state.jobCodes && (item.id in app.state.jobCodes)) {
+				var last_code = app.state.jobCodes[item.id];
+				status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
+				if (last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
+			}
 
 			if (group && item.multiplex) {
 				group = copy_object(group);
@@ -883,15 +883,15 @@ toggle_token: function () {
 			if (item.start_time && Number(item.start_time) > new Date().valueOf() + 60000) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
 			if (item.end_time && Number(item.end_time) < new Date().valueOf()) inactiveTitle = 'Schedule expired on ' + new Date(item.end_time).toLocaleString()
 
-			let niceTiming = summarize_event_timing(item.timing, item.timezone,  !inactiveTitle ? item.ticks : null)
+			let niceTiming = summarize_event_timing(item.timing, item.timezone, !inactiveTitle ? item.ticks : null)
 
 			if (inactiveTitle) {
 				niceTiming = `<span title="${inactiveTitle}"><s>${niceTiming}</s>`
-				if(item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`
+				if (item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`
 			}
 
-			let now = Date.now()/1000
-			
+			let now = Date.now() / 1000
+
 			var tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ', this)" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
 				'<div class="td_big"><span class="link" onMouseUp="$P().edit_event(' + idx + ')">' + evt_name + '</span></div>',
@@ -899,12 +899,12 @@ toggle_token: function () {
 				self.getNicePlugin(plugin, col_width),
 				self.getNiceGroup(group, item.target, col_width),
 				niceTiming + chainInfo,
-				'<span id="ss_' + item.id + '" onMouseUp="$P().jump_to_last_job('+idx+')">' + status_html + '</span>',
-				get_text_from_seconds(now - item.modified, true, true ), //modified
+				'<span id="ss_' + item.id + '" onMouseUp="$P().jump_to_last_job(' + idx + ')">' + status_html + '</span>',
+				get_text_from_seconds(now - item.modified, true, true), //modified
 				actions.join('&nbsp;|&nbsp;')
 			];
 
-			if(item.id) tds.id = item.id
+			if (item.id) tds.id = item.id
 
 			if (!item.enabled) tds.className = 'disabled';
 			if (cat && !cat.enabled) tds.className = 'disabled';
@@ -931,7 +931,7 @@ toggle_token: function () {
 					insert_html += '</div></td></tr>';
 					tds.insertAbove = insert_html;
 				} // group changed
-				if( args.collapse) tds.hide = true
+				if (args.collapse) tds.hide = true
 			} // group_by
 
 			return tds;
@@ -974,28 +974,28 @@ toggle_token: function () {
 		}, 1);
 	},
 
-	update_job_last_runs: function() {
+	update_job_last_runs: function () {
 		// update last run state for all jobs, called when state is updated
 		if (!app.state.jobCodes) return;
 
 		for (var event_id in app.state.jobCodes) {
 			var last_code = app.state.jobCodes[event_id];
 			var status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
-			if(last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
-			this.div.find('#ss_' + event_id).html( status_html );
+			if (last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
+			this.div.find('#ss_' + event_id).html(status_html);
 		}
 	},
 
-	jump_to_last_job: function(idx) {
+	jump_to_last_job: function (idx) {
 		// locate ID of latest completed job for event, and redirect to it
 		var event = this.events[idx];
 
-		app.api.post( 'app/get_event_history', { id: event.id, offset: 0, limit: 1 }, function(resp) {
+		app.api.post('app/get_event_history', { id: event.id, offset: 0, limit: 1 }, function (resp) {
 			if (resp && resp.rows && resp.rows[0]) {
 				var job = resp.rows[0];
-				Nav.go( 'JobDetails?id=' + job.id );
+				Nav.go('JobDetails?id=' + job.id);
 			}
-		} );
+		});
 	},
 
 	alt_sort: 1,
@@ -1009,16 +1009,16 @@ toggle_token: function () {
 		this.gosub_events(this.args);
 	},
 
-	toggle_group_by: function() {
-		let args = this.args 
-		args.collapse ^= true 
+	toggle_group_by: function () {
+		let args = this.args
+		args.collapse ^= true
 		this.change_group_by(app.getPref('schedule_group_by'))
 	},
 
 	change_event_enabled: function (idx, box) {
 		// toggle event on / off
 		var event = this.events[idx];
-		
+
 		if (this.isAdmin()) { // for admins - toggle state right away (old way)
 			event.enabled = event.enabled ? 0 : 1;
 			var stub = {
@@ -1037,34 +1037,34 @@ toggle_token: function () {
 		else { // for non-admin ask to confirm first
 			let action = event.enabled ? 'Disable' : 'Enable'
 			let msg = `Are you sure you want to ${action} <b>${event.title}</b> event?`
-	
+
 			app.confirm(`<span style="color:red">${action} Event</span>`, msg, action, function (result) {
 				if (result) {
-	
+
 					event.enabled = event.enabled ? 0 : 1;
-	
+
 					var stub = {
 						id: event.id,
 						title: event.title,
 						enabled: event.enabled,
 						catch_up: event.catch_up || false
 					};
-					
+
 					app.showProgress(1.0, "Updating Event...");
-	
+
 					app.api.post('app/update_event', stub, function (resp) {
 						app.hideProgress();
 						app.showMessage('success', "Event '" + event.title + "' has been " + action + "d.");
 						$('#' + event.id).toggleClass('disabled');
-					});	
-				
+					});
+
 				}
 				else {
-				   if(box) box.checked = !box.checked 
-				}			
-				
+					if (box) box.checked = !box.checked
+				}
+
 			});
-            
+
 		}
 
 	},
@@ -1164,12 +1164,12 @@ toggle_token: function () {
 		// grab values from search filters, and refresh
 		var args = this.args;
 
-		if(!app.filter.schedule) app.filter.schedule = {}
+		if (!app.filter.schedule) app.filter.schedule = {}
 
 		args.plugin = app.filter.schedule['plugin'] = $('#fe_sch_plugin').val();
 		if (!args.plugin) delete args.plugin;
 
-		args.target = app.filter.schedule['target'] =  $('#fe_sch_target').val();
+		args.target = app.filter.schedule['target'] = $('#fe_sch_target').val();
 		if (!args.target) delete args.target;
 
 		args.category = app.filter.schedule['category'] = $('#fe_sch_cat').val();
@@ -1182,9 +1182,9 @@ toggle_token: function () {
 		args.enabled = app.filter.schedule['enabled'] = $('#fe_sch_enabled').val();
 		if (args.enabled === 'chained') setTimeout(function () { self.show_graph() }, 20);
 		if (!args.enabled) delete args.enabled;
-	
-		Nav.go('Schedule' + compose_query_string(args));    
-				
+
+		Nav.go('Schedule' + compose_query_string(args));
+
 	},
 
 	gosub_new_event: function (args) {
@@ -1298,10 +1298,10 @@ toggle_token: function () {
 		setTimeout(function () {
 			app.showMessage('success', "Event '" + self.event.title + "' was created successfully.");
 			let el = document.getElementById(resp.id)
-			if(el.scrollIntoViewIfNeeded) {
+			if (el.scrollIntoViewIfNeeded) {
 				el.scrollIntoViewIfNeeded()
 			} else {
-				el.scrollIntoView({block:'center'})
+				el.scrollIntoView({ block: 'center' })
 			}
 
 			$('#' + resp.id).addClass('focus')
@@ -1415,6 +1415,9 @@ toggle_token: function () {
 		delete event.modified;
 		delete event.username;
 		delete event.timing;
+		delete event.secret;
+		delete event.secret_value;
+		delete event.secret_preview;
 
 		event.title = "Copy of " + event.title;
 
@@ -1432,18 +1435,18 @@ toggle_token: function () {
 		if (!event) return; // error
 
 		// debug options 
-		if ($("#fe_ee_debug_chain").is(":checked")) { 
+		if ($("#fe_ee_debug_chain").is(":checked")) {
 			event.chain = "";
-			event.chain_error = ""; 
+			event.chain_error = "";
 		}
 		if ($("#fe_ee_debug_notify").is(":checked")) {
 			event.notify_success = "";
-			event.notify_fail = ""; 
+			event.notify_fail = "";
 			event.web_hook = "";
-			event.web_hook_start = "" 
+			event.web_hook_start = ""
 		}
 		event.tty = $("#fe_ee_debug_tty").is(":checked") ? 1 : 0;
-		event.debug_sudo = $("#fe_ee_debug_sudo").is(":checked") && app.isAdmin() ? 1: 0;
+		event.debug_sudo = $("#fe_ee_debug_sudo").is(":checked") && app.isAdmin() ? 1 : 0;
 
 		this.event = event;
 		this.run_event('edit', e);
@@ -1538,6 +1541,16 @@ toggle_token: function () {
 		} // check for update
 
 		delete this.old_event;
+		if (event.secret_value && typeof event.secret_value === 'string' ) {
+			delete event.secret_value
+			$('#fe_ee_secret').val('').attr('placeholder', '[*****]')
+		}
+	},
+
+	set_event_secret(val) { // invoked if user editing secret
+		let event = this.event
+		event.secret_value = val
+		$('#fe_ee_secret').attr('placeholder', '')
 	},
 
 	get_event_edit_html: function () {
@@ -1648,7 +1661,7 @@ toggle_token: function () {
 		// plugin params
 		html += get_form_table_row('', '<div id="d_ee_plugin_params">' + this.get_plugin_params_html() + '</div>');
 		html += get_form_table_spacer();
-		
+
 		// arguments
 		let arg_title = "Argument values are available as ARG[1-9] env variable or parameter on shellplug (e.g. $ARG1 or [/ARG1])\nOn httpplug use [/params/ARG1], on event workflow JOB_ARG env variable. ARGS env variable will store entire string";
 		html += get_form_table_row('Arguments', `<input title="${arg_title}" type="text" id="fe_ee_args" size="50" value="${event.args || ''}" spellcheck="false"/>`);
@@ -1736,6 +1749,12 @@ toggle_token: function () {
 			html += get_form_table_caption("Allow invoking this event via token");
 			html += get_form_table_spacer();
 		}
+
+		// Secret
+		let sph = event.secret_preview ? '[' + event.secret_preview  + ']' : '';
+		html += get_form_table_row('Secret', `<textarea  style="width:420px; height:45px;resize:vertical;" id="fe_ee_secret" oninput="$P().set_event_secret(this.value)" placeholder="${sph}" spellcheck="false"></textarea>`);
+		html += get_form_table_caption("Specify KEY=VALUE pairs to be mounted as env variables (to this job process)");
+		html += get_form_table_spacer();
 
 		// max children
 		html += get_form_table_row('Concurrency', '<select id="fe_ee_max_children">' + render_menu_options([[1, "1 (Singleton)"], 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32], event.max_children, false) + '</select>');
@@ -2061,9 +2080,9 @@ toggle_token: function () {
 				category.notify_fail = '';
 				category.web_hook = '';
 				category.enabled = 1;
-				let baseColors = ["#5dade2 ", "#ec7063 ", "#58d68d",  "#f4d03f", , "#af7ac5", "#dc7633", "#99a3a4", " #45b39d", "#a93226"]
+				let baseColors = ["#5dade2 ", "#ec7063 ", "#58d68d", "#f4d03f", , "#af7ac5", "#dc7633", "#99a3a4", " #45b39d", "#a93226"]
 
-				category.gcolor = baseColors[(app.categories || []).length % 7 ];
+				category.gcolor = baseColors[(app.categories || []).length % 7];
 
 				app.showProgress(1.0, "Adding category...");
 				app.api.post('app/create_category', category, function (resp) {
@@ -2183,29 +2202,29 @@ toggle_token: function () {
 		$('#fe_ee_rc_time').data('epoch', new_cursor).val(this.rc_get_short_date_time(new_cursor));
 	},
 
-	parseTicks: function() {
+	parseTicks: function () {
 		let tickString = $("#fe_ee_ticks").val()
-		if(tickString) {
-			let parsed = tickString.trim().replace(/\s+/g, ' ').split(/[\,\|]/).map(e=>{
-			  let format = e.trim().length > 8 ? 'YYYY-MM-DD HH:mm A' : 'HH:mm A';
-			  let t = moment(e, format);
-			  return t._isValid ? t.format(e.trim().length > 8 ? 'YYYY-MM-DD HH:mm' : 'HH:mm') : null;
+		if (tickString) {
+			let parsed = tickString.trim().replace(/\s+/g, ' ').split(/[\,\|]/).map(e => {
+				let format = e.trim().length > 8 ? 'YYYY-MM-DD HH:mm A' : 'HH:mm A';
+				let t = moment(e, format);
+				return t._isValid ? t.format(e.trim().length > 8 ? 'YYYY-MM-DD HH:mm' : 'HH:mm') : null;
 			}).filter(e => e).join(" | ")
-			$("#fe_ee_parsed_ticks").text(' parsed ticks: ' + parsed);		    
+			$("#fe_ee_parsed_ticks").text(' parsed ticks: ' + parsed);
 		} else {
-		  $("#fe_ee_parsed_ticks").text('');
-		}	  
-	  },
-  
-	  ticks_add_now: function() {
-		  let currTicks = $("#fe_ee_ticks").val()
-		  let tme = moment().add(1, 'minute').format('YYYY-MM-DD HH:mm')
-		  if(currTicks.trim()) {
-			  $("#fe_ee_ticks").val(currTicks + ', ' + tme);
-		  }
-		  else { $("#fe_ee_ticks").val(tme)}
-		  this.parseTicks();
-	  },
+			$("#fe_ee_parsed_ticks").text('');
+		}
+	},
+
+	ticks_add_now: function () {
+		let currTicks = $("#fe_ee_ticks").val()
+		let tme = moment().add(1, 'minute').format('YYYY-MM-DD HH:mm')
+		if (currTicks.trim()) {
+			$("#fe_ee_ticks").val(currTicks + ', ' + tme);
+		}
+		else { $("#fe_ee_ticks").val(tme) }
+		this.parseTicks();
+	},
 
 	change_edit_timing: function () {
 		// change edit timing mode
@@ -2571,7 +2590,7 @@ toggle_token: function () {
 							if (param.id == "script") {
 								let lang = params.lang || params.default_lang || 'shell';
 								// gutter for yaml linting
-								let gutter =  ''
+								let gutter = ''
 								let lint = 'false'
 
 								if (lang == 'java') { lang = 'text/x-java' }
@@ -2581,18 +2600,18 @@ toggle_token: function () {
 								if (lang == 'dockerfile') { lang = 'text/x-dockerfile' }
 								if (lang == 'toml') { lang = 'text/x-toml' }
 								if (lang == 'yaml') {
-									 lang = 'text/x-yaml'
-									 gutter = 'CodeMirror-lint-markers'
-									 lint = 'CodeMirror.lint.yaml'
-									 }
-								if (lang == 'json') { 
+									lang = 'text/x-yaml'
+									gutter = 'CodeMirror-lint-markers'
+									lint = 'CodeMirror.lint.yaml'
+								}
+								if (lang == 'json') {
 									lang = 'application/json'
 									lint = 'CodeMirror.lint.json'
-								 }
+								}
 								if (lang == 'props') { lang = 'text/x-properties' }
 
-								let theme = app.getPref('theme') == 'dark' && params.theme == 'default' ? 'gruvbox-dark' : params.theme ;
-								if(params.theme == 'light') theme = 'default'
+								let theme = app.getPref('theme') == 'dark' && params.theme == 'default' ? 'gruvbox-dark' : params.theme;
+								if (params.theme == 'light') theme = 'default'
 
 								html += `
 							<script>
@@ -2634,9 +2653,9 @@ toggle_token: function () {
 							break;
 
 						case 'eventlist':
-						let workflow = this.event.workflow || []
-						let opts = this.event.options || {}
-						html += `<div class="plugin_params_label">${param.title}</div>
+							let workflow = this.event.workflow || []
+							let opts = this.event.options || {}
+							html += `<div class="plugin_params_label">${param.title}</div>
 						  <div class="plugin_params_content" style="margin:10px 10px 10px 10px"> <span> Start From Step: </span>
 						    <select onChange="$P().wf_update_start()" id="wf_start_from_step" style="margin:5px" >
 							  ${render_menu_options(workflow.map((e, i) => i + 1), opts.wf_start_from_step || 1)}
@@ -2646,9 +2665,9 @@ toggle_token: function () {
 					      <script>$P().render_wf_event_list()</script>
 					      <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 0px" onMouseUp="$P().wf_event_add()">Add Event</div>
 						  <div class="button mini" style="width:90px;float:left; margin:10px 10px 10px 8px" onMouseUp="$P().wf_event_add_cat()">Add Category</div><br>
-					      `	
-						break;		
-						
+					      `
+							break;
+
 						case 'filelist':
 							html += `
 							  <div id="fe_ee_pp_file_list"></div>
@@ -2658,7 +2677,7 @@ toggle_token: function () {
 							<br>
 	 					    `
 							event.theme = param.theme
-						break;	
+							break;
 
 						case 'select':
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
@@ -2867,7 +2886,7 @@ toggle_token: function () {
 		// timezone
 		event.timezone = $('#fe_ee_timezone').val();
 		event.start_time = new Date($('#event_starttime').val()).valueOf()
-        event.end_time = new Date($('#event_endtime').val()).valueOf()
+		event.end_time = new Date($('#event_endtime').val()).valueOf()
 
 		// max children
 		event.max_children = parseInt($('#fe_ee_max_children').val());
@@ -2884,8 +2903,8 @@ toggle_token: function () {
 		if (event.retry_delay < 0) return quiet ? false : app.badField('fe_ee_retry_delay', "Please enter a positive integer for the event retry delay.");
 
 		// log expiration
-		event.log_expire_days = parseInt($('#fe_ee_expire_days').val()) || undefined; 
-		
+		event.log_expire_days = parseInt($('#fe_ee_expire_days').val()) || undefined;
+
 		// catch-up mode (run all)
 		event.catch_up = $('#fe_ee_catch_up').is(':checked') ? 1 : 0;
 
@@ -2968,13 +2987,13 @@ toggle_token: function () {
 		switch (key) {
 			case 'schedule':
 				if (this.args.sub == 'events' && value.length !== this.args.eventCount) {
-					 this.args.eventCount = value.length
-					 this.gosub_events(this.args); 
+					this.args.eventCount = value.length
+					this.gosub_events(this.args);
 				}
 				break;
 
 			case 'state':
-				if (this.args.sub == 'edit_event' ) this.update_rc_value();
+				if (this.args.sub == 'edit_event') this.update_rc_value();
 				else if (this.args.sub == 'events') this.update_job_last_runs();
 				break;
 
@@ -3008,7 +3027,7 @@ toggle_token: function () {
 	onDeactivate: function () {
 		// called when page is deactivated
 		// this.div.html( '' );
-		if(app.network) app.network.unselectAll();
+		if (app.network) app.network.unselectAll();
 
 		// allow sub-page to hook deactivate
 		if (this.args && this.args.sub && this['leavesub_' + this.args.sub]) {
