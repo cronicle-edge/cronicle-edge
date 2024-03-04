@@ -400,7 +400,7 @@ Class.add( Page.Admin, {
 		// Secret
 		let sph = plugin.secret_preview ? '[' + plugin.secret_preview + ']' : ''
 		html += get_form_table_row('Secret:', `<textarea id="fe_ep_secret" style="width:550px; height:70px;resize:vertical;" oninput="$P().set_plugin_secret(this.value)" placeholder="${sph}"  spellcheck="false"></textarea>`);
-		html += get_form_table_caption(`Specify KEY=VALUE pairs to be mounted as env variables. This data will be encrypted`);
+		html += get_form_table_caption(`Specify KEY=VALUE pairs to be mounted as env variables on this plugin jobs. This data will be encrypted`);
 		html += get_form_table_spacer();
 
 		// params editor

@@ -433,7 +433,7 @@ Class.subclass( Page.Base, "Page.Home", {
 						titleFontColor: 'orange',
 						displayColors: false,
 						callbacks: {
-							title: function (ti, dt) { return dt.datasets[0].jobs[ti[0].index].event_title + (dt.datasets[0].jobs[ti[0].index].arg ? ('@ ' + filterXSS(dt.datasets[0].jobs[ti[0].index].arg)) : '') },
+							title: function (ti, dt) { return dt.datasets[0].jobs[ti[0].index].event_title + (dt.datasets[0].jobs[ti[0].index].arg ? ('@' + filterXSS(dt.datasets[0].jobs[ti[0].index].arg)) : '') },
 							label: function (ti, dt) {
 								//var job = jobs[ti.index]
 								let job = dt.datasets[0].jobs[ti.index] ;
