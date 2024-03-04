@@ -234,8 +234,12 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		else html += '(None)';
 		html += '</div>';
 
-		html += '<div class="info_label">EVENT TIMING</div>';
-		html += '<div class="info_value">' + (event.enabled ? summarize_event_timing(event.timing, event.timezone) : '(Disabled)') + '</div>';
+		// html += '<div class="info_label">EVENT TIMING</div>';
+		// html += '<div class="info_value">' + (event.enabled ? summarize_event_timing(event.timing, event.timezone) : '(Disabled)') + '</div>';
+		// html += '</div>';
+
+		html += '<div class="info_label">ARGUMENT</div>'; // hist
+		html += '<div class="info_value">' + encode_entities(job.arg || '(no argument)') + '</div>';
 		html += '</div>';
 
 		html += '<div style="float:left; width:25%;">';
@@ -263,7 +267,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 
 		html += '<div style="float:left; width:25%;">';
 		html += '<div class="info_label">JOB SOURCE</div>';
-		html += '<div class="info_value"><div class="ellip" style="max-width:' + col_width + 'px;">' + (job.source || 'Scheduler') + '</div></div>';
+		html += `<div class="info_value"><div title="${summarize_event_timing(event.timing, event.timezone)}" class="ellip" style="max-width:' + col_width + 'px;">` + (job.source || 'Scheduler') + '</div></div>';
 
 		html += '<div class="info_label">SERVER HOSTNAME</div>';
 		html += '<div class="info_value">' + this.getNiceGroup(null, job.hostname, col_width) + '</div>';
@@ -560,7 +564,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		var legend_html = '';
 		legend_html += '<div class="pie-legend-container">';
 		for (var idx = 0, len = perf_keys.length; idx < len; idx++) {
-			legend_html += '<div class="pie-legend-item" style="background-color:' + p_colors[idx] + '">' + p_labels[idx] + '</div>';
+			legend_html += '<div class="pie-legend-item" style="background-color:' + p_colors[idx] + '">' + filterXSS(p_labels[idx]) + '</div>';
 		}
 		legend_html += '</div>';
 
@@ -868,9 +872,18 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		html += '<div class="info_label">EVENT NAME</div>';
 		html += '<div class="info_value"><a href="#Schedule?sub=edit_event&id=' + job.event + '">' + this.getNiceEvent(job.event_title, col_width) + '</a></div>';
 
-		html += '<div class="info_label">EVENT TIMING</div>';
-		html += '<div class="info_value">' + (event.enabled ? summarize_event_timing(event.timing, event.timezone) : '(Disabled)') + '</div>';
+		// html += '<div class="info_label">EVENT TIMING</div>';
+		// html += '<div class="info_value">' + (event.enabled ? summarize_event_timing(event.timing, event.timezone) : '(Disabled)') + '</div>';
+		// html += '</div>';
+
+		html += '<div class="info_label">ARGUMENT</div>'; // hist
+		html += '<div class="info_value">' + encode_entities(job.arg || '(no argument)') + '</div>';
 		html += '</div>';
+
+		// html += '<div class="info_label">ARGUMENT</div>';
+		// html += '<div class="info_value">' + encode_entities(job.arg || '') + '</div>';
+		// html += '</div>';
+		
 
 		html += '<div style="float:left; width:25%;">';
 		html += '<div class="info_label">CATEGORY NAME</div>';
@@ -885,7 +898,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 
 		html += '<div style="float:left; width:25%;">';
 		html += '<div class="info_label">JOB SOURCE</div>';
-		html += '<div class="info_value"><div class="ellip" style="max-width:' + col_width + 'px;">' + (job.source || 'Scheduler') + '</div></div>';
+		html += `<div class="info_value"><div title="${summarize_event_timing(event.timing, event.timezone)}" class="ellip" style="max-width:` + col_width + 'px;">' + (job.source || 'Scheduler') + '</div></div>';
 
 		html += '<div class="info_label">SERVER HOSTNAME</div>';
 		html += '<div class="info_value">' + this.getNiceGroup(null, job.hostname, col_width) + '</div>';

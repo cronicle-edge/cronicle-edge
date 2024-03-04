@@ -161,11 +161,9 @@ Class.subclass(Page, "Page.Base", {
 	},
 
 	getNiceArgument: function(arg, maxWidth) {
-		let nice_arg = `${arg || ''}`
-		if(nice_arg.length > maxWidth) {
-			nice_arg = `<span title="${nice_arg}">${nice_arg.substring(0,maxWidth-3)}...</span>`
-		}
-		return nice_arg
+		let nice_arg = encode_entities(`${arg || ''}`)
+		if(nice_arg.length > maxWidth) nice_arg = nice_arg.substring(0,maxWidth-3) + "..."
+		return `<a href="#History?sub=error_history&all=1&limit=50&arg=${encodeURIComponent(arg)}">${nice_arg}</a>`
 	},
 
 	setGroupVisible: function (group, visible) {
