@@ -4,7 +4,6 @@ const { readFileSync } = require('fs');
 const { Client } = require('ssh2');
 const conn = new Client();
 const { EOL } = require('os')
-const JSONStream = require('pixl-json-stream');
 const fs = require('fs')
 
 // read job info from stdin (sent by Cronicle engine)
@@ -14,6 +13,12 @@ const print = (text) => process.stdout.write(text + EOL)
 const printInfo = (text) => process.stdout.write(`[INFO] \x1b[32m${text}\x1b[0m` + EOL)
 const printWarning = (text) => process.stdout.write(`[INFO] \x1b[33m${text}\x1b[0m` + EOL)
 const printError = (text) => process.stdout.write(`\x1b[31m${text}\x1b[0m` + EOL)
+
+const printComplete = (complete, code, desc) => {
+    process.stdout.write(JSON.stringify({ complete: complete, code: code || 0, description: desc || "" }) + EOL)
+}
+
+const printJson = (json) => { process.stdout.write(JSON.stringify(json) + EOL) }
 
 let shuttingDown = false
 
@@ -77,11 +82,6 @@ let trapCmd = ""
 
 // -------------------------- MAIN --------------------------------------------------------------//
 
-const stream = new JSONStream(process.stdin, process.stdout);
-
-function printJSONmessage(complete, code, desc) {
-    stream.write({ complete: complete, code: code || 0, description: desc || "" })
-}
 
 if (!hostInfo.startsWith('ssh://')) hostInfo = 'ssh://' + hostInfo
 
@@ -115,16 +115,12 @@ try {
         if (process.connected) process.disconnect()
     })
 
-    let streamRef = null
-
     conn.on('ready', () => {
         printInfo(`Connected to ${conf.host}`)
 
         conn.exec(command, (err, stream) => {
 
-            if (err) printJSONmessage(1, 1, err.message)
-
-            streamRef = stream
+            if (err) printComplete(1, 1, err.message)
 
             stream.on('close', (code, signal) => {
 
@@ -137,7 +133,7 @@ try {
                 conn.end()
                 if (process.connected) process.disconnect()
 
-                printJSONmessage(1, code, code ? `Script exited with code: ${code}; ${stderr_msg}` : "")
+                printComplete(1, code, code ? `Script exited with code: ${code}; ${stderr_msg}` : "")
 
             }).on('data', (data) => {
 
@@ -150,15 +146,11 @@ try {
 
                     else if (line.match(/^\s*(\d+)\%\s*$/)) { // handle progress
                         let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
-                        stream.write({
-                            progress: progress
-                        })
+                        printJson({ progress: progress })
                     }
                     else if (line.match(/^\s*\#(.{1,60})\#\s*$/)) { // handle memo
                         let memoText = RegExp.$1
-                        stream.write({
-                            memo: memoText
-                        })
+                        printJson({ memo: memoText })
                     }
                     else {
                         // adding ANSI sequence (grey-ish color) to prevent JSON interpretation
