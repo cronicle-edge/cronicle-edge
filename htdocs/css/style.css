@@ -649,6 +649,14 @@ td.table_label {
 
 		}
 
+		body.dark span.color_label.gray {
+			background: rgb(62, 62, 62);
+		}
+
+		body.dark {
+			--body-text-color: rgb(120, 120, 120);
+		}
+
 		:root {
 			--new_event_color: #a2ffa9;
 		}
