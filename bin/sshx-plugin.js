@@ -23,13 +23,17 @@ const printJson = (json) => { process.stdout.write(JSON.stringify(json) + EOL) }
 let shuttingDown = false
 
 let hostInfo = process.env['SSH_HOST'] || process.env['JOB_ARG']
-if (!hostInfo) throw new Error("Host info is not provided. Specify SSH_HOST parameter or pass it via Workflow argument")
+
+if (!hostInfo) {
+    printComplete(1, 1, "Host info is not provided. Specify SSH_HOST parameter or pass it via Workflow argument")
+    process.exit(1)
+}
 
 let killCmd = (process.env['KILL_CMD'] || '').trim() || 'pkill -s $$' // $$ will be resolved in bootstrap script
 
 hostInfo = process.env[hostInfo] || hostInfo // host info might be passed as name of env variable
 
-let json = parseInt(process.env['JSON'] || '')
+let json = parseInt(process.env['JSON'])
 
 let ext = { powershell: 'ps1', csharp: 'cs', java: 'java', python: 'py', javascript: 'js' } // might be useful in Windows (TODO)
 
