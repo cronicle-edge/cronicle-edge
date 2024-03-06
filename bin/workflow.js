@@ -6,6 +6,7 @@ const request = new PixlRequest();
 const he = require('he');
 const {EOL} = require('os')
 const JSONStream = require('pixl-json-stream');
+const { profileEnd } = require('console');
 
 let bullet = '>' // '⬤'
 
@@ -312,7 +313,8 @@ stream.on('json', function (job) {
 						}
 						let prog = `[${taskList.length - pendingJobs}/${taskList.length}]`
 						let arg = jobStatus[j].arg ? ': ' + jobStatus[j].arg : ''
-						msg = ` │ ${jstat} ${jobStatus[j].title + arg} (job ${j}) completed ${prog} at ${(new Date()).toLocaleTimeString()}${EOL} │      \u001b[33melapsed in ${niceInterval(jobStatus[j].elapsed)}\u001b[39m  ${desc}`
+						let memo = compl.memo ? ', memo: ' + compl.memo : ''
+						msg = ` │ ${jstat} ${jobStatus[j].title + arg} (job ${j}) completed ${prog} at ${(new Date()).toLocaleTimeString()}${EOL} │      \u001b[33melapsed in ${niceInterval(jobStatus[j].elapsed)}${memo}\u001b[39m  ${desc}`
 					}
 
 					msg += EOL + ' │'
@@ -381,6 +383,7 @@ stream.on('json', function (job) {
 		})
 
 		function getNiceTitle(job, id) {
+			if(!job) return ''
 			let title = '<b> ' + job.seq + ' :: ' + (job.title || 'Unknown') + '</b>'
 			// if(id) title = `${id} :: ${title} `
 			// if(job.arg) title = title + ' :: ' + job.arg
@@ -406,7 +409,7 @@ stream.on('json', function (job) {
 				jobStatus[key].start,
 				niceInterval(jobStatus[key].elapsed),
 				getNiceStatus(jobStatus[key]), // status
-				key === jobStatus[key].event ? '' : `<i id="view_${key}" onclick="this.className = this.className == 'fa fa-eye' ? 'fa fa-eye-slash' : 'fa fa-eye'; $P().get_log_to_grid('${getNiceTitle(jobStatus[key], key)}', '${key}')" style="cursor:pointer" class="fa fa-eye"></i>`,
+				key === jobStatus[key].event ? '' : `<i id="view_${key}" onclick="this.className = this.className == 'fa fa-eye' ? 'fa fa-eye-slash' : 'fa fa-eye'; $P().get_log_to_grid(filterXSS(\`${getNiceTitle(jobStatus[key], key)}\`), '${key}')" style="cursor:pointer" class="fa fa-eye"></i>`,
 				//jobStatus[key].code ? `${he.encode(jobStatus[key].description)}`.substring(0,120) : ''
 				`${he.encode(jobStatus[key].description)}`.substring(0, 120)
 
@@ -428,6 +431,10 @@ stream.on('json', function (job) {
 
 	};
 
-	poll().catch(e => stream.write({ complete: 1, code: 1, description: e.message }));
+	poll().catch(e => {
+		stream.write({ complete: 1, code: 1, description: 'Plugin crashed: ' + e.message })
+		//if(process.connected) process.disconnect()
+		process.exit(1)
+	});
 
 });

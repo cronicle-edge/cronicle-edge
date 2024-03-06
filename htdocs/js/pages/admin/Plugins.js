@@ -288,7 +288,10 @@ Class.add( Page.Admin, {
 		delete plugin.created;
 		delete plugin.modified;
 		delete plugin.username;
-		
+		delete plugin.secret;
+		delete plugin.secret_preview;
+		delete plugin.secret_value;
+
 		plugin.title = "Copy of " + plugin.title;
 		
 		this.plugin_copy = plugin;
@@ -340,6 +343,18 @@ Class.add( Page.Admin, {
 				} // clicked Abort
 			} ); // app.confirm
 		} // disabled + jobs
+
+		// clear secret data on Save
+		if (plugin.secret_value && typeof plugin.secret_value === 'string' ) {
+			delete plugin.secret_value
+			$('#fe_ep_secret').val('').attr('placeholder', '[*****]')
+		}
+	},
+
+	set_plugin_secret(val) { // invoked if user editing secret
+		let plugin = this.plugin
+		plugin.secret_value = val
+		$('#fe_ep_secret').attr('placeholder', '')
 	},
 	
 	get_plugin_edit_html: function() {
@@ -368,7 +383,12 @@ Class.add( Page.Admin, {
 		html += get_form_table_row( 'Workflow', '<input type="checkbox" id="fe_wf_enabled" value="1" ' + (plugin.wf ? 'checked="checked"' : '') + '/><label for="fe_wf_enabled">Workflow Enabled</label>' );
 		html += get_form_table_caption( "Generate WF_SIGNATURE variable as a temp api key to run/abort jobs" );
 		html += get_form_table_spacer();
-		
+
+		// ipc
+		html += get_form_table_row( 'IPC', '<input type="checkbox" id="fe_ep_ipc" value="1" ' + (plugin.ipc ? 'checked="checked"' : '') + '/><label for="fe_ep_ipc">Connect process with ipc</label>' );
+		html += get_form_table_caption( "Create ipc channel between cronicle engine and job (to use disconnect vs SIGTERM)" );
+		html += get_form_table_spacer();
+	
 		// command
 		html += get_form_table_row('Executable:', '<textarea id="fe_ep_command" style="width:550px; height:50px; resize:vertical;" spellcheck="false" onkeydown="return $P().stopEnter(this,event)">'+escape_text_field_value(plugin.command)+'</textarea>');
 		html += get_form_table_caption(
@@ -376,7 +396,13 @@ Class.add( Page.Admin, {
 			'Do not include any pipes or redirects -- for those, please use the <b>Shell Plugin</b>.' 
 		);
 		html += get_form_table_spacer();
-		
+
+		// Secret
+		let sph = plugin.secret_preview ? '[' + plugin.secret_preview + ']' : ''
+		html += get_form_table_row('Secret:', `<textarea id="fe_ep_secret" style="width:550px; height:70px;resize:vertical;" oninput="$P().set_plugin_secret(this.value)" placeholder="${sph}"  spellcheck="false"></textarea>`);
+		html += get_form_table_caption(`Specify KEY=VALUE pairs to be mounted as env variables on this plugin jobs. This data will be encrypted`);
+		html += get_form_table_spacer();
+
 		// params editor
 		html += get_form_table_row( 'Parameters:', '<div id="d_ep_params">' + this.get_plugin_params_html() + '</div>' );
 		html += get_form_table_caption( 
@@ -388,23 +414,24 @@ Class.add( Page.Admin, {
 		// advanced options
 		var adv_expanded = !!(plugin.cwd || plugin.uid);
 		html += get_form_table_row( 'Advanced', 
-			'<div style="font-size:13px;'+(adv_expanded ? 'display:none;' : '')+'"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Advanced Options</span></div>' + 
-			'<fieldset style="padding:10px 10px 0 10px; margin-bottom:5px;'+(adv_expanded ? '' : 'display:none;')+'"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Advanced Options</legend>' + 
-				'<div class="plugin_params_label">Working Directory (CWD):</div>' + 
-				'<div class="plugin_params_content"><input type="text" id="fe_ep_cwd" size="50" value="'+escape_text_field_value(plugin.cwd)+'" placeholder="" spellcheck="false"/></div>' + 
-				
-				'<div class="plugin_params_label">Run as User (UID):</div>' + 
-				'<div class="plugin_params_content"><input type="text" id="fe_ep_uid" size="20" value="'+escape_text_field_value(plugin.uid)+'" placeholder="" spellcheck="false"/></div>' + 
-		
-				'<div class="plugin_params_label">Secret</div>' + 
-				'<div class="plugin_params_content"><input type="password" id="fe_ep_secret" size="20" value="" placeholder="" spellcheck="false"/></div>' + 
-		
-			'</fieldset>'
-		);
+		`<div autocomplete="off" style="font-size:13px;${adv_expanded ? 'display:none;' : ''}"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Advanced Options</span></div>
+		<fieldset style="padding:10px 10px 0 10px; margin-bottom:5px;${adv_expanded ? '' : 'display:none;'}"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Advanced Options</legend>
+			<div class="plugin_params_label">Working Directory (CWD):</div>
+			<div class="plugin_params_content"><input type="text" id="fe_ep_cwd" size="50" value="${escape_text_field_value(plugin.cwd)}" placeholder="" spellcheck="false"/></div> 
+			
+			<div class="plugin_params_label">Run as User (UID):</div>
+			<div class="plugin_params_content"><input type="text" id="fe_ep_uid" size="20" value="${escape_text_field_value(plugin.uid)}" placeholder="" spellcheck="false"/></div>           
+
+		    <input name="DummyUsername" type="text" style="display:none;">
+            <input name="DummyPassword" type="password" style="display:none;"></input>
+
+        </fieldset>
+		`);
+
 		html += get_form_table_caption(
-			"Optionally enter a working directory path, and/or a custom UID for the Plugin.<br>" + 
-			"The UID may be either numerical or a string ('root', 'wheel', etc.).<br>" +
-			"Secret will appear as PLUGIN_SECRET env variable. It's not transmitted to UI"
+		`Optionally enter a working directory path, and/or a custom UID for the Plugin.<br>
+		 The UID may be either numerical or a string ('root', 'wheel', etc.).<br>
+		`
 		);
 		html += get_form_table_spacer();
 		
@@ -434,8 +461,10 @@ Class.add( Page.Admin, {
 		for (var idx = 0, len = params.length; idx < len; idx++) {
 			var param = params[idx];
 			var actions = [
+				'<span class="link" onMouseUp="$P().up_plugin_param('+idx+')"><b>Up</b></span>',
+				'<span class="link" onMouseUp="$P().down_plugin_param('+idx+')"><b>Down</b></span>',
 				'<span class="link" onMouseUp="$P().edit_plugin_param('+idx+')"><b>Edit</b></span>',
-				'<span class="link" onMouseUp="$P().delete_plugin_param('+idx+')"><b>Delete</b></span>'
+				'<span class="link" onMouseUp="$P().delete_plugin_param('+idx+')"><b>Delete</b></span>',				
 			];
 			html += '<tr>';
 			html += '<td><span class="link" style="font-family:monospace; font-weight:bold; white-space:nowrap;" onMouseUp="$P().edit_plugin_param('+idx+')"><i class="fa fa-cog">&nbsp;&nbsp;</i>' + param.id + '</span></td>';
@@ -684,12 +713,32 @@ Class.add( Page.Admin, {
 		this.plugin.params.splice( idx, 1 );
 		this.refresh_plugin_params();
 	},
+
+	up_plugin_param: function(idx) {
+		// move app parameter
+		if( !parseInt(idx)) return
+		let arr = this.plugin.params
+		let curr = arr[idx]
+		arr[idx] = arr[idx-1]
+		arr[idx-1] = curr
+		this.refresh_plugin_params();
+	},
+
+	down_plugin_param: function(idx) {
+		// move app parameter
+		let arr = this.plugin.params
+		if(parseInt(idx) >= arr.length - 1) return
+		let curr = arr[idx]
+		arr[idx] = arr[idx+1]
+		arr[idx+1] = curr
+		this.refresh_plugin_params();
+	},
 	
 	refresh_plugin_params: function() {
 		// redraw plugin param area after change
 		$('#d_ep_params').html( this.get_plugin_params_html() );
 	},
-	
+
 	get_plugin_form_json: function() {
 		// get plugin elements from form, used for new or edit
 		var plugin = this.plugin;
@@ -698,6 +747,7 @@ Class.add( Page.Admin, {
 		if (!plugin.title) return app.badField('fe_ep_title', "Please enter a title for the Plugin.");
 		
 		plugin.enabled = $('#fe_ep_enabled').is(':checked') ? 1 : 0;
+		plugin.ipc = $('#fe_ep_ipc').is(':checked') ? 1 : 0;
 		plugin.wf = $('#fe_wf_enabled').is(':checked') ? 1 : 0;
 		
 		plugin.command = trim( $('#fe_ep_command').val() );
@@ -706,7 +756,6 @@ Class.add( Page.Admin, {
 		
 		plugin.cwd = trim( $('#fe_ep_cwd').val() );
 		plugin.uid = trim( $('#fe_ep_uid').val() );
-		plugin.secret = trim( $('#fe_ep_secret').val() );
 		
 		if (plugin.uid.match(/^\d+$/)) plugin.uid = parseInt( plugin.uid );
 		

@@ -167,14 +167,14 @@ Class.subclass( Page.Base, "Page.History", {
 	
 	gosub_error_history: function(args) {
 		// show history
-		app.setWindowTitle( "Error History" );
+		app.setWindowTitle( "Query History" );
 		
 		var html = '';
 		// html += '<div style="padding:5px 15px 15px 15px;">';
 		html += '<div style="padding:20px 20px 30px 20px">';
 		
 		html += '<div class="subtitle">';
-			html += 'Error History';
+			html += 'Query History';
 
 			html += '<div class="clear"></div>';
 		html += '</div>';
@@ -184,10 +184,10 @@ Class.subclass( Page.Base, "Page.History", {
 		this.div.html( html );
 
 		var args = this.args;
-		var evtLimit = parseInt($("#fe_hist_eventlimit").val())
+		// var evtLimit = parseInt($("#fe_hist_eventlimit").val())
 		if (!args.offset) args.offset = 0;
-		if (!evtLimit) args.limit = 25;
-		if(evtLimit)  args.limit = parseInt(evtLimit*100);
+		if (!args.limit) args.limit = 25;
+		// if(evtLimit)  args.limit = parseInt(evtLimit*100);
 		app.api.post( 'app/get_errors', copy_object(args), this.receive_error_history.bind(this) );
 		
 	},
@@ -204,7 +204,7 @@ Class.subclass( Page.Base, "Page.History", {
 			['history', "All Completed"],
 			// ['event_history', "Event History"],
 			// ['event_stats', "Event Stats"],
-			['error_history', "Error History"],
+			['error_history', "Query History"],
 		]
 	    );
 		
@@ -235,7 +235,7 @@ Class.subclass( Page.Base, "Page.History", {
 			if (event && job.id) {
 				let niceEvent = self.getNiceEvent((event.title || job.event), col_width + 40) 
 				if(self.args.id) event_link = `<div class="td_big"> ${niceEvent}</div>` // no hyperlink if already filtered by id
-				else { event_link = `<div class="td_big"><a href="#History?sub=error_history&id=${job.event}">${niceEvent}</a></div>` }
+				else { event_link = `<div class="td_big"><a href="#History?sub=error_history&error=1&id=${job.event}">${niceEvent}</a></div>` }
 			}
 			else if (job.event_title) {
 				event_link = self.getNiceEvent(job.event_title, col_width + 40);
@@ -262,7 +262,7 @@ Class.subclass( Page.Base, "Page.History", {
 				self.getNicePlugin( plugin, col_width ),
 				self.getNiceGroup( null, job.hostname, col_width ),				
 				job.code,
-				job.description,
+				encode_entities(job.description || job.memo),
 				// job.arg ? `<div class="ellip" style="max-width:40">${String(job.arg).substring(0,40)}</div>`  : '', // argument
 				get_nice_date_time( job.time_start, false, true ),
 				get_text_from_seconds( job.elapsed, true, false )
@@ -332,7 +332,7 @@ Class.subclass( Page.Base, "Page.History", {
 				['history', "All Completed"],				
 				['event_history&id=' + args.id, "Event History"],
 				['event_stats', "Event Stats"],
-				['error_history', "Error History"],
+				['error_history', "Query History"],
 			]
 		);
 		html += '<div style="padding:20px 20px 30px 20px">';
@@ -839,7 +839,7 @@ Class.subclass( Page.Base, "Page.History", {
 				['history', "All Completed"],
 				['event_history', "Event History"],
 				['event_stats&id=' + args.id, "Event Stats"],
-				['error_history', "Error History"],
+				['error_history', "Query History"],
 			]
 		);
 		html += '<div style="padding:20px 20px 30px 20px">';
@@ -875,7 +875,7 @@ Class.subclass( Page.Base, "Page.History", {
 				self.getNiceArgument(job.arg, 40),
 				self.getNiceGroup( null, job.hostname, col_width ),
 				jobStatusHist,
-				job.memo,
+				encode_entities(job.memo),
 				get_nice_date_time( job.time_start, false, true ),
 				get_text_from_seconds( job.elapsed, true, false ),
 				'' + cpu_avg + '%',

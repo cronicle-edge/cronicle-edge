@@ -34,6 +34,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		  </div>
 		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i>
 			  <select id="fe_cmp_job_chart_limit" class="subtitle_menu" style="width:75px;" onChange="$P().refresh_completed_job_chart();app.setPref('job_chart_limit', this.value)">
+			  <option value="1">hide</option> 
 			  <option value="50">Last 50</option>
 			  <option value="10">Last 10</option>
 			  <option value="25">Last 25</option>
@@ -57,7 +58,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		let ui = app.config.ui || {}
 		let lmt = Number(app.getPref('job_chart_limit') || ui.job_chart_limit || 50)
 		let scale = app.getPref('job_chart_scale') || ui.job_chart_scale || 'linear'
-		let lmtActual = [10, 25, 35, 50, 100, 120, 150, 250, 500].includes(lmt) ? lmt : 50
+		let lmtActual = [1, 10, 25, 35, 50, 100, 120, 150, 250, 500].includes(lmt) ? lmt : 50
 		  $('#fe_cmp_job_chart_scale').val(scale)
 		  $('#fe_cmp_job_chart_limit').val(lmtActual)
 	   </script>
@@ -166,7 +167,6 @@ Class.subclass( Page.Base, "Page.Home", {
 
 		let errBg = stats.jobs_completed > 0 && (stats.jobs_failed || 0)/stats.jobs_completed > (parseFloat(ui.err_rate) || 0.03) ? 'red2' : 'gray'
 		let errTitle = Object.entries(stats.errorLog || {}).slice(0,20).sort((a,b)=> a[1] < b[1] ? 1 : -1).map(e=>`${e[0]}:\t<b>${e[1]}</b>`).join("\n")
-		let errLink = `style="cursor:pointer" onclick='Nav.go("History?sub=error_history")'`
 
 		html += ` 
 				<fieldset style="margin-top:0px; margin-right:0px; padding-top:10px;"><legend>Server Stats</legend>
@@ -175,7 +175,7 @@ Class.subclass( Page.Base, "Page.Home", {
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>PLUGINS:&nbsp;<b> <span class="color_label gray">${app.plugins.length}</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>JOBS COMPLETED TODAY:&nbsp;<b> <span class="color_label gray">${stats.jobs_completed || 0 }</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>FAILED:&nbsp;<b> 
-				    <span style="cursor:pointer" onclick='Nav.go("History?sub=error_history")' title="${errTitle}" class="color_label ${errBg}">${stats.jobs_failed || 0}</span>&nbsp;
+				    <span style="cursor:pointer" onclick='Nav.go("History?sub=error_history&error=1&max=${stats.jobs_failed || 0}")' title="${errTitle}" class="color_label ${errBg}">${stats.jobs_failed || 0}</span>&nbsp;
 				  </div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>SUCCESS RATE:&nbsp;<b> <span class="color_label gray">${pct( (stats.jobs_completed || 0) - (stats.jobs_failed || 0), stats.jobs_completed || 1 ) }</span>&nbsp;</div>
 				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>AVG LOG SIZE:&nbsp;<b> <span class="color_label gray"> 2K</span>&nbsp;</div>
@@ -361,6 +361,17 @@ Class.subclass( Page.Base, "Page.Home", {
 	},
 
 	refresh_completed_job_chart: function () {
+	
+		if($('#fe_cmp_job_chart_limit').val() < 2) {
+			
+			if(app.jobHistoryChart) {
+				app.jobHistoryChart.destroy()
+				location.reload(true) // no easy way to kill graph, just reload the page
+			}
+			
+			return 
+		}
+
 	    let isDark = app.getPref('theme') === 'dark'
 		let green = isDark ? '#44bb44' : 'lightgreen' // success
 		let orange = isDark ? '#bbbb44' : 'orange'  // warning
@@ -393,19 +404,19 @@ Class.subclass( Page.Base, "Page.Home", {
 			let scaleType = $('#fe_cmp_job_chart_scale').val() || 'logarithmic';
 
 			// if chart is already generated only update data
-			if(this.jobHistoryChart) { 
-				this.jobHistoryChart.data.datasets = datasets;
-				this.jobHistoryChart.data.labels = labels;
-				this.jobHistoryChart.options.scales.yAxes[0].type = scaleType;
-				this.jobHistoryChart.options.scales.yAxes[0]
-				this.jobHistoryChart.options.layout.padding.bottom = jobLimit > 50 ? 50 : 20  
-				this.jobHistoryChart.update()
+			if(app.jobHistoryChart) { 
+				app.jobHistoryChart.data.datasets = datasets;
+				app.jobHistoryChart.data.labels = labels;
+				app.jobHistoryChart.options.scales.yAxes[0].type = scaleType;
+				app.jobHistoryChart.options.scales.yAxes[0]
+				app.jobHistoryChart.options.layout.padding.bottom = jobLimit > 50 ? 50 : 20  
+				app.jobHistoryChart.update()
 				return
 			} 
 
 			let ctx = document.getElementById('d_home_completed_jobs');
 
-			jobHistoryChart = new Chart(ctx, {
+			app.jobHistoryChart = new Chart(ctx, {
 				type: 'bar',
 				data: {
 					//labels: jobs.map(j => moment.unix(j.epoch).format('MM/D, H:mm:ss')),
@@ -422,7 +433,7 @@ Class.subclass( Page.Base, "Page.Home", {
 						titleFontColor: 'orange',
 						displayColors: false,
 						callbacks: {
-							title: function (ti, dt) { return dt.datasets[0].jobs[ti[0].index].event_title },
+							title: function (ti, dt) { return dt.datasets[0].jobs[ti[0].index].event_title + (dt.datasets[0].jobs[ti[0].index].arg ? ('@' + filterXSS(dt.datasets[0].jobs[ti[0].index].arg)) : '') },
 							label: function (ti, dt) {
 								//var job = jobs[ti.index]
 								let job = dt.datasets[0].jobs[ti.index] ;
@@ -456,9 +467,9 @@ Class.subclass( Page.Base, "Page.Home", {
 			});
 
 			ctx.ondblclick = function(evt){
-				let activePoints = jobHistoryChart.getElementsAtEvent(evt);
+				let activePoints = app.jobHistoryChart.getElementsAtEvent(evt);
 				let firstPoint = activePoints[0];
-				let job = jobHistoryChart.data.datasets[firstPoint._datasetIndex].jobs[firstPoint._index]
+				let job = app.jobHistoryChart.data.datasets[firstPoint._datasetIndex].jobs[firstPoint._index]
 				window.open("#JobDetails?id=" + job.id, "_blank");
 			};
 			

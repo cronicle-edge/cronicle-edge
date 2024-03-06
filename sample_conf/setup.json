@@ -74,6 +74,51 @@
 		} ],		
 
 		[ "listPush", "global/plugins", {
+			"id": "sshxplug",
+			"title": "SSHX",
+			"enabled": 1,
+			"command": "node bin/sshx-plugin.js",
+			"username": "admin",
+			"uid": "",
+			"modified": 1434125333,
+			"created": 1434125333,
+			"ipc": true,
+			"params": [
+				{ "id":"ssh_host", "type":"text", "size":40, "title":"HOST/URI", "value": "ssh://cronicle:Password@localhost:22" },
+				{ "id":"kill_cmd", "type":"text", "size":40, "title":"Kill Command", "value": "pkill -s $$" },
+				{ "id":"script", "type":"textarea", "rows":10, "title":"Script", "value": "\n#!/bin/sh\n\necho \"Running SSHX job on $HOSTNAME\"\n\nsleep 10\n\n# Specify conneciton info using URI format:\n# [ssh://]user[:Password]@host[:port]?[privateKey=/path/to/file&passphrase=Password]\n# If passing password via URI, you'd need to encode special characters (e.g. @ => %40)\n# You can also set SSH_KEY/SSH_PASSWORD/SSH_PASSPHRASE as variables in event/plugin secrets\n\n# If no SSH Host specified on event parameters, it can be resolved from WF argument\n\n# Kill Command parameter is used to properly handle job abortion\n# Default command is [pkill -S $$]\n# $$ is refering to PID of your script parent process (bootstrap script)\n\n# To pass variables other then JOB_ / ARG*, use SSH_ prefix on variable name\n# If this event is chained by other job, you can access chain data using CHAIN_DATA variable\n\n" },
+				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
+				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
+				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 }		
+			]
+		} ],
+		
+		[ "listPush", "global/plugins", {
+			"id": "dockerplug",
+			"title": "Docker",
+			"enabled": 1,
+			"command": "node bin/docker-plugin.js",
+			"username": "admin",
+			"uid": "",
+			"modified": 1434125333,
+			"created": 1434125333,
+			"ipc": true,
+			"params": [
+				{ "id":"docker_host", "type":"text", "size":40, "title":"Docker Host", "value": "" },
+				{ "id":"image", "type":"text", "size":40, "title":"Image", "value": "alpine" },
+				{ "id":"command", "type":"text", "size":40, "title":"Command", "value": "" },
+				{ "id":"script", "type":"textarea", "rows":10, "title":"Script", "value": "\n#!/bin/sh\n\necho \"Running Docker job on $HOSTNAME\"\n\ncat /etc/os-release\n\nls -lah chain_data || echo \"no chain data\"\n\n# If Docker Host is not specified, docker socket will be used\n# To access remote docker machine via ssh (on top of socket) specify DH as:\n# ssh://user[:password]@host[:port]\n# To specify ssh credentials you can also use SSH_PASSWORD/SSH_KEY env varaibles\n# To access remote docker instance with exposed http:\n# http://dockerhost:2375  (there is no auth options for that at this point)\n# To specify image registry credentials use DOCKER_USER, DOCKER_PASSWORD variables\n# All credential variables can be set via event/plugin secrets\n\n# This script will be used as an entrypoint on the container (mounted as /cronicle.sh by default).\n# To use original entrypoint check corresponding checkbox below,\n#  and use command parameter above to pass argument to it\n# If this job is chained by other event, chain data will be mounted to the container\n#   as chain_data file \n\n# In order to pass variables to container (other than JOB_ and ARG*) it should start with DOCKER_\n\n# If job is aborted \"docker stop\" is invoked (SIGTERM), docker will send SIGKILL after some time\n# Try to handle SIGTERM in your script for proper shutdown on abortion\n"},
+				{ "id":"entrypoint_path", "type":"text", "size":40, "title":"Mount As", "value": "" },
+				{ "id":"keep_entrypoint", "type":"checkbox", "title":"Keep Original Entrypoint", "value": 0 },
+				{ "id":"pull_image", "type":"checkbox", "title":"Pull Image", "value": 1 },
+				{ "id":"keep_container", "type":"checkbox", "title":"Keep Container", "value": 0 },
+				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
+				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
+				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"}
+			]
+		} ],
+
+		[ "listPush", "global/plugins", {
 			"params": [
 
 				{

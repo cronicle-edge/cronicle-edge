@@ -258,8 +258,10 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/test-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/url-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  --loader:.node=file bin/ssh-plugin.js
+esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  --loader:.node=file bin/sshx-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/workflow.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/run-detached.js
+esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  --loader:.node=file bin/docker-plugin.js
 
 # ----------- Tools (repair/migrate)
 if [ "$tools" = 1 ]; then
