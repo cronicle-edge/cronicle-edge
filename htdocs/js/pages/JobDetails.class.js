@@ -207,10 +207,13 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 
 		html += '<div class="subtitle" style="margin-top:7px; margin-bottom:13px;">';
 		html += 'Completed Job';
+
+		if(event.id) html += `<div class="subtitle_widget" style="margin-left:5px;"><a href="#History?sub=event_history&id=${event.id}"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to History</b></a></div>`
 		if (event.id && !event.multiplex) html += '<div class="subtitle_widget" style="margin-left:2px;"><span class="link" onMouseUp="$P().run_again()"><i class="fa fa-repeat">&nbsp;</i><b>Run Again</b></span></div>';
 		//adding edit button on job detail page
 		if (event.id) html += '<div class="subtitle_widget" style="margin-left:2px;"><a href="#Schedule?sub=edit_event&id=' + event.id + '" target="_self"><span class="link"><i class="fa fa-edit">&nbsp;</i><b>Edit</b></span></a></div>';
 		if (app.isAdmin()) html += '<div class="subtitle_widget"><span class="link abort" onMouseUp="$P().delete_job()"><i class="fa fa-trash-o">&nbsp;</i><b>Delete Job</b></span></div>';
+		
 		html += '<div class="clear"></div>';
 		html += '</div>';
 
