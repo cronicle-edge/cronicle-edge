@@ -167,14 +167,14 @@ Class.subclass( Page.Base, "Page.History", {
 	
 	gosub_error_history: function(args) {
 		// show history
-		app.setWindowTitle( "Error History" );
+		app.setWindowTitle( "Query History" );
 		
 		var html = '';
 		// html += '<div style="padding:5px 15px 15px 15px;">';
 		html += '<div style="padding:20px 20px 30px 20px">';
 		
 		html += '<div class="subtitle">';
-			html += 'Error History';
+			html += 'Query History';
 
 			html += '<div class="clear"></div>';
 		html += '</div>';
@@ -204,7 +204,7 @@ Class.subclass( Page.Base, "Page.History", {
 			['history', "All Completed"],
 			// ['event_history', "Event History"],
 			// ['event_stats', "Event Stats"],
-			['error_history', "Error History"],
+			['error_history', "Query History"],
 		]
 	    );
 		
@@ -235,7 +235,7 @@ Class.subclass( Page.Base, "Page.History", {
 			if (event && job.id) {
 				let niceEvent = self.getNiceEvent((event.title || job.event), col_width + 40) 
 				if(self.args.id) event_link = `<div class="td_big"> ${niceEvent}</div>` // no hyperlink if already filtered by id
-				else { event_link = `<div class="td_big"><a href="#History?sub=error_history&id=${job.event}">${niceEvent}</a></div>` }
+				else { event_link = `<div class="td_big"><a href="#History?sub=error_history&error=1&id=${job.event}">${niceEvent}</a></div>` }
 			}
 			else if (job.event_title) {
 				event_link = self.getNiceEvent(job.event_title, col_width + 40);
@@ -332,7 +332,7 @@ Class.subclass( Page.Base, "Page.History", {
 				['history', "All Completed"],				
 				['event_history&id=' + args.id, "Event History"],
 				['event_stats', "Event Stats"],
-				['error_history', "Error History"],
+				['error_history', "Query History"],
 			]
 		);
 		html += '<div style="padding:20px 20px 30px 20px">';
@@ -839,7 +839,7 @@ Class.subclass( Page.Base, "Page.History", {
 				['history', "All Completed"],
 				['event_history', "Event History"],
 				['event_stats&id=' + args.id, "Event Stats"],
-				['error_history', "Error History"],
+				['error_history', "Query History"],
 			]
 		);
 		html += '<div style="padding:20px 20px 30px 20px">';
