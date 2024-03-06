@@ -313,7 +313,8 @@ stream.on('json', function (job) {
 						}
 						let prog = `[${taskList.length - pendingJobs}/${taskList.length}]`
 						let arg = jobStatus[j].arg ? ': ' + jobStatus[j].arg : ''
-						msg = ` │ ${jstat} ${jobStatus[j].title + arg} (job ${j}) completed ${prog} at ${(new Date()).toLocaleTimeString()}${EOL} │      \u001b[33melapsed in ${niceInterval(jobStatus[j].elapsed)}\u001b[39m  ${desc}`
+						let memo = compl.memo ? ', memo: ' + compl.memo : ''
+						msg = ` │ ${jstat} ${jobStatus[j].title + arg} (job ${j}) completed ${prog} at ${(new Date()).toLocaleTimeString()}${EOL} │      \u001b[33melapsed in ${niceInterval(jobStatus[j].elapsed)}${memo}\u001b[39m  ${desc}`
 					}
 
 					msg += EOL + ' │'
