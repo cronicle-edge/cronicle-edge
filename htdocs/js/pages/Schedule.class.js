@@ -1752,7 +1752,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		// Secret
 		let sph = event.secret_preview ? '[' + event.secret_preview  + ']' : '';
-		html += get_form_table_row('Secret', `<textarea  style="width:420px; height:45px;resize:vertical;" id="fe_ee_secret" oninput="$P().set_event_secret(this.value)" placeholder="${sph}" spellcheck="false"></textarea>`);
+		html += get_form_table_row('Secret', `<textarea  style="width:620px; height:45px;resize:vertical;" id="fe_ee_secret" oninput="$P().set_event_secret(this.value)" placeholder="${sph}" spellcheck="false"></textarea>`);
 		html += get_form_table_caption("Specify KEY=VALUE pairs to be mounted as env variables (to this job process)");
 		html += get_form_table_spacer();
 

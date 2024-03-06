@@ -108,9 +108,14 @@ if(uri.password) conf.password = decodeURIComponent(uri.password)
 if (uri.searchParams.get('privateKey')) conf.privateKey = readFileSync(String(uri.searchParams.get('privateKey')))
 if (uri.searchParams.get('passphrase')) conf.passphrase = uri.searchParams.get('passphrase')
 
+if (!conf.password && !conf.privateKey ) {
+    printComplete(1, 1, "No password or key specified. Use SSH_PASSWORD/SSH_KEY env vars, or set via URI (ssh://user:[pass]@host?privateKey=/path/to/key")
+    process.exit(1)
+}
+
 try {
     conn.on('error', (err) => {  // handle configuration errors
-        stream.write({
+        printJson({
             complete: 1,
             code: 1,
             description: err.message
@@ -177,7 +182,7 @@ try {
     }).connect(conf)
 }
 catch (err) {
-    stream.write({
+    printJson({
         complete: 1,
         code: 1,
         description: err.message
