@@ -1,5 +1,5 @@
 
-FROM arm64v8/alpine:3.19.1 as base
+FROM arm32v7/alpine:3.19.1 as base
 RUN apk add --no-cache bash nodejs tini 
 RUN apk add --no-cache bash nodejs tini util-linux bash openssl procps coreutils curl tar jq
 
