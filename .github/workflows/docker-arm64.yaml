@@ -1,4 +1,4 @@
-name: Docker Build
+name: Docker Build Arm64
 
 on:
   push:
@@ -21,13 +21,13 @@ jobs:
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
-      with:
-        context: .
-        file: ./Docker/arm64.dockerfile
-        platforms: linux/amd64,linux/arm64
-        push: true
-        tags: |
-          cronicle/edge:arm64
       env:
         DOCKER_USERNAME: ${{ secrets.DHUB_USER }}
         DOCKER_PASSWORD: ${{ secrets.DHUB_TOKEN }}
+      with:
+        context: .
+        file: ./Docker/arm64.dockerfile
+        platforms: linux/arm64
+        push: true
+        tags: docker.io/cronicle/edge:arm64
+
