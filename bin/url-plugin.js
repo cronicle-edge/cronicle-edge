@@ -74,7 +74,7 @@ stream.on('json', function(job) {
 
 	// ssl cert bypass
 	if (params.ssl_cert_bypass) {
-		opts.rejectUnauthorized = true;
+		opts.rejectUnauthorized = false;
 	}
 	
 	// post data
