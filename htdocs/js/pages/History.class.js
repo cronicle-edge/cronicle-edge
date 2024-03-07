@@ -135,7 +135,7 @@ Class.subclass( Page.Base, "Page.History", {
 			var tds = [
 				job_link,				
 				event_link ,
-				self.getNiceArgument(job.arg, 40),				
+				self.getNiceArgument(job.arg, 40, self.args),				
 				self.getNiceCategory( cat, col_width ),
 				self.getNicePlugin( plugin, col_width ),
 				self.getNiceGroup( null, job.hostname, col_width ),				
@@ -257,7 +257,7 @@ Class.subclass( Page.Base, "Page.History", {
 			var tds = [
 				job_link,				
 				event_link ,
-				self.getNiceArgument(job.arg, 40),				
+				self.getNiceArgument(job.arg, 40, self.args),				
 				self.getNiceCategory( cat, col_width ),
 				self.getNicePlugin( plugin, col_width ),
 				self.getNiceGroup( null, job.hostname, col_width ),				
@@ -872,7 +872,7 @@ Class.subclass( Page.Base, "Page.History", {
 
 			var tds = [
 				`<div class="td_big" style="white-space:nowrap;">${href}<i class="fa fa-pie-chart">&nbsp;</i><b>${job.id.substring(0, 11)}</b></span></div>`,
-				self.getNiceArgument(job.arg, 40),
+				self.getNiceArgument(job.arg, 40, self.args),
 				self.getNiceGroup( null, job.hostname, col_width ),
 				jobStatusHist,
 				encode_entities(job.memo),

@@ -160,10 +160,14 @@ Class.subclass(Page, "Page.Base", {
 		return html;
 	},
 
-	getNiceArgument: function(arg, maxWidth) {
+	getNiceArgument: function(arg, maxWidth, context) {
+		context = context || {}
 		let nice_arg = encode_entities(`${arg || ''}`)
 		if(nice_arg.length > maxWidth) nice_arg = nice_arg.substring(0,maxWidth-3) + "..."
-		return `<a href="#History?sub=error_history&max=25&arg=${encodeURIComponent(arg)}">${nice_arg}</a>`
+		let href = '#History?sub=error_history'
+		if(context.id) href += ('&id=' + context.id)
+		if(context.error) href += '&error=1'
+		return `<a href="${href}&max=25&arg=${encodeURIComponent(arg)}">${nice_arg}</a>`
 	},
 
 	setGroupVisible: function (group, visible) {
