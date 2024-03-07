@@ -1,9 +1,11 @@
 name: Docker Build Arm64
 
 on:
-  push:
-    branches:
-      - main
+    workflow_dispatch:
+      inputs:
+        parameter_name:
+          description: 'Run arm64 manually'
+          required: true
 
 jobs:
   build:
