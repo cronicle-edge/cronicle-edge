@@ -403,6 +403,20 @@ Class.add( Page.Admin, {
 		html += get_form_table_caption(`Specify KEY=VALUE pairs to be mounted as env variables on this plugin jobs. This data will be encrypted`);
 		html += get_form_table_spacer();
 
+
+		// Use STDIN
+		html += get_form_table_row('Use stdin script', '<input type="checkbox" id="fe_ep_stdin" value="1" ' + (plugin.stdin ? 'checked="checked"' : '') + '/><label for="fe_ep_stdin">Use stding script</label>');
+		html += get_form_table_caption("use stdin");
+		html += get_form_table_spacer();
+
+		// STDIN SCRIPT
+
+		html += get_form_table_row('STDIN Script:', `<textarea id="fe_ep_script" style="width:550px; height:70px;resize:vertical;" spellcheck="false">${plugin.script}</textarea>`);
+		html += get_form_table_caption(`Define plugin as stdin script`);
+		html += get_form_table_spacer();
+
+
+
 		// params editor
 		html += get_form_table_row( 'Parameters:', '<div id="d_ep_params">' + this.get_plugin_params_html() + '</div>' );
 		html += get_form_table_caption( 
@@ -749,6 +763,9 @@ Class.add( Page.Admin, {
 		plugin.enabled = $('#fe_ep_enabled').is(':checked') ? 1 : 0;
 		plugin.ipc = $('#fe_ep_ipc').is(':checked') ? 1 : 0;
 		plugin.wf = $('#fe_wf_enabled').is(':checked') ? 1 : 0;
+
+		plugin.stdin = $('#fe_ep_stdin').is(':checked') ? 1 : 0;
+		plugin.script = trim( $('#fe_ep_script').val() );
 		
 		plugin.command = trim( $('#fe_ep_command').val() );
 		if (!plugin.command) return app.badField('fe_ep_command', "Please enter a filesystem path to the executable command for the Plugin.");
