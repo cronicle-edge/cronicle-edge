@@ -149,6 +149,9 @@ Get-Content `
   , node_modules/codemirror/theme/darcula.css `
   , node_modules/codemirror/theme/solarized.css `
   , node_modules/codemirror/theme/gruvbox-dark.css `
+  , node_modules/codemirror/theme/base16-dark.css `
+  , node_modules/codemirror/theme/ambiance.css `
+  , node_modules/codemirror/theme/nord.css `
   , node_modules/codemirror/addon/scroll/simplescrollbars.css `
   , node_modules/codemirror/addon/display/fullscreen.css `
   , node_modules/codemirror/addon/lint/lint.css `
@@ -174,6 +177,7 @@ Get-Content `
 	 , node_modules/codemirror/mode/clike/clike.js `
 	 , node_modules/codemirror/mode/properties/properties.js `
 	 , node_modules/codemirror/addon/display/fullscreen.js `
+   , node_modules/codemirror/addon/display/placeholder.js `
 	 , node_modules/codemirror/mode/xml/xml.js `
 	 , node_modules/codemirror/mode/sql/sql.js `
   , node_modules/js-yaml/dist/js-yaml.js `

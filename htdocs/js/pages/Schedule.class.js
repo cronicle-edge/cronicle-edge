@@ -122,6 +122,28 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		py: "python"
 	},
 
+	setFileEditor: function(fileName) {
+		const self = this
+		let editor = CodeMirror.fromTextArea(document.getElementById("fe_ee_pp_file_content"), {
+			mode: self.extension_map[fileName.split('.').pop()] || 'text',
+			styleActiveLine: true,
+			lineWrapping: false,
+			scrollbarStyle: "overlay",
+			lineNumbers: true,
+			theme: app.getPref('theme') == 'dark' ? 'gruvbox-dark' : 'default',
+			matchBrackets: true,
+			gutters: [''],
+			lint: true
+		})
+
+		editor.on('change', function(cm){
+			document.getElementById("fe_ee_pp_file_content").value = cm.getValue();
+		 });
+
+		editor.setSize('52vw', '52vh')
+
+	},
+
 	render_file_list: function () {
 		let cols = ['File Name', ' '];
 		let files = this.event.files || []
@@ -157,31 +179,10 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let html = '<table>' +
 			get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="" spellcheck="false"/>`) +
 			get_form_table_spacer() +
-			get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110"></textarea>`) +
-			`</table>
-		<script> 
+			get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110"></textarea>`)
+			html +=`</table>`
 
-		  setTimeout(()=> {
-		  fileEditor = CodeMirror.fromTextArea(document.getElementById("fe_ee_pp_file_content"), {
-			mode: "javascript",
-			styleActiveLine: true,
-			lineWrapping: false,
-			scrollbarStyle: "overlay",
-			lineNumbers: true,
-			theme: "${app.getPref('theme') == 'dark' ? 'gruvbox-dark' : 'default'}",
-			matchBrackets: true,
-			gutters: [''],
-			lint: true
-		})
-
-		fileEditor.on('change', function(cm){
-			document.getElementById("fe_ee_pp_file_content").value = cm.getValue();
-		 });
-
-		fileEditor.setSize('52vw', '52vh')
-
-	}, 30);
-		</script>`
+		setTimeout(() => self.setFileEditor('.text'), 30) // editor needs to wait for a bit for modal window to render
 
 		app.confirm(html, '', "Save", function (result) {
 
@@ -222,34 +223,12 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let html = '<table>' +
 			get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="${file.name}" spellcheck="false">`) +
 			get_form_table_spacer() +
-			get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110">${file.content}</textarea>`) +
-			`</table>
-		<script> 
+			get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110">${file.content}</textarea>`)
+			html += '</table>'
 
-		  setTimeout(()=> {
-		  fileEditor = CodeMirror.fromTextArea(document.getElementById("fe_ee_pp_file_content"), {
-			mode: "${self.extension_map[file.name.split('.').pop()] || 'text'}",
-			styleActiveLine: true,
-			lineWrapping: false,
-			scrollbarStyle: "overlay",
-			lineNumbers: true,
-			theme: "${app.getPref('theme') == 'dark' ? 'gruvbox-dark' : 'default'}",
-			matchBrackets: true,
-			gutters: [''],
-			lint: true
-		})
-
-		fileEditor.on('change', function(cm){
-			document.getElementById("fe_ee_pp_file_content").value = cm.getValue();
-		 });
-
-		fileEditor.setSize('52vw', '52vh')
-
-	}, 30);
-		</script>`
+		setTimeout(() => self.setFileEditor(file.name), 30) // editor needs to wait for a bit for modal window to render
 
 		app.confirm(html, '', "Save", function (result) {
-
 			app.clearError();
 
 			if (result) {
@@ -1247,6 +1226,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		`
 
 		this.div.html(html);
+		this.setScriptEditor()
 
 		setTimeout(function () {
 			$('#fe_ee_title').focus();
@@ -1401,6 +1381,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		`
 
 		this.div.html(html);
+		this.setScriptEditor()
 	},
 
 	do_copy_event: function () {
@@ -2554,6 +2535,100 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		this.refresh_plugin_params();
 	},
+	
+	setScriptEditor: function() {		
+		
+		let params = this.event.params || {}
+		let el = document.getElementById("fe_ee_pp_script")
+
+		if(!el || !params.script) return 
+
+		let privs = app.user.privileges;
+		let canEdit = privs.admin || privs.edit_events || privs.create_events;
+
+		let lang = params.lang || params.default_lang || 'shell';
+		// gutter for yaml linting
+		let gutter = ''
+		let lint = 'false'
+
+		if (lang == 'java') { lang = 'text/x-java' }
+		if (lang == 'scala') { lang = 'text/x-scala' }
+		if (lang == 'csharp') { lang = 'text/x-csharp' }
+		if (lang == 'sql') { lang = 'text/x-sql' }
+		if (lang == 'dockerfile') { lang = 'text/x-dockerfile' }
+		if (lang == 'toml') { lang = 'text/x-toml' }
+		if (lang == 'yaml') {
+			lang = 'text/x-yaml'
+			gutter = 'CodeMirror-lint-markers'
+			lint = 'CodeMirror.lint.yaml'
+		}
+		if (lang == 'json') {
+			lang = 'application/json'
+			lint = 'CodeMirror.lint.json'
+		}
+		if (lang == 'props') { lang = 'text/x-properties' }
+
+		let theme = app.getPref('theme') == 'dark' && params.theme == 'default' ? 'gruvbox-dark' : params.theme;
+		if (params.theme == 'light') theme = 'default'
+
+		let editor = CodeMirror.fromTextArea(el, {
+			mode: lang,
+			readOnly: !canEdit,
+			styleActiveLine: true,
+			lineWrapping: false,
+			scrollbarStyle: "overlay",
+			lineNumbers: true,
+			theme: theme,
+			matchBrackets: true,
+			gutters: [gutter],
+			lint: lint,
+			extraKeys: {
+			  "F11": (cm) => cm.setOption("fullScreen", !cm.getOption("fullScreen")),
+			  "Esc": (cm) => cm.getOption("fullScreen") ? cm.setOption("fullScreen", false) : null,
+			  "Ctrl-/": (cm) => cm.execCommand('toggleComment')
+			}							  
+		  });
+
+		editor.on('change', function(cm){
+			  params.script = cm.getValue();
+		   });
+
+		editor.setValue(params.script || '');
+
+		// syntax selector
+		document.getElementById("fe_ee_pp_lang").addEventListener("change", function(){
+			let ln = this.options[this.selectedIndex].value;
+
+			editor.setOption("gutters", ['']);
+			editor.setOption("lint", false)
+
+			if(ln == 'java') {ln = 'text/x-java'}
+			if(ln == 'scala') {ln = 'text/x-scala'}
+			if(ln == 'csharp') {ln = 'text/x-csharp'}
+			if (ln == 'sql') { ln = 'text/x-sql' }
+			if (ln == 'dockerfile') { ln = 'text/x-dockerfile' }
+			if (ln == 'toml') { ln = 'text/x-toml' }
+			if (ln == 'json') { 
+				ln = 'application/json'
+				editor.setOption("lint", CodeMirror.lint.json)
+			 }
+			if (ln == 'props') { ln = 'text/x-properties' }
+			if (ln == 'yaml') {
+				ln = 'text/x-yaml'
+				editor.setOption("gutters", ['CodeMirror-lint-markers']);
+				editor.setOption("lint", CodeMirror.lint.yaml)
+			}
+		editor.setOption("mode", ln);
+		});
+
+		// theme 
+		document.getElementById("fe_ee_pp_theme").addEventListener("change", function(){
+			var thm = this.options[this.selectedIndex].value;
+			if(thm === 'default' && app.getPref('theme') === 'dark') thm = 'gruvbox-dark';
+			if(thm === 'light') thm = 'default';
+			editor.setOption("theme", thm);
+		});
+	},
 
 	get_plugin_params_html: function () {
 		// get plugin param editor html
@@ -2583,63 +2658,6 @@ Class.subclass(Page.Base, "Page.Schedule", {
 							let ta_height = parseInt(param.rows) * 15;
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
 							html += '<div class="plugin_params_content" style="width: 54rem"><textarea id="fe_ee_pp_' + param.id + '" style="width:99%; height:' + ta_height + 'px; resize:vertical;" spellcheck="false" onkeydown="return catchTab(this,event)">' + escape_text_field_value(value) + '</textarea></div>';
-							let privs = app.user.privileges;
-							let canEdit = privs.admin || privs.edit_events || privs.create_events;
-
-							// adding code eitor for script area
-							if (param.id == "script") {
-								let lang = params.lang || params.default_lang || 'shell';
-								// gutter for yaml linting
-								let gutter = ''
-								let lint = 'false'
-
-								if (lang == 'java') { lang = 'text/x-java' }
-								if (lang == 'scala') { lang = 'text/x-scala' }
-								if (lang == 'csharp') { lang = 'text/x-csharp' }
-								if (lang == 'sql') { lang = 'text/x-sql' }
-								if (lang == 'dockerfile') { lang = 'text/x-dockerfile' }
-								if (lang == 'toml') { lang = 'text/x-toml' }
-								if (lang == 'yaml') {
-									lang = 'text/x-yaml'
-									gutter = 'CodeMirror-lint-markers'
-									lint = 'CodeMirror.lint.yaml'
-								}
-								if (lang == 'json') {
-									lang = 'application/json'
-									lint = 'CodeMirror.lint.json'
-								}
-								if (lang == 'props') { lang = 'text/x-properties' }
-
-								let theme = app.getPref('theme') == 'dark' && params.theme == 'default' ? 'gruvbox-dark' : params.theme;
-								if (params.theme == 'light') theme = 'default'
-
-								html += `
-							<script>
-							var editor = CodeMirror.fromTextArea(document.getElementById("fe_ee_pp_script"), {
-							  mode: "${lang}",
-							  readOnly: ${!canEdit},
-							  styleActiveLine: true,
-							  lineWrapping: false,
-							  scrollbarStyle: "overlay",
-							  lineNumbers: true,
-							  theme: "${theme}",
-							  matchBrackets: true,
-							  gutters: ['${gutter}'],
-							  lint: ${lint},
-							  extraKeys: {
-                                "F11": (cm) => cm.setOption("fullScreen", !cm.getOption("fullScreen")),
-                                "Esc": (cm) => cm.getOption("fullScreen") ? cm.setOption("fullScreen", false) : null,
-								"Ctrl-/": (cm) => cm.execCommand('toggleComment')
-                              }							  
-							});
-		
-							editor.on('change', function(cm){
-								document.getElementById("fe_ee_pp_script").value = cm.getValue();
-						     });
-
-							</script>
-							`}
-
 							break;
 
 						case 'checkbox':
@@ -2682,51 +2700,6 @@ Class.subclass(Page.Base, "Page.Schedule", {
 						case 'select':
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
 							html += '<div class="plugin_params_content"><select id="fe_ee_pp_' + param.id + '">' + render_menu_options(param.items, value, true) + '</select></div>';
-
-							if (param.id == 'lang') {
-								html += `
-								<script>
-								document.getElementById("fe_ee_pp_lang").addEventListener("change", function(){
-									let ln = this.options[this.selectedIndex].value;
-
-									editor.setOption("gutters", ['']);
-									editor.setOption("lint", false)
-
-									if(ln == 'java') {ln = 'text/x-java'}
-									if(ln == 'scala') {ln = 'text/x-scala'}
-									if(ln == 'csharp') {ln = 'text/x-csharp'}
-									if (ln == 'sql') { ln = 'text/x-sql' }
-									if (ln == 'dockerfile') { ln = 'text/x-dockerfile' }
-									if (ln == 'toml') { ln = 'text/x-toml' }
-									if (ln == 'json') { 
-										ln = 'application/json'
-										editor.setOption("lint", CodeMirror.lint.json)
-									 }
-									if (ln == 'props') { ln = 'text/x-properties' }
-									if (ln == 'yaml') {
-										ln = 'text/x-yaml'
-										editor.setOption("gutters", ['CodeMirror-lint-markers']);
-										editor.setOption("lint", CodeMirror.lint.yaml)
-									}
-									editor.setOption("mode", ln);
-									
-								});
-								</script>
-							  `
-							}
-							if (param.id == 'theme') {
-								html += `
-								<script>
-								document.getElementById("fe_ee_pp_theme").addEventListener("change", function(){
-									var thm = this.options[this.selectedIndex].value;
-									if(thm === 'default' && app.getPref('theme') === 'dark') thm = 'gruvbox-dark';
-									if(thm === 'light') thm = 'default';
-									editor.setOption("theme", thm);
-								});
-								</script>
-								`
-							}
-
 							break;
 
 						case 'hidden':
@@ -2754,6 +2727,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	refresh_plugin_params: function () {
 		// redraw plugin param area after change
 		$('#d_ee_plugin_params').html(this.get_plugin_params_html());
+		this.setScriptEditor(); 
 	},
 
 	get_random_event: function () {

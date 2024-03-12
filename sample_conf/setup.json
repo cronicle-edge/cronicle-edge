@@ -216,10 +216,11 @@
 		[ "listCreate", "global/secrets", {} ],
 		[ "listPush", "global/secrets", {
 			"id": "globalenv",
-			"encrypted": false,
+			"encrypted": true,
 			"target": null,
-			"form": "props",
-			"data": "# dotenv style key/value pairs representing env variables\nmyvar = some_value"
+			"modified": 1434125333,
+			"created": 1434125333,
+			"form": "props"
 		} ],
 		
 		[ "listCreate", "global/server_groups", {} ],

@@ -118,6 +118,10 @@ div.container {
 	color: #3f7ed5;
 }
 
+.subtitle_menu_big {
+	max-width: 600px; /* Your new max-width value */
+  }
+
 /* Material Design Icons Additions */
 
 .mdi-lg {

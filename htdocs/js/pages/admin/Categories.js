@@ -212,11 +212,11 @@ Class.add( Page.Admin, {
 			]
 		);
 		
-		html += '<div style="padding:20px;"><div class="subtitle">Editing Category &ldquo;' + (this.category.title) + '&rdquo;</div></div>';
-		
-		html += '<div style="padding:0px 20px 50px 20px">';
-		html += '<center>';
-		html += '<table style="margin:0;">';
+		html += `<div style="padding:20px;"><div class="subtitle">Editing Category &ldquo;${this.category.title}&rdquo;
+		<div class="subtitle_widget"><a href="#Admin?sub=secrets&id=${this.category.id}" ><b>Attach Secret</b></a></div>
+		</div></div><div style="padding:0px 20px 50px 20px"><center>
+		<table style="margin:0;">
+		`
 		
 		html += this.get_category_edit_html();
 		
