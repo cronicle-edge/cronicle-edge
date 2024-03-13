@@ -193,9 +193,9 @@ Class.add( Page.Admin, {
 	gosub_edit_category: function(args) {
 		// edit existing Category
 		var html = '';
-		this.category = find_object( app.categories, { id: args.id } );
+		let category = find_object( app.categories, { id: args.id } );
 		
-		app.setWindowTitle( "Editing Category \"" + (this.category.title) + "\"" );
+		app.setWindowTitle( "Editing Category \"" + (category.title) + "\"" );
 		this.div.removeClass('loading');
 		
 		html += this.getSidebarTabs( 'edit_category',
@@ -212,8 +212,8 @@ Class.add( Page.Admin, {
 			]
 		);
 		
-		html += `<div style="padding:20px;"><div class="subtitle">Editing Category &ldquo;${this.category.title}&rdquo;
-		<div class="subtitle_widget"><a href="#Admin?sub=secrets&id=${this.category.id}" ><b>Attach Secret</b></a></div>
+		html += `<div style="padding:20px;"><div class="subtitle">Editing Category &ldquo;${category.title}&rdquo;
+		<div class="subtitle_widget"><a href="#Admin?sub=secrets&id=${category.id}" ><b>Attach Secret</b></a></div>
 		</div></div><div style="padding:0px 20px 50px 20px"><center>
 		<table style="margin:0;">
 		`

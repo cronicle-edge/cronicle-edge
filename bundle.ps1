@@ -98,6 +98,7 @@ if (!(Get-Command esbuild -ErrorAction SilentlyContinue)) {
 }
 
 # ---- set up bin and htdocs folders on dist (will overwrite)
+mkdir -Force $Path
 Copy-Item -Force -r htdocs $Path/
 mkdir -EA SilentlyContinue $Path/htdocs/js/external, $Path/htdocs/css, $Path/htdocs/fonts | Out-Null
 

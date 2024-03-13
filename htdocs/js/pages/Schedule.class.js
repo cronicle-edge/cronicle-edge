@@ -2541,7 +2541,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let params = this.event.params || {}
 		let el = document.getElementById("fe_ee_pp_script")
 
-		if(!el || !params.script) return 
+		if(!el) return 
 
 		let privs = app.user.privileges;
 		let canEdit = privs.admin || privs.edit_events || privs.create_events;
@@ -2589,11 +2589,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			}							  
 		  });
 
-		editor.on('change', function(cm){
-			  params.script = cm.getValue();
-		   });
-
-		editor.setValue(params.script || '');
+		editor.on('change', (cm) => { el.value = cm.getValue() })
 
 		// syntax selector
 		document.getElementById("fe_ee_pp_lang").addEventListener("change", function(){

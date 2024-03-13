@@ -72,6 +72,13 @@ Class.add( Page.Admin, {
 		let secretId = this.secretId
 		let plugs = (app.plugins || []).map(e=>({id: e.id, title: 'plug: ' + e.title}))
 		let cats = (app.categories || []).map(e=>({id: e.id, title: 'cat: ' + e.title}))
+
+		cats.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()))
+		plugs.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()))
+		// plugs.sort(function (a, b) {
+		// 	// return (b.title < a.title) ? 1 : -1;
+		// 	return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
+		// });
 		let menu = '<optgroup label="Plugins:">' + render_menu_options(plugs, secretId, false) + '</optgroup>';
 		menu += '<optgroup label="Categories:">' + render_menu_options(cats, secretId, false) + '</optgroup>';
 		let secretList = (app.plugins || []).map(e=>({id: e.id, title: 'plugin: ' + e.title}))
