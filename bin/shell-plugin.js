@@ -50,16 +50,25 @@ stream.on('json', function (job) {
 	let script = (job.params.script || '').trim()
 
 	if (os.platform() == 'win32') { // if Windows - try to parse shebang or invoke as bat file
-		let fl = script.substring(0, script.indexOf("\n"))
+		let fl = script.substring(0, script.indexOf("\n")).trim()
+		script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.ps1')
 
 		// if script contains shebang, resolve interpreter from there
 		if (fl.startsWith("#!")) {
-			script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.ps1');
-			child_args = sqparse(fl.substring(2).trim())
-			if (child_args.length == 0) { // for empty shebang use windows powershell
-				child_exec = 'powershell'
-				child_args = ['-f', script_file ]				
+
+			fl = fl.replace('#!/usr/bin/env', '').replace('#!', '').trim()
+
+			child_args = sqparse(fl)
+
+			if(fl.startsWith('/bin/sh') || fl.startsWith('sh')) {
+				 script_file += '.cmd'
+				 child_exec = 'cmd'
+				 child_args = ['/c', script_file]
 			}
+			else if(fl.startsWith('/bin/bash') || fl.startsWith('bash') || !child_args.length) {
+				child_exec = 'powershell'
+				child_args = ['-f', script_file]
+		    }
 			else {
 				child_exec = child_args.shift() || 'powershell'
 				child_args.push(script_file)
@@ -67,7 +76,7 @@ stream.on('json', function (job) {
 			script = script.substring(script.indexOf("\n")).trim() // remove shebang			
 		}
 		else { // if no shebang - just treat it as bat file
-			script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.bat');
+			script_file += '.bat'
 			child_exec = script_file
 		}
 	}

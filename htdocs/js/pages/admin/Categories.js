@@ -194,6 +194,8 @@ Class.add( Page.Admin, {
 		// edit existing Category
 		var html = '';
 		let category = find_object( app.categories, { id: args.id } );
+
+		this.category = deep_copy_object( category )
 		
 		app.setWindowTitle( "Editing Category \"" + (category.title) + "\"" );
 		this.div.removeClass('loading');

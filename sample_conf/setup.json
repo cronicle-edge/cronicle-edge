@@ -42,11 +42,11 @@
 			"modified": 1434125333,
 			"created": 1434125333,
 			"params": [
-				{ "id":"script", "type":"textarea", "rows":10, "title":"Script Source", "value": "#!/usr/bin/env bash\n\n# Enter your shell script code here\n# Press F11 to toggle full screen mode\n# To get workflow's job argument refer to $JOB_ARG env variable\necho \"print integer with % to report progress (e.g. 20%)\"\n sleep 2 && echo `date` && echo 10%\n sleep 2 && echo `date` && echo 40%\n sleep 2 && echo `date` && echo 90%\n sleep 2\necho '{\"perf\":{\"step3\":55,\"step2\":30,\"step1\":20}}'" },
+				{ "id":"script", "type":"textarea", "rows":10, "title":"Script Source", "value": "#!/usr/bin/env bash\n\n# Enter your shell script code here\n# Press F11 to toggle full screen mode\n# To get workflow's job argument refer to $JOB_ARG env variable\n\n# am I windows?\necho $PSVersionTable\n\necho \"print integer with % to report progress (e.g. 20%)\"\n sleep 2; echo \"$(date)\"; echo 10%\n sleep 2; echo \"$(date)\"; echo 40%\n sleep 2; echo \"$(date)\"; echo 90%\n sleep 2\necho '{\"perf\":{\"step3\":55,\"step2\":30,\"step1\":20}}'" },
 				{ "id":"annotate", "type":"checkbox", "title":"Add Date/Time Stamps to Log", "value": 0 },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","toml","dockerfile"],"value":"shell"},
-				{"type":"select","id":"theme","title":"theme","items":["default","light","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
+				{"type":"select","id":"theme","title":"theme","items":["default","light","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"},
 				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0},
 				{"type":"checkbox","id":"logmemo","title":"Log Memo","value":0},
 				{"type":"filelist","id":"files","title":"File List","theme":"default", "value":0}	
@@ -67,7 +67,7 @@
 				{ "id":"ssh_cmd", "type":"text", "size":40, "title":"Command", "value": "bash -" },
 				{ "id":"script", "type":"textarea", "rows":10, "title":"STDIN Script", "value": "\n\necho \"STARTED\"\n\n# set trap command for proper termination handling\necho \"trap: kill $$\"\n\nsleep 15\necho \"COMPLETED\"\n\n# to specify host use full URI (sftp://user:Password@host:port)\n# or keep that URI as env variable and specify variable name\n# keep blank or localhost to run command locally (without ssh)\n# if using ssh key\n# sftp://user@host:port?privateKey=/path/to/file&passphrase=Password)\n# you can also keep ssh key in SSH Key parameter\n# if password contains special character use URI escape characters (e.g. @ => %40)\n\n# if using with WF plugin host could be specified via Job Argument parameter\n\n# many interpreters (besides sh/bash) will support execution from stdin\n# node -\n# python -\n# pwsh -c -\n# some will need a file to be created, if so try smth like\n# cat - > /tmp/myfile && groovy myfile\n\n# This should work the same way on Windows machines too (if openssh installed)\n# powershell -\n\n# Please note that aborting SSH job won't terminate you remote command\n# You can specify termination command by printing it out with \"trap:\" prefix, e.g.\n# echo \"trap: kill $$\" or \"trap: kill -9 -$$\"" },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
-				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
+				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"},
 				{ "id":"ssh_key", "type":"textarea", "rows":5, "title":"SSH Key", "value": "" },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 }		
 			]
@@ -88,7 +88,7 @@
 				{ "id":"kill_cmd", "type":"text", "size":40, "title":"Kill Command", "value": "pkill -s $$" },
 				{ "id":"script", "type":"textarea", "rows":10, "title":"Script", "value": "\n#!/bin/sh\n\necho \"Running SSHX job on $HOSTNAME\"\n\nsleep 10\n\n# Specify conneciton info using URI format:\n# [ssh://]user[:Password]@host[:port]?[privateKey=/path/to/file&passphrase=Password]\n# URI can be passed directly or as a reference to environment variable\n# If passing password via URI, you'd need to encode special characters (e.g. @ => %40)\n# You can also set SSH_KEY/SSH_PASSWORD/SSH_PASSPHRASE as variables in event/plugin secrets\n\n# If no SSH Host specified on event parameters, it can be resolved from WF argument\n\n# Kill Command parameter is used to properly handle job abortion\n# Default command is [pkill -S $$]\n# $$ is refering to PID of your script parent process (bootstrap script)\n\n# To pass variables other then JOB_ / ARG*, use SSH_ prefix on variable name\n# If this event is chained by other job, you can access chain data using CHAIN_DATA variable\n\n" },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
-				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"},
+				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"},
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 }		
 			]
 		} ],
@@ -114,7 +114,7 @@
 				{ "id":"keep_container", "type":"checkbox", "title":"Keep Container", "value": 0 },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
-				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula"],"value":"default"}
+				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"}
 			]
 		} ],
 

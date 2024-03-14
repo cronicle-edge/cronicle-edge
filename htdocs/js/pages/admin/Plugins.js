@@ -217,13 +217,13 @@ Class.add( Page.Admin, {
 	
 	gosub_edit_plugin: function(args) {
 		// edit plugin subpage
-		var plugin = find_object( app.plugins, { id: args.id } );
+		let plugin = find_object( app.plugins, { id: args.id } );
 		if (!plugin) return app.doError("Could not locate Plugin with ID: " + args.id);
 		
 		// make local copy so edits don't affect main app list until save
 		this.plugin = deep_copy_object( plugin );
 		
-		var html = '';
+		let html = '';
 		app.setWindowTitle( "Editing Plugin \"" + plugin.title + "\"" );
 		this.div.removeClass('loading');
 		
