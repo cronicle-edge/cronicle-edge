@@ -87,10 +87,14 @@ if ($Command -in "list", "ls") {
         groups = "global/server_groups"
         api = "global/api_keys"
         conf = "global/conf_keys"
-        cats = "global/categories"
+        cat = "global/categories"
+        categories = "global/categories"
         users = "global/users"
         plugins = "global/plugins"
+        plug = "global/plugins"
         logs = "logs/activity"
+        secrets = "global/secrets"
+        sec = "global/secrets"
 
     }
 
@@ -126,9 +130,12 @@ if ($Command -in "list", "ls") {
         events   = @( "title", "id", $cat, $plug, $timing, $mod, $notes )
         logs       = @("action", "username", "ip", $epoch )
         api   = @("title", $mod, "privileges")
-        secrets    = @("id", "encrypted", "form")
-        cats  = @("id", "title", "enabled", "description", $mod)
+        secrets    = @("id", "encrypted", "form", "data")
+        sec    = @("id", "encrypted", "form", "data")
+        cat  = @("id", "title", "enabled", "description", $mod)
+        categories  = @("id", "title", "enabled", "description", $mod)
         plugins    = @("id", "title", "enabled", "command", $mod)
+        plug    = @("id", "title", "enabled", "command", $mod)
         conf  = @("title", "key")
         jobs = @($epoch, "event_title", "category_title", "plugin_title", "elapsed", "code", 'description')
 
