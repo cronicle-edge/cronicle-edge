@@ -122,7 +122,6 @@ let vars = Object.entries(process.env)
     .filter(([k, v]) => ((k.startsWith('JOB_') || k.startsWith('DOCKER_') || k.startsWith('ARG') || include.indexOf(k) > -1) && exclude.indexOf(k) === -1))
     .map(([k, v]) => `${k}=${v}`)
 
-
 // CONTAINER SETTING
 const createOptions = {
     Image: imageName,
@@ -148,16 +147,18 @@ const dockerRun = async () => {
 
     // create tar archive for entrypoint script
     const pack = tar.pack()
-    pack.entry({ name: ENTRYPOINT_PATH, mode: 0o755 }, script)
+
+    pack.entry({ name: path.basename(ENTRYPOINT_PATH), mode: 0o755 }, script)
+
     if (job.chain_data) {
-        pack.entry({ name: path.join(path.dirname(ENTRYPOINT_PATH), 'chain_data') }, JSON.stringify(job.chain_data))
+        pack.entry({ name: 'chain_data'}, JSON.stringify(job.chain_data))
     }
     
     // attach file
 	if(Array.isArray(job.files)) {
 		job.files.forEach((e)=> {
             if(e.name) { 
-                pack.entry({ name: path.join(path.dirname(ENTRYPOINT_PATH), e.name) }, e.content || '')
+                pack.entry({  name: e.name }, e.content || '')
 			}
 		})
 	}
@@ -170,7 +171,7 @@ const dockerRun = async () => {
     try {
         container = await docker.createContainer(createOptions)
         // copy entrypoint file to root directory
-        container.putArchive(arch, { path: '/' })
+        container.putArchive(arch, { path: path.dirname(ENTRYPOINT_PATH) })
         if(docker.modem.host) printInfo('docker host: ' + docker.modem.protocol + '://' + docker.modem.host)
         printInfo(`Container ready: name: [${createOptions.name}], image: [${imageName}], keep: ${!autoRemove}`)
 
