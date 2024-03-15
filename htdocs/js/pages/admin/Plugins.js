@@ -219,6 +219,7 @@ Class.add( Page.Admin, {
 		// edit plugin subpage
 		let plugin = find_object( app.plugins, { id: args.id } );
 		if (!plugin) return app.doError("Could not locate Plugin with ID: " + args.id);
+		let secret = find_object( app.secrets, { id: args.id } ) || {};
 		
 		// make local copy so edits don't affect main app list until save
 		this.plugin = deep_copy_object( plugin );
@@ -240,9 +241,11 @@ Class.add( Page.Admin, {
 				['users', "Users"]
 			]
 		);
+
+		let secretInfo = secret.size > 0 ? `Edit Secrets (${secret.size})` : 'Attach Secrets'
 		
 		html += `<div style="padding:20px;"><div class="subtitle">Editing Plugin &ldquo;${plugin.title}&rdquo;
-		<div class="subtitle_widget"><a href="#Admin?sub=secrets&id=${plugin.id}" ><b>Attach Secret</b></a></div>
+		<div class="subtitle_widget"><a href="#Admin?sub=secrets&id=${plugin.id}" ><b>${secretInfo}</b></a></div>
 		</div></div><div style="padding:0px 20px 50px 20px"><center>
 		<table style="margin:0;">
 		`
@@ -376,7 +379,7 @@ Class.add( Page.Admin, {
 
 		editor.on('change', (cm) =>  { plugin.script= cm.getValue() });
 		editor.setValue(plugin.script || '');
-		editor.setSize('600px', '30vh')
+		editor.setSize('900px', '25vh')
 	},
 	
 	get_plugin_edit_html: function() {

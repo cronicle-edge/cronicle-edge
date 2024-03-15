@@ -194,6 +194,8 @@ Class.add( Page.Admin, {
 		// edit existing Category
 		var html = '';
 		let category = find_object( app.categories, { id: args.id } );
+		if(!category) return app.doError("Could not locate Category with ID: " + args.id);
+		let secret = find_object( app.secrets, { id: args.id } ) || {};
 
 		this.category = deep_copy_object( category )
 		
@@ -213,9 +215,11 @@ Class.add( Page.Admin, {
 				['users', "Users"]
 			]
 		);
+
+		let secretInfo = secret.size > 0 ? `Edit Secrets (${secret.size})` : 'Attach Secrets'
 		
 		html += `<div style="padding:20px;"><div class="subtitle">Editing Category &ldquo;${category.title}&rdquo;
-		<div class="subtitle_widget"><a href="#Admin?sub=secrets&id=${category.id}" ><b>Attach Secret</b></a></div>
+		<div class="subtitle_widget"><a href="#Admin?sub=secrets&id=${category.id}" ><b>${secretInfo}</b></a></div>
 		</div></div><div style="padding:0px 20px 50px 20px"><center>
 		<table style="margin:0;">
 		`
