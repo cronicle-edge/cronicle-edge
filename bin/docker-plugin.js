@@ -152,6 +152,16 @@ const dockerRun = async () => {
     if (job.chain_data) {
         pack.entry({ name: path.join(path.dirname(ENTRYPOINT_PATH), 'chain_data') }, JSON.stringify(job.chain_data))
     }
+    
+    // attach file
+	if(Array.isArray(job.files)) {
+		job.files.forEach((e)=> {
+            if(e.name) { 
+                pack.entry({ name: path.join(path.dirname(ENTRYPOINT_PATH), e.name) }, e.content || '')
+			}
+		})
+	}
+
     pack.finalize()
     let chunks = []
     for await (const data of pack) chunks.push(data)
