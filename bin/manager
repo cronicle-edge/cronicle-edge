@@ -33,6 +33,10 @@ if [ -f "$HOMEDIR/bin/cronicle.js" ]; then
     # echo "starting bundle"
 fi
 
+# check for custom http port (pass as first arg)
+if [ -n "$1" ]; then
+  export CRONICLE_WebServer__http_port="$1"
+fi
 #$HOMEDIR/bin/control.sh start
 exec $BINARY --echo --foreground --manager --color 1
 
