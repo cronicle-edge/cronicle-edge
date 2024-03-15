@@ -114,7 +114,25 @@
 				{ "id":"keep_container", "type":"checkbox", "title":"Keep Container", "value": 0 },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
-				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"}
+				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"},
+				{"type":"filelist","id":"files","title":"File List","theme":"default", "value":0}
+			]
+		} ],
+
+		[ "listPush", "global/plugins", {
+			"id": "stdin",
+			"title": "stdin",
+			"enabled": 1,
+			"command": "node -",
+			"username": "admin",
+			"uid": 1000,
+			"stdin": 1,
+			"script": "\nlet prefix = process.env['PREFIX'] || 'JOB_'\n\nlet env = Object.entries(process.env)\n  .filter(e => e[0].startsWith(prefix))\n  .map(e => ({name: e[0], value: e[1].substring(0,80)}))\n  \nconsole.table(env)\n\nconsole.log(JSON.stringify({complete:1, code:0}))",
+			"ipc": 0,
+			"modified": 1434125333,
+			"created": 1434125333,
+			"params": [
+				{ "id":"prefix", "type":"text", "size":20, "title":"Env Prefix", "value": "JOB_" }					
 			]
 		} ],
 
