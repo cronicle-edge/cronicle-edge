@@ -1645,7 +1645,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		// arguments
 		let arg_title = "Argument values are available as ARG[1-9] env variable or parameter on shellplug (e.g. $ARG1 or [/ARG1])\nOn httpplug use [/params/ARG1], on event workflow JOB_ARG env variable. ARGS env variable will store entire string";
-		html += get_form_table_row('Arguments', `<input title="${arg_title}" type="text" id="fe_ee_args" size="50" value="${event.args || ''}" spellcheck="false"/>`);
+		html += get_form_table_row('Arguments', `<input title="${arg_title}" type="text" id="fe_ee_args" size="50" value="${event.args || ''}" autocomplete="one-time-code" spellcheck="false"/>`);
 		html += get_form_table_caption("List of comma separated arguments. Use alphanumeric/email characters only");
 		html += get_form_table_spacer();
 
@@ -1701,7 +1701,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			<fieldset style="padding:10px 10px 0 10px; margin-bottom:5px;${time_options_exp ? '' : 'display:none;'}"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Timing Options</legend>
 		     <div class="plugin_params_label">Extra Ticks: </div>
 		     <div class="plugin_params_content">
-		      <input type="text" id="fe_ee_ticks" size="50" value="${event.ticks || ''}" placeholder="e.g. 3PM|16:45|2020-01-01 09:30" spellcheck="false" onchange="$P().parseTicks()"/>
+		      <input type="text" id="fe_ee_ticks" size="50" value="${event.ticks || ''}" autocomplete="one-time-code" placeholder="e.g. 3PM|16:45|2020-01-01 09:30" spellcheck="false" onchange="$P().parseTicks()"/>
 		      <span class="link addme" style="padding-left:4px; font-size:13px;" onMouseUp="$P().parseTicks()"> check &nbsp;&nbsp;|</span>
 		      <span class="link addme" style="padding-left:0px; font-size:13px;" onMouseUp="$P().ticks_add_now()">add timestamp</span>		   
 		      <div class="caption" style="margin-top:6px;">Optional extra minute ticks (extends regular schedule). Separate by comma or pipe.<br> Use HH:mm fromat for daily recurring or YYYY-MM-DD HH:mm for onetime ticks</div>
@@ -1709,11 +1709,11 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		    </div>			
 			<div class="plugin_params_label">Only Run From</div>
 			<div class="plugin_params_content">
-			  <input id="event_starttime" type="text" placeholder="(now)" >
+			  <input id="event_starttime" type="text" autocomplete="one-time-code" placeholder="(now)" >
 			</div>
 			
 			<div class="plugin_params_label">And Until</div>
-			<div class="plugin_params_content"><input placeholder="(forever)" id="event_endtime" type="text"></div>
+			<div class="plugin_params_content"><input autocomplete="one-time-code" placeholder="(forever)" id="event_endtime" type="text"></div>
 			</fieldset>
 			<script>$P().render_time_options()</script>
 		`
