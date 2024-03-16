@@ -75,16 +75,13 @@ Class.add( Page.Admin, {
 
 		cats.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()))
 		plugs.sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()))
-		// plugs.sort(function (a, b) {
-		// 	// return (b.title < a.title) ? 1 : -1;
-		// 	return a.title.toLowerCase().localeCompare(b.title.toLowerCase());
-		// });
-		let menu = '<optgroup label="Plugins:">' + render_menu_options(plugs, secretId, false) + '</optgroup>';
-		menu += '<optgroup label="Categories:">' + render_menu_options(cats, secretId, false) + '</optgroup>';
+		
+		let menu = '<optgroup label="Categories:">' + render_menu_options(cats, secretId, false) + '</optgroup>';
+		menu += '<optgroup label="Plugins:">' + render_menu_options(plugs, secretId, false) + '</optgroup>';
 		let secretList = (app.plugins || []).map(e=>({id: e.id, title: 'plugin: ' + e.title}))
 		let env_lock = this.secret.encrypted ? '<i class="fa fa-lock">&nbsp;&nbsp;</i>' : ''
 		html += `Secret Editor &nbsp;&nbsp;<span id="fe_env_lock">${env_lock}</span>`;
-		html += `<div class="subtitle_widget"><span style="font-size:16px;font-weight: bold;padding-right: 20px">Scope: </span><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sec_plugin" class="subtitle_menu subtitle_menu_big" style="width:180px;margin-bottom:5px" onChange="$P().switch_secret(this.value)"><option value="">Global</option>${menu}</select></div>`
+		html += `<div class="subtitle_widget"><span style="font-size:16px;font-weight: bold;padding-right: 10px">scope: </span><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sec_plugin" class="subtitle_menu subtitle_menu_big" style="width:180px;margin-bottom:5px" onChange="$P().switch_secret(this.value)"><option value="">Global</option>${menu}</select></div>`
 
 		html += '<div class="clear"></div>';
 		html += '</div>';
