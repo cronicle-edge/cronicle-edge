@@ -11,7 +11,7 @@ Class.add( Page.Admin, {
 		eventlist: "Event List",
 		filelist: "File List"
 	},
-	
+
 	gosub_plugins: function(args) {
 		// show plugin list
 		this.div.removeClass('loading');
@@ -40,12 +40,7 @@ Class.add( Page.Admin, {
 		var cols = ['Plugin Name', 'Author', '# of Events', 'Created', 'Modified', 'Actions'];
 		
 		// html += '<div style="padding:5px 15px 15px 15px;">';
-		html += '<div style="padding:20px 20px 30px 20px">';
-		
-		html += '<div class="subtitle">';
-			html += 'Plugins';
-			// html += '<div class="clear"></div>';
-		html += '</div>';
+		html += `<div style="padding:20px 20px 30px 20px"><div class="subtitle">Plugins</div>`
 		
 		// sort by title ascending
 		this.plugins = app.plugins.sort( function(a, b) {
@@ -222,13 +217,14 @@ Class.add( Page.Admin, {
 	
 	gosub_edit_plugin: function(args) {
 		// edit plugin subpage
-		var plugin = find_object( app.plugins, { id: args.id } );
+		let plugin = find_object( app.plugins, { id: args.id } );
 		if (!plugin) return app.doError("Could not locate Plugin with ID: " + args.id);
+		let secret = find_object( app.secrets, { id: args.id } ) || {};
 		
 		// make local copy so edits don't affect main app list until save
 		this.plugin = deep_copy_object( plugin );
 		
-		var html = '';
+		let html = '';
 		app.setWindowTitle( "Editing Plugin \"" + plugin.title + "\"" );
 		this.div.removeClass('loading');
 		
@@ -245,12 +241,14 @@ Class.add( Page.Admin, {
 				['users', "Users"]
 			]
 		);
+
+		let secretInfo = secret.size > 0 ? `Edit Secrets (${secret.size})` : 'Attach Secrets'
 		
-		html += '<div style="padding:20px;"><div class="subtitle">Editing Plugin &ldquo;' + plugin.title + '&rdquo;</div></div>';
-		
-		html += '<div style="padding:0px 20px 50px 20px">';
-		html += '<center>';
-		html += '<table style="margin:0;">';
+		html += `<div style="padding:20px;"><div class="subtitle">Editing Plugin &ldquo;${plugin.title}&rdquo;
+		<div class="subtitle_widget"><a href="#Admin?sub=secrets&id=${plugin.id}" ><b>${secretInfo}</b></a></div>
+		</div></div><div style="padding:0px 20px 50px 20px"><center>
+		<table style="margin:0;">
+		`
 		
 		html += this.get_plugin_edit_html();
 		
@@ -344,17 +342,44 @@ Class.add( Page.Admin, {
 			} ); // app.confirm
 		} // disabled + jobs
 
-		// clear secret data on Save
-		if (plugin.secret_value && typeof plugin.secret_value === 'string' ) {
-			delete plugin.secret_value
-			$('#fe_ep_secret').val('').attr('placeholder', '[*****]')
-		}
 	},
 
-	set_plugin_secret(val) { // invoked if user editing secret
+	resolveSyntax: function() {
+		let cmd = $('#fe_ep_command').val()
+		let syntax = 'shell'
+		if(cmd.indexOf('node') > -1) syntax = 'javascript'
+		else if(cmd.indexOf('node') > -1) syntax = 'javascript'
+		else if(cmd.indexOf('python') > -1) syntax = 'python'
+		else if(cmd.indexOf('powershell') > -1) syntax = 'powershell'
+		else if(cmd.indexOf('pwsh') > -1) syntax = 'powershell'
+		else if(cmd.indexOf('groovy') > -1) syntax = 'groovy'
+		else if(cmd.indexOf('java') > -1) syntax = 'text/x-java'
+		return syntax
+	},
+
+	setScriptEditor: function (id) {
+		const self = this
 		let plugin = this.plugin
-		plugin.secret_value = val
-		$('#fe_ep_secret').attr('placeholder', '')
+		let editor = CodeMirror.fromTextArea(document.getElementById(id), {
+			mode: self.resolveSyntax(),
+			styleActiveLine: true,
+			lineWrapping: false,
+			scrollbarStyle: "overlay",
+			// lineNumbers: true,
+			theme: app.getPref('theme') == 'dark' ? 'ambiance' : 'default',
+			matchBrackets: true,
+			// gutters: [''],
+			lint: true,
+			extraKeys: {
+				"F11": (cm) => cm.setOption("fullScreen", !cm.getOption("fullScreen")),
+				"Esc": (cm) => cm.getOption("fullScreen") ? cm.setOption("fullScreen", false) : null,
+				"Ctrl-/": (cm) => cm.execCommand('toggleComment')
+			}	
+		})		
+
+		editor.on('change', (cm) =>  { plugin.script= cm.getValue() });
+		editor.setValue(plugin.script || '');
+		editor.setSize('900px', '25vh')
 	},
 	
 	get_plugin_edit_html: function() {
@@ -388,19 +413,27 @@ Class.add( Page.Admin, {
 		html += get_form_table_row( 'IPC', '<input type="checkbox" id="fe_ep_ipc" value="1" ' + (plugin.ipc ? 'checked="checked"' : '') + '/><label for="fe_ep_ipc">Connect process with ipc</label>' );
 		html += get_form_table_caption( "Create ipc channel between cronicle engine and job (to use disconnect vs SIGTERM)" );
 		html += get_form_table_spacer();
+
+
 	
-		// command
-		html += get_form_table_row('Executable:', '<textarea id="fe_ep_command" style="width:550px; height:50px; resize:vertical;" spellcheck="false" onkeydown="return $P().stopEnter(this,event)">'+escape_text_field_value(plugin.command)+'</textarea>');
+		// Command
+		html += get_form_table_row('Executable:', `<input type="text" size="50" id="fe_ep_command" spellcheck="false" value="${escape_text_field_value(plugin.command)}" />`)
 		html += get_form_table_caption(
 			'Enter the filesystem path to your executable, including any command-line arguments.<br/>' + 
-			'Do not include any pipes or redirects -- for those, please use the <b>Shell Plugin</b>.' 
+			'Do not include any pipes or redirects -- for those, please use the <b>Shell Plugin</b><br>'			
 		);
 		html += get_form_table_spacer();
 
-		// Secret
-		let sph = plugin.secret_preview ? '[' + plugin.secret_preview + ']' : ''
-		html += get_form_table_row('Secret:', `<textarea id="fe_ep_secret" style="width:550px; height:70px;resize:vertical;" oninput="$P().set_plugin_secret(this.value)" placeholder="${sph}"  spellcheck="false"></textarea>`);
-		html += get_form_table_caption(`Specify KEY=VALUE pairs to be mounted as env variables on this plugin jobs. This data will be encrypted`);
+		// stdin
+		html += get_form_table_row('stdin', '<input type="checkbox" id="fe_ep_stdin" value="1" ' + (plugin.stdin ? 'checked="checked"' : '') + '/><label for="fe_ep_stdin">Pipe a script</label>');
+		html += get_form_table_caption("Pipe below script to plugin child process stdin");
+		html += get_form_table_spacer();
+
+		// Script 
+		html += get_form_table_row('Script:', `
+		  <textarea id="fe_ep_script" spellcheck="false">${plugin.script || ''}</textarea>
+		  <script>$P().setScriptEditor('fe_ep_script')</script>`);
+		html += get_form_table_caption(`You can pipe this script to bash/node/python/pwsh stdin instead of storing a script on the filesystem`);
 		html += get_form_table_spacer();
 
 		// params editor
@@ -749,6 +782,9 @@ Class.add( Page.Admin, {
 		plugin.enabled = $('#fe_ep_enabled').is(':checked') ? 1 : 0;
 		plugin.ipc = $('#fe_ep_ipc').is(':checked') ? 1 : 0;
 		plugin.wf = $('#fe_wf_enabled').is(':checked') ? 1 : 0;
+
+		plugin.stdin = $('#fe_ep_stdin').is(':checked') ? 1 : 0;
+		// script value is set directly in editor
 		
 		plugin.command = trim( $('#fe_ep_command').val() );
 		if (!plugin.command) return app.badField('fe_ep_command', "Please enter a filesystem path to the executable command for the Plugin.");

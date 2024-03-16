@@ -143,6 +143,7 @@ app.extend({
 		delete resp.code;
 		
 		for (var key in resp) {
+			if(key === 'secrets' && !this.isAdmin()) continue // secrets admin only
 			this[key] = resp[key];
 		}
 		
@@ -227,6 +228,7 @@ app.extend({
 				delete self.schedule;
 				delete self.categories;
 				delete self.plugins;
+				delete self.secrets;
 				delete self.server_groups;
 				delete self.epoch;
 				
@@ -386,6 +388,7 @@ app.extend({
 			var limited_user = self.isCategoryLimited() || self.isGroupLimited();
 			
 			for (var key in data) {
+				if(key === 'secrets' && !self.isAdmin()) continue // secrets are admin only
 				self[key] = data[key];
 				
 				if (limited_user) {
