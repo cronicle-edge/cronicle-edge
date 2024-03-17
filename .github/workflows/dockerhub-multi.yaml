@@ -31,7 +31,6 @@ jobs:
 
     - name: Set release tag as image tag
       id: set-tag
-    #   run: echo "::set-output name=TAG::${GITHUB_REF/refs\/tags\//}"
     #   run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
       run: |
        if [ "${{ github.event_name }}" == "push" ]; then
