@@ -41,6 +41,7 @@ while (( "$#" )); do
         --tools | -t ) tools=1 ;; # bundle up repair and migration tools
         --all | -a ) all=1 ;; # install all engines
         --restart | -r ) restart=1 ;; # start cronicle upon completion
+        --engine ) shift; engine=$1 ;;
         -*) echo "invalid parameter: $1"; usage ;;
         * ) dist=$1; x=$(($x + 1))
     esac
@@ -311,7 +312,7 @@ fi
 sqlDrivers=()
 sqlArgs=("--bundle" "--minify" "--platform=node" "--outdir=$dist/bin/engines")
 # exclude unused drivers
-sqlArgs+=("--external:better-sqlite3" "--external:mysql" "--external:sqlite3")
+sqlArgs+=("--external:better-sqlite3" "--external:mysql")
 
 if [ "$sql" = 1 ]; then
   oracle=1
@@ -347,7 +348,13 @@ else
   sqlArgs+=("--external:tedious")
 fi
 
-if [[ ${#sqlDrivers[@]} -gt 0 || "$sqlite" = 1 ]]; then
+if [ "$sqlite" = 1 ]; then
+  sqlDrivers+=("sqlite3")
+else
+  sqlArgs+=("--external:sqlite3")
+fi
+
+if [[ ${#sqlDrivers[@]} -gt 0 ]]; then
   sqlInstall=("install" "--no-save" "--loglevel" "silent" "knex")
   sqlInstall+=("${sqlDrivers[@]}")
 
@@ -356,6 +363,9 @@ if [[ ${#sqlDrivers[@]} -gt 0 || "$sqlite" = 1 ]]; then
   echo "      - bundling SQL Engine [${sqlDrivers[@]}]"
   npm "${sqlInstall[@]}"
   esbuild "${sqlArgs[@]}"
+  if [ "$sqlite" = 1 ]; then
+    cp -r node_modules/sqlite3/build $dist/bin/
+  fi
 fi
 
 if [ "$redis" = 1 ]; then
@@ -380,6 +390,12 @@ if [ ! -d $dist/conf ]; then
   cp -r sample_conf/emails $dist/conf/emails
   cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 > $dist/conf/secret_key
   chmod 400 $dist/conf/secret_key
+fi
+
+# -- override storage engine if specified
+if [ -f "sample_conf/examples/storage.$engine.json" ]; then
+  writehead "Overriding stoarge.json for $engine"
+  cp "sample_conf/examples/storage.$engine.json" $dist/conf/storage.json
 fi
 
 
@@ -477,3 +493,4 @@ if [ "$test" = 1 ]; then
   # remove test files
   rm $dist/bin/test.js
 fi
+
