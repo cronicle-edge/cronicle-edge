@@ -1,14 +1,14 @@
 {
     "engine": "S3",
     "AWS": {
-        "endpoint": "http://minio:9000",
+        "endpoint": "http://localhost:9000",
         "endpointPrefix": false,
         "forcePathStyle": true,
         "region": "us-east-1",
         "hostPrefixEnabled": false,
         "credentials": {
-            "secretAccessKey": "minioadmin",
-            "accessKeyId": "minioadmin"
+            "accessKeyId": "minioadmin",
+            "secretAccessKey": "minioadmin"
         },
         "correctClockSkew": true,
         "maxRetries": 5,
