@@ -142,6 +142,7 @@ mkdir -p $dist
 cp -r htdocs $dist/
 cp -r bin  $dist/
 cp package.json  $dist/bin/
+rm $dist/bin/storage-migrate.js $dist/bin/run-detached.js
 
 
 # ------------------------------- 
@@ -327,9 +328,9 @@ if [ "$sql" = 1 ]; then
   mssql=1
   mysql=1
   pgsql=1
+  sqlite=1
 fi
 
-# for sqlite - just bundle plain SQL engine with no driver
 # driver need to be installed separetly (cannot bundle native libs)
 
 if [ "$mysql" = 1 ]; then

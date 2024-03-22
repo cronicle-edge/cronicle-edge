@@ -118,12 +118,8 @@ var StorageMigrator = {
 				if (config.uid && (process.getuid() == 0)) {
 					self.logPrint( 3, "Switching to user: " + config.uid );
 					process.setuid( config.uid );
-				}
-
-				self.logPrint(2, "before test");
-				
-				self.testStorage();
-				// self.startMigration();				
+				}				
+				self.testStorage();		
 
 			}
 		); // series
@@ -133,13 +129,11 @@ var StorageMigrator = {
 		// test both old and new storage
 		var self = this;
 		this.logDebug(3, "Testing storage engines");
-		self.logPrint(2, "test begin test");
-		
+	
 		async.series(
 			[
 				function(callback) {
 					self.oldStorage.get('global/users', callback);
-					self.logPrint(2, "test old users");
 				},
 				function(callback) {
 					self.newStorage.put('test/test1', { "foo1": "bar1" }, function(err) {
