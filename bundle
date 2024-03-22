@@ -3,7 +3,14 @@
 cd "$(dirname "$0")"
 
 usage() {
-    echo "Usage: $0 /path/to/dist [--s3 | --lmdb | --level | --sftp | --sql | --dev | --verbose]"
+    echo "Usage: $0 /path/to/dist"
+    echo "    [ --s3 | --lmdb | --level | --sftp | --sqlite | --mysql | --oracle | --mysql | --pgsql ] # bundle 1 or more storage engine"
+    echo "    [ --dev ]  # avoid minification, add verbosity to esbuild/npm"
+    echo "    [ --versbose ]  # add verbosity"
+    echo "    [ --tool ]  # bundle migration and detahced job tools"
+    echo "    [ --restart ]  # restart cronicle upon bundle completion (in dev mode)"
+    echo "    [ --engine engine] # copy sample_conf/example/storage.engine.json to dist/conf/storage.json (engine: fs/sqlite/s3/...)"
+    echo "    [ --test ]  # run unit test upon bundle completion"
     exit 1
 }
 
@@ -42,6 +49,7 @@ while (( "$#" )); do
         --all | -a ) all=1 ;; # install all engines
         --restart | -r ) restart=1 ;; # start cronicle upon completion
         --engine ) shift; engine=$1 ;;
+        --help ) usage ;;
         -*) echo "invalid parameter: $1"; usage ;;
         * ) dist=$1; x=$(($x + 1))
     esac
