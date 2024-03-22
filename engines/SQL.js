@@ -15,6 +15,13 @@ const Component = require("pixl-server/component");
 const { knex, Knex } = require('knex')
 const { Readable } = require('stream');
 
+class NoSuchKeyError extends Error {
+	constructor(key = 'key', crudOp = 'Fetch') {
+		super(`Failed to ${crudOp} key: ${key}: Not found`)
+	}
+	code = "NoSuchKey"
+}
+
 module.exports = class SQLEngine extends Component {
 
      __name = 'SQLEngine'
@@ -212,9 +219,9 @@ module.exports = class SQLEngine extends Component {
                 callback(null, rows[0]);
             }
             else {
-                let err = new Error("Failed to head key: " + key + ": Not found");
-                err.code = "NoSuchKey";
-                callback(err, null);
+                // let err = new Error("Failed to head key: " + key + ": Not found");
+                // err.code = "NoSuchKey";
+                callback(new NoSuchKeyError(key, 'head') , null);
             }
 
         }
@@ -254,9 +261,9 @@ module.exports = class SQLEngine extends Component {
                 }
             }
             else {
-                let err = new Error("Failed to fetch key: " + key + ": Not found");
-                err.code = "NoSuchKey";
-                callback(err, null);
+                // let err = new Error("Failed to fetch key: " + key + ": Not found");
+                // err.code = "NoSuchKey";
+                callback(new NoSuchKeyError(key, 'fetch'), null);
             }
 
         }
@@ -284,9 +291,9 @@ module.exports = class SQLEngine extends Component {
             }
             else if (!buf) {
                 // record not found
-                let ERR = new Error("Failed to fetch key: " + key + ": Not found");
-                ERR.code = "NoSuchKey";
-                return callback(ERR, null);
+                // let ERR = new Error("Failed to fetch key: " + key + ": Not found");
+                // ERR.code = "NoSuchKey";
+                return callback(new NoSuchKeyError(key, 'fetch'), null);
             }
 
             let stream = Readable.from(buf) // new BufferStream(buf);
@@ -310,9 +317,9 @@ module.exports = class SQLEngine extends Component {
             }
             else if (!buf) {
                 // record not found
-                let ERR = new Error("Failed to fetch key: " + key + ": Not found");
-                ERR.code = "NoSuchKey";
-                return callback(ERR, null);
+                // let ERR = new Error("Failed to fetch key: " + key + ": Not found");
+                // ERR.code = "NoSuchKey";
+                return callback(new NoSuchKeyError(key, 'fetch'), null);
             }
 
             // validate byte range, now that we have the head info
@@ -346,7 +353,7 @@ module.exports = class SQLEngine extends Component {
 
         try {
             let d = await db(this.tableName).where('K', key).del()
-            delError =  d > 0 ? self.logDebug(9, "Delete complete: " + key) : new Error("Failed to fetch key: " + key + ": Not found");
+            delError =  d > 0 ? self.logDebug(9, "Delete complete: " + key) : new NoSuchKeyError(key, 'fetch')
         }
         catch (err) {
             self.logError('sql', "Failed to delete object: " + key + ": " + err);

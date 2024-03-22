@@ -175,9 +175,10 @@ module.exports = class LmdbEngine extends Component {
 	}
 
 
-	async delete(key, callback) {
-		// delete LevelDb key given key
-		var self = this;
+	async delete(key, callback) { 
+		
+		const  self = this;
+
 		key = this.prepKey(key);
 
 		this.logDebug(9, "Deleting LevelDb Object: " + key);
