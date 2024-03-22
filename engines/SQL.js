@@ -63,8 +63,9 @@ module.exports = class SQLEngine extends Component {
         // setup SQL connection
         const self = this;
         const sql_config = this.config.get();
-
-        this.db = knex(sql_config)
+        
+        let db = knex(sql_config);
+        this.db = db;    
 
         this.db.client.pool.on('createSuccess', () => {
             self.logDebug(3, "SQL connected successfully")           
@@ -124,6 +125,8 @@ module.exports = class SQLEngine extends Component {
             })          
         }
 
+        if(self.storage.config.get('trans')) this.trx = await db.transaction()
+        
         if (!self.storage.started) return callback();
        
     }
@@ -139,9 +142,11 @@ module.exports = class SQLEngine extends Component {
      */
     async put(key, value, callback) {
         // store key+value in SQL
-        var self = this;
+        const self = this;
+        const db = this.trx || this.db
+        
         key = this.prepKey(key);
-
+        
         if (this.storage.isBinaryKey(key)) {
             this.logDebug(9, "Storing SQL Binary Object: " + key, '' + value.length + ' bytes');
         }
@@ -153,10 +158,10 @@ module.exports = class SQLEngine extends Component {
         // For oracle/mssql use MERGE statement, for other drivers use "INSEERT/ON CONFLICT" mechanism
         try {
             if (this.mergeStmt) { // this.client === 'mssql' || this.client === 'oracledb'
-                await this.db.raw(this.mergeStmt, [ key, Buffer.from(value)])                
+                await db.raw(this.mergeStmt, [ key, Buffer.from(value)])                
             }
             else {
-                await this.db(this.tableName)
+                await db(this.tableName)
                     .insert({ K: key, V: Buffer.from(value), updated: this.db.fn.now() })
                     .onConflict('K')
                     .merge()
@@ -176,8 +181,8 @@ module.exports = class SQLEngine extends Component {
 
     putStream(key, inp, callback) {
         // store key+value in SQL using read stream
-        var self = this;
-
+        const self = this;
+        
         // There is no common way to stream BLOBs from SQL
         // So, we have to do this the RAM-hard way...
 
@@ -193,13 +198,15 @@ module.exports = class SQLEngine extends Component {
 
     async head(key, callback) {
         // head value by given key. Just return blob size
-        var self = this;
+        const self = this;
+        const db = this.trx || this.db
+        
         key = this.prepKey(key);
 
         try {
-            let rows = await this.db(this.tableName).where('K', key).select([
-                this.db.raw(`${this.getBlobSizeFn} as len`),
-                this.db.raw('1 as mod')
+            let rows = await db(this.tableName).where('K', key).select([
+                db.raw(`${this.getBlobSizeFn} as len`),
+                db.raw('1 as mod')
             ])
             if (rows.length > 0) {
                 callback(null, rows[0]);
@@ -221,13 +228,14 @@ module.exports = class SQLEngine extends Component {
 
     async get(key, callback) {
         // fetch SQL value given key
-        var self = this;
+        const self = this;
+        const db = this.trx || this.db
         key = this.prepKey(key);
-
+        
         this.logDebug(9, "Fetching SQL Object: " + key);
 
         try {
-            let data = (await this.db(this.tableName).where('K', key).select(["K as key", 'V as value']))[0] // expected {key: key, value: value}
+            let data = (await db(this.tableName).where('K', key).select(["K as key", 'V as value']))[0] // expected {key: key, value: value}
             let result = (data || {}).value
             if (result) {
                 if (self.storage.isBinaryKey(key)) {
@@ -328,32 +336,24 @@ module.exports = class SQLEngine extends Component {
 
     async delete(key, callback) {
         // delete SQL key given key
-        var self = this;
+        const self = this;
+        const db = this.trx || this.db
         key = this.prepKey(key);
 
         this.logDebug(9, "Deleting SQL Object: " + key);
 
-        let ERR
+        let delError
 
         try {
-            let d = await this.db(this.tableName).where('K', key).del()
-
-            if (d > 0) {
-                self.logDebug(9, "Delete complete: " + key);
-                if (callback) callback(null)
-            } else {
-                ERR = new Error("Failed to fetch key: " + key + ": Not found");
-                ERR.code = "NoSuchKey";
-
-            }
-
+            let d = await db(this.tableName).where('K', key).del()
+            delError =  d > 0 ? self.logDebug(9, "Delete complete: " + key) : new Error("Failed to fetch key: " + key + ": Not found");
         }
         catch (err) {
             self.logError('sql', "Failed to delete object: " + key + ": " + err);
-            ERR = err
+            delError = err
         }
 
-        if (callback) callback(ERR)
+        callback(delError)
 
     }
 
@@ -362,10 +362,11 @@ module.exports = class SQLEngine extends Component {
         callback();
     }
 
-    shutdown(callback) {
+    async shutdown(callback) {
         // shutdown storage
         this.logDebug(2, "Shutting down SQL");
-        this.db.destroy()
+        if(this.trx) await this.trx.commit()
+        await this.db.destroy()
         callback();
     }
 

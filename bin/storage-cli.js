@@ -47,7 +47,13 @@ args = args.get(); // simple hash
 // copy debug flag into config (for standalone)
 config.Storage.debug = args.debug;
 
-// disable storage transactions for CLI
+// indicate that you want to enable engine level transaction
+// to pack multiple crud operation in one transaction
+// this is default for setup/migration, to avoid use --notrx argument
+if(cmd == 'install' || cmd == 'setup') config.Storage.trans = true
+if(args.notrx) config.Storage.trans = false
+
+// disable storage transactions for CLI (this is storage level transaction)
 config.Storage.transactions = false;
 
 var print = function (msg) {

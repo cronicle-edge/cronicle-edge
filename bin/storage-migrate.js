@@ -76,10 +76,13 @@ var StorageMigrator = {
 		// massage config, override logger
 		config.Storage.logger = self.logger;
 		config.Storage.log_event_types = { all: 1 };
-		
+				
 		config.NewStorage.logger = self.logger;
 		config.NewStorage.log_event_types = { all: 1 };
-		
+		// if engine supports (sql and lmdb) begin transaction
+		config.NewStorage.trans = true
+		if(args.notrx) config.NewStorage.trans = false
+
 		// start both standalone storage instances
 		async.series(
 			[
@@ -100,8 +103,12 @@ var StorageMigrator = {
 					self.logPrint( 3, "Switching to user: " + config.uid );
 					process.setuid( config.uid );
 				}
+
+				self.logPrint(2, "before test");
 				
 				self.testStorage();
+				// self.startMigration();				
+
 			}
 		); // series
 	},
@@ -110,18 +117,26 @@ var StorageMigrator = {
 		// test both old and new storage
 		var self = this;
 		this.logDebug(3, "Testing storage engines");
+		self.logPrint(2, "test begin test");
 		
 		async.series(
 			[
 				function(callback) {
 					self.oldStorage.get('global/users', callback);
+					self.logPrint(2, "test old users");
 				},
 				function(callback) {
 					self.newStorage.put('test/test1', { "foo1": "bar1" }, function(err) {
 						if (err) return callback(err);
+						self.logPrint(2, "test new foo test");
+
+						// throw new Error('before del')
 						
 						self.newStorage.delete('test/test1', function(err) {
+							
+							self.logPrint(2, "test new before delete", err);
 							if (err) return callback(err);
+							self.logPrint(2, "test new delete");
 							
 							callback();
 						});

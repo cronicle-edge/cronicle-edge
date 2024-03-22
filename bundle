@@ -411,7 +411,7 @@ if [ ! -e 'package.json' ]; then
 fi
 
 if [ "$lmdb" = 1 ]; then
-  npm i lmdb --loglevel silent
+  npm i lmdb@2.9.4 --loglevel silent
 fi 
 
 cd - &>/dev/null  
