@@ -2757,7 +2757,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				"max_children": 1, "timeout": 3600, "catch_up": 0, "queue_max": 1000, "timezone": "America/New_York",
 				"plugin": "testplug",
 				"title": event_title,
-				"category": "general",
+				"category": $("#fe_sch_cat").val() || "general",
 				"target": "allgrp", "algo": "random", "multiplex": 0, "stagger": 0, "retries": 0,
 				"retry_delay": 0, "detached": 0, "queue": 0, "chain": "", "chain_error": "", "notify_success": "", "notify_fail": "", "web_hook": "", "cpu_limit": 0, "cpu_sustain": 0,
 				"memory_limit": 0, "memory_sustain": 0, "log_max_size": 0, "notes": "Randomly Generated Job",
