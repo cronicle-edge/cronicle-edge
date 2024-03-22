@@ -14,16 +14,33 @@ param(
   [switch]$Level, # bundle level db engine
   [switch]$Lmdb, # bundle lmdb engine *
   [switch]$Sftp, # bundle sftp engine
+  [string][ValidateSet("s3","lmdb","level","sqlite","oracle","mysql","mssql","pgsql","sftp","redis")]$Engine, # copy storage.engine.json from sample_conf to dist
   [switch]$Force, # force reinstall if something is broken in node_modules
   [switch]$Dev, # prevent minificaiton and add verbosity
   [Switch]$Restart, # for dev purposes only: it will force kill cronicle if running, and start it over again once bundling is complete
   [Switch]$Tools, # bundle repair/migrate tools
   [Switch]$All, # bundle all storage engines and tools
   [switch]$V, # verbose
-  [switch]$Test, # run unit test at the end
-  [ValidateSet("warning", "debug", "info", "warning", "error","silent")][string]$ESBuildLogLevel = "warning"
+  [switch]$Test, # run unit test at the end  
+  [ValidateSet("warning", "debug", "info", "warning", "error","silent")][string]$ESBuildLogLevel = "warning",
+  [switch]$Help
 
 )
+
+if($Help) {
+  Write-Host "Usage: ./bundle.ps1 [path\to\dist]  # default bundle location is dist"
+  Write-Host " [ -S3 | -Redis | -Lmdb | -Level | -Redis | -Sftp ] # 1 or more storage engines (FS always added)"
+  Write-Host " [ -Mysql | -Pgsql | -Sqlite | -Oracle | -MSSQL ] # SQL storage engines"
+  Write-Host " [ -Engine engine ] # (for dev) copy storage engine file from sample_conf to dist/conf/storage.json, engine is s3,lmdb,sqlite,..."
+  Write-Host " [ -SQL | -All]  # bundle all sql or just all engines "
+  Write-Host " [ -Force ]  # force reinstall if something is broken in node_modules "
+  Write-Host " [ -Dev ] # prevent minificaiton and add verbosity"
+  Write-Host " [ -Restart ] for dev purposes only: it will force kill cronicle if running, and start it over again once bundling is complete"
+  Write-Host " [ -V ] # add verbosity"
+  Write-Host " [ -Tools ] # bundle repair/migrate tools"
+  Write-Host " [ -Help ] # see this message again"
+  exit
+}
 
 $ErrorActionPreference = 'Stop'
 
@@ -299,7 +316,7 @@ if ($Level.IsPresent) {
 $sqlDrivers = [System.Collections.ArrayList]::new()
 $sqlArgs = [System.Collections.ArrayList]::new(@("--bundle", "--minify", "--platform=node", "--outdir=$Path/bin/engines"))
 # exclude unused drivers
-$sqlArgs.AddRange(@("--external:better-sqlite3", "--external:mysql", "--external:sqlite3"))
+$sqlArgs.AddRange(@("--external:better-sqlite3", "--external:mysql"))
 
 if($SQL) { $Oracle = $MSSQL = $Mysql = $Pgsql = $true }
 
@@ -307,9 +324,10 @@ $Mysql ? $sqlDrivers.Add("mysql2"): $sqlArgs.Add("--external:mysql2") | Out-Null
 $Pgsql ? $sqlDrivers.AddRange(@("pg", "pg-query-stream")) : $sqlArgs.AddRange(@("--external:pg", "--external:pg-query-stream")) | Out-Null
 $Oracle ? $sqlDrivers.Add("oracledb") : $sqlArgs.Add("--external:oracledb") | Out-Null
 $MSSQL ? $sqlDrivers.Add("tedious") : $sqlArgs.Add("--external:tedious") | Out-Null
+$Sqlite ? $sqlDrivers.Add("sqlite3") : $sqlArgs.Add("--external:sqlite3") | Out-Null
 
 # bundle SQL engine if at least 1 SQL driver selected
-if($sqlDrivers.Count -gt 0 -OR $Sqlite) {
+if($sqlDrivers.Count -gt 0) {
   $sqlInstall = [System.Collections.ArrayList]::new(@("install", "--no-save", "--loglevel", "silent", "knex"))
   $sqlInstall.AddRange($sqlDrivers) | Out-Null
   $sqlArgs.Add("engines/SQL.js") | Out-Null
@@ -317,6 +335,9 @@ if($sqlDrivers.Count -gt 0 -OR $Sqlite) {
   Write-Host "     - bundling SQL Engine [$($sqlDrivers -join ",")]"
   & npm $sqlInstall
   & esbuild $sqlArgs
+  if($Sqlite.IsPresent) {
+    Copy-Item -Recurse -Force node_modules/sqlite3/build $Path/bin/
+  }
 }
 
 # Lmdb, need to install lmdb separetly (npm i lmdb)
@@ -338,6 +359,10 @@ if (!(Test-Path $Path/conf)) {
   # generate sample secret_key. Please change, or use CRONICLE_secret_key variable to overwrite
   -join ((48..57) + (97..122) | Get-Random -Count 32 | ForEach-Object { [char]$_ }) > $Path/conf/secret_key
 
+}
+
+if(Test-Path "sample_conf\examples\storage.$Engine.json") {
+  Copy-Item -Force "sample_conf\examples\storage.$Engine.json" $Path\conf\storage.json
 }
 
 # --- CRONICLE.JS
@@ -372,7 +397,7 @@ if(!(Test-Path "package.json")) {
   npm pkg set main="bin/cronicle.js"
   npm pkg set scripts.start="node bin/cronicle.js --foreground --echo --manager --color"
 }
-if($Lmdb.IsPresent) { npm i lmdb --loglevel silent}
+if($Lmdb.IsPresent) { npm i "lmdb@2.9.4" --loglevel silent}
 Pop-Location
 
 
