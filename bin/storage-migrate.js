@@ -24,6 +24,20 @@ var cli = require('pixl-cli');
 var args = cli.args;
 cli.global();
 
+
+// check if --from/--to args
+
+let oldConfPath;
+let newConfPath;
+if(args.from) {
+	if(fs.existsSync(Path.resolve(args.from))) oldConfPath = Path.resolve(args.from)
+	else { console.log("config file does not exist:", Path.resolve(args.from)); process.exit(1)}
+}
+if(args.to) {
+	if(fs.existsSync(Path.resolve(args.to))) newConfPath = Path.resolve(args.to)
+	else { console.log("config file does not exist:", Path.resolve(args.to)); process.exit(1)}
+}
+
 var StandaloneStorage = require('pixl-server-storage/standalone');
 
 // chdir to the proper server root dir
@@ -59,7 +73,9 @@ var StorageMigrator = {
 		this.logPrint(1, "Cronicle Storage Migration Script v" + this.version + " starting up");
 		this.logPrint(2, "Starting storage engines");
 		
+		if(oldConfPath) config.Storage = require(oldConfPath) // custom storage config file
 		if (!config.Storage) this.fatal("Your Cronicle configuration lacks a 'Storage' property");
+		if (newConfPath) config.NewStorage = require(newConfPath)
 		if (!config.NewStorage) this.fatal("Your Cronicle configuration lacks a 'NewStorage' property.");
 		
 		if (config.uid && (process.getuid() != 0)) {
@@ -157,7 +173,7 @@ var StorageMigrator = {
 		var self = this;
 		this.logPrint(3, "Starting migration");
 		
-		this.timeStart = Tools.timeNow(true);
+		this.timeStart = Date.now()
 		this.numRecords = 0;
 		
 		this.copyKey( 'global/state', { ignore: true } );
@@ -276,13 +292,14 @@ var StorageMigrator = {
 	finish: function() {
 		// all done
 		var self = this;
-		var elapsed = Tools.timeNow(true) - this.timeStart;
+		var elapsed = Date.now() - this.timeStart;
+		var dur = elapsed < 2000 ? `${elapsed} ms` : Tools.getTextFromSeconds(elapsed/1000, false, true) 
 		
 		cli.progress.end();
 		
 		print("\n");
 		this.logPrint(1, "Storage migration complete!");
-		this.logPrint(2, Tools.commify(this.numRecords) + " total records copied in " + Tools.getTextFromSeconds(elapsed, false, true) + ".");
+		this.logPrint(2, Tools.commify(this.numRecords) + " total records copied in " + dur + ".");
 		this.logPrint(4, "You should now overwrite 'Storage' with 'NewStorage' in your config.json.");
 		this.logPrint(3, "Shutting down");
 		
