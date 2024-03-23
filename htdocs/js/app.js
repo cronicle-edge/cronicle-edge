@@ -39,7 +39,7 @@ app.extend({
 		
 		// allow visible app name to be changed in config
 		this.name = config.name;
-		$('#d_header_title').html( '<b>' + this.name + '</b>' );
+		$('#d_header_title').html( '<b>' + filterXSS(this.name) + '</b>' );
 		
 		// hit the manager server directly from now on
 		this.setmanagerHostname( resp.manager_hostname );
