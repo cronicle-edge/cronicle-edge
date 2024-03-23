@@ -3,7 +3,7 @@
 cd "$(dirname "$0")"
 
 usage() {
-    echo "Usage: $0 /path/to/dist"
+    echo "Usage: $0 [/path/to/dist]"
     echo "    [ --s3 | --lmdb | --level | --sftp | --sqlite | --mysql | --oracle | --mysql | --pgsql ] # bundle 1 or more storage engine"
     echo "    [ --dev ]  # avoid minification, add verbosity to esbuild/npm"
     echo "    [ --versbose ]  # add verbosity"
@@ -138,13 +138,12 @@ fi
 
 # ----------------
 
-mkdir -p $dist 
+mkdir -p $dist/bin
 cp -r htdocs $dist/
-cp -r bin  $dist/
+# cp -r bin  $dist/
 cp package.json  $dist/bin/
-rm $dist/bin/storage-migrate.js $dist/bin/run-detached.js
-
-
+cp bin/manager bin/worker bin/cronicled.init bin/control.sh bin/getnode.sh $dist/bin/
+  
 # ------------------------------- 
 
 writehead "Building frontend"
@@ -425,12 +424,9 @@ fi
 
 cd - &>/dev/null  
 
-# ------  clean up 
-writehead "Final cleanup"
-rm -rf $dist/bin/cronicled.init $dist/bin/debug.sh $dist/bin/install.js $dist/bin/build.js $dist/bin/build-tools.js \
-$dist/bin/manager.bat $dist/bin/worker.bat $dist/bin/win-* $dist/bin/*.ps1
+# ------  final steps
+writehead "Setting up permissions"
 chmod -R 755 $dist/bin
-
 
 # -------------------- we are done 
 
@@ -448,15 +444,11 @@ echo ""
 echo "---------------------------------------------------------------------------------------------------------------------------------------"
 echo ""
 echo "Bundle is ready: $(readlink -f $dist)"
-if [ "$sql" = 1 ]; then
-  echo " - SQL Engine is bundled for mysql and postgress only. SQLite, MSSQL Oracle need to be installed separetly in $dist"
-fi 
+
 if [ "$lmdb" = 1 ]; then
-  echo " - Lmdb cannot be fully bundeled. Lmdb package was installed in $dist"
+  echo " - Lmdb package was installed in $dist"
 fi 
-if [ "$level" = 1 ]; then
-  echo " - If not running this on linux, copy OS proper binary from node_modules/classic-level/prebuilds to $dist/bin/engines/prebuilds/"
-fi 
+
 
 if [ "$restart" = 1 ]; then
  echo "Running in dev mode. Version: $CRONICLE_dev_version"
