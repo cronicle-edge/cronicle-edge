@@ -78,6 +78,8 @@ Class.add( Page.Admin, {
 		html += '<div style="height:30px;"></div>';
 		html += '<center><table><tr>';
 			html += '<td><div class="button" style="width:140px;" onMouseUp="$P().edit_plugin(-1)"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Add New Plugin...</div></td>';
+			html += '<td width="50">&nbsp;</td>'
+			html += '<td><div class="button" style="width:140px;" onMouseUp="$P().import_plugin()"><i class="fa fa-upload">&nbsp;&nbsp;</i> from JSON</div></td>';
 		html += '</tr></table></center>';
 		
 		html += '</div>'; // padding
@@ -97,6 +99,62 @@ Class.add( Page.Admin, {
 		this.plugin = this.plugins[idx];
 		this.show_delete_plugin_dialog();
 	},
+
+	setImportEditor: function() {
+		
+		let editor = CodeMirror.fromTextArea(document.getElementById("plugin_import"), {
+			mode: 'application/json',
+			styleActiveLine: true,
+			lineWrapping: false,
+			scrollbarStyle: "overlay",
+			lineNumbers: false,
+			theme: app.getPref('theme') == 'dark' ? 'gruvbox-dark' : 'default',
+			matchBrackets: true,
+			gutters: [''],
+			lint: true
+		})
+
+		editor.on('change', function(cm){
+			document.getElementById("plugin_import").value = cm.getValue();
+		 });
+
+		editor.setSize('52vw', '52vh')
+
+	},
+
+	import_plugin: function (args) {
+
+		const self = this;
+
+		setTimeout(() => self.setImportEditor(), 30)
+		app.confirm(`<span>Import Plugin from JSON<br><br><style>.CodeMirror { text-align: left!important; }</style>
+		<textarea id="plugin_import" rows="16" cols="80"></textarea>
+		`, '', "Import", function (result) {
+			if (result) {
+				var importData = document.getElementById('plugin_import').value;
+				let plugin;
+				try {	plugin = JSON.parse(importData)
+				} catch (e) {
+					return app.doError("Invalid JSON: " + e.message)					
+				}
+				delete plugin.id
+				app.showProgress(1.0, "Importing...");
+				app.api.post('app/create_plugin', plugin, function (resp) {
+					app.hideProgress();
+
+					report = `Plugin ${resp.id} created`
+					
+					setTimeout(function () {
+						Nav.go('#Admin?sub=plugins', 'force');
+						app.show_info(`<div ><table class="data_table">${report}</table></div>`, '');
+
+					}, 50);
+
+				});
+			}
+		});
+	},
+
 	
 	show_delete_plugin_dialog: function() {
 		// delete selected plugin
@@ -166,7 +224,7 @@ Class.add( Page.Admin, {
 				html += '<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().cancel_plugin_edit()">Cancel</div></td>';
 				html += '<td width="50">&nbsp;</td>';
 				html += '<td><div class="button" style="width:120px;" onMouseUp="$P().do_new_plugin()"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Create Plugin</div></td>';
-			html += '</tr></table>';
+				html += '</tr></table>';
 			
 		html += '</td></tr>';
 		html += '</table></center>';
