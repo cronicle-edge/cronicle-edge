@@ -17,6 +17,8 @@ Class.add( Page.Admin, {
 		this.div.removeClass('loading');
 		app.setWindowTitle( "Plugins" );
 		
+		if(this.observer) this.observer.disconnect() // kill old observer if set by editor
+		
 		var size = get_inner_window_size();
 		var col_width = Math.floor( ((size.width * 0.9) + 500) / 6 );
 		
@@ -52,7 +54,8 @@ Class.add( Page.Admin, {
 		html += this.getBasicTable( this.plugins, cols, 'plugin', function(plugin, idx) {
 			var actions = [
 				'<span class="link" onMouseUp="$P().edit_plugin('+idx+')"><b>Edit</b></span>',
-				'<span class="link" onMouseUp="$P().delete_plugin('+idx+')"><b>Delete</b></span>'
+				'<span class="link" onMouseUp="$P().delete_plugin('+idx+')"><b>Delete</b></span>',
+				'<span class="link" onMouseUp="$P().export_plugin('+idx+')"><b>Export</b></span>'
 			];
 			
 			var plugin_events = find_objects( app.schedule, { plugin: plugin.id } );
@@ -79,7 +82,7 @@ Class.add( Page.Admin, {
 		html += '<center><table><tr>';
 			html += '<td><div class="button" style="width:140px;" onMouseUp="$P().edit_plugin(-1)"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Add New Plugin...</div></td>';
 			html += '<td width="50">&nbsp;</td>'
-			html += '<td><div class="button" style="width:140px;" onMouseUp="$P().import_plugin()"><i class="fa fa-upload">&nbsp;&nbsp;</i> from JSON</div></td>';
+			html += '<td><div class="button" style="width:140px;" onMouseUp="$P().import_plugin()"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i> From JSON</div></td>';
 		html += '</tr></table></center>';
 		
 		html += '</div>'; // padding
@@ -101,6 +104,8 @@ Class.add( Page.Admin, {
 	},
 
 	setImportEditor: function() {
+
+		const self = this;
 		
 		let editor = CodeMirror.fromTextArea(document.getElementById("plugin_import"), {
 			mode: 'application/json',
@@ -110,15 +115,37 @@ Class.add( Page.Admin, {
 			lineNumbers: false,
 			theme: app.getPref('theme') == 'dark' ? 'gruvbox-dark' : 'default',
 			matchBrackets: true,
-			gutters: [''],
+			// gutters: [''],
 			lint: true
 		})
 
 		editor.on('change', function(cm){
-			document.getElementById("plugin_import").value = cm.getValue();
+			document.getElementById("plugin_import").value = editor.getValue();
 		 });
 
 		editor.setSize('52vw', '52vh')
+
+	},
+
+	export_plugin: function(idx) {
+		let plug = this.plugins[idx];
+		let data;
+		if(plug) {
+			plug = deep_copy_object(plug)
+			delete plug.username
+			delete plug.created
+			delete plug.modified
+			delete plug.id
+			data = JSON.stringify(plug, null, 2)
+		}	
+		else { return }
+
+		app.show_info(`
+		<span > Back Up Scheduler<br><br></span><textarea id="conf_export" rows="22" cols="80">${data}</textarea><br>
+		<div class="caption"> Use this output to import plugin via "From Json" option on some other Cronicle instance (command binary should be exported/installed separetly) </div>
+		`, '', function (result) {
+
+	 });
 
 	},
 
@@ -127,8 +154,8 @@ Class.add( Page.Admin, {
 		const self = this;
 
 		setTimeout(() => self.setImportEditor(), 30)
-		app.confirm(`<span>Import Plugin from JSON<br><br><style>.CodeMirror { text-align: left!important; }</style>
-		<textarea id="plugin_import" rows="16" cols="80"></textarea>
+		app.confirm(`<span>Import Plugin from JSON<br><br>
+		<textarea id="plugin_import" rows="16" cols="80"></textarea><br>
 		`, '', "Import", function (result) {
 			if (result) {
 				var importData = document.getElementById('plugin_import').value;
@@ -137,12 +164,39 @@ Class.add( Page.Admin, {
 				} catch (e) {
 					return app.doError("Invalid JSON: " + e.message)					
 				}
-				delete plugin.id
+
+				let newPlugin = {}
+
+				if(!plugin.title) return app.doError("Plugin is missing Title")
+				if(find_object(self.plugins, {title: plugin.title})) return app.doError(`Plugin with title [${plugin.title}] already exist`)
+				if(!plugin.command) return app.doError("Plugin is missing Command")
+
+				if(Array.isArray(plugin.params)) {
+					newPlugin.params = plugin.params
+					for(let i = 0; i < plugin.params.length; i++){
+						let e = plugin.params[i]
+						if(!e.id) return app.doError("One of the plugin parameters is missing [id] property")
+						if(!e.type) return app.doError("One of the plugin parameters is missing [type] property")
+						if(!e.title) return app.doError("One of the plugin parameters is missing [title] property")
+					}
+				}				
+				
+				newPlugin.title = plugin.title
+				newPlugin.command = plugin.command
+				newPlugin.enabled = !!plugin.enabled
+				newPlugin.ipc = !!plugin.ipc
+				newPlugin.wf = !!plugin.wf
+				newPlugin.stdin = !!plugin.stdin
+				if(typeof plugin.uid === 'string' || parseInt(plugin.uid)) newPlugin.uid = plugin.uid
+				if(typeof plugin.gid === 'string' || parseInt(plugin.gid)) newPlugin.gid = plugin.gid
+				if(typeof plugin.cwd === 'string') newPlugin.cwd = plugin.cwd
+				if(typeof plugin.script === 'string') newPlugin.script = plugin.script 
+
 				app.showProgress(1.0, "Importing...");
-				app.api.post('app/create_plugin', plugin, function (resp) {
+				app.api.post('app/create_plugin', newPlugin, function (resp) {
 					app.hideProgress();
 
-					report = `Plugin ${resp.id} created`
+					report = `Plugin ${newPlugin.title} [ ${resp.id} ] has been created`
 					
 					setTimeout(function () {
 						Nav.go('#Admin?sub=plugins', 'force');
@@ -433,11 +487,18 @@ Class.add( Page.Admin, {
 				"Esc": (cm) => cm.getOption("fullScreen") ? cm.setOption("fullScreen", false) : null,
 				"Ctrl-/": (cm) => cm.execCommand('toggleComment')
 			}	
-		})		
+		})	
 
-		editor.on('change', (cm) =>  { plugin.script= cm.getValue() });
+		self.observer = new MutationObserver((mutationList, observer)=> {
+			editor.setOption('theme', app.getPref('theme') == 'dark' ? 'ambiance' : 'default')
+		});
+		self.observer.observe(document.querySelector('body'), {attributes: true})
+
+		editor.on('change', (cm) =>  { plugin.script = cm.getValue() });
 		editor.setValue(plugin.script || '');
-		editor.setSize('900px', '25vh')
+		editor.setSize('900px', '25vh');
+
+		  
 	},
 	
 	get_plugin_edit_html: function() {
