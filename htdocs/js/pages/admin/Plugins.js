@@ -572,7 +572,9 @@ Class.add( Page.Admin, {
 			<div class="plugin_params_content"><input type="text" id="fe_ep_cwd" size="50" value="${escape_text_field_value(plugin.cwd)}" placeholder="" spellcheck="false"/></div> 
 			
 			<div class="plugin_params_label">Run as User (UID):</div>
-			<div class="plugin_params_content"><input type="text" id="fe_ep_uid" size="20" value="${escape_text_field_value(plugin.uid)}" placeholder="" spellcheck="false"/></div>           
+			<div class="plugin_params_content"><input type="text" id="fe_ep_uid" size="20" value="${escape_text_field_value(plugin.uid)}" placeholder="" spellcheck="false"/></div> 
+			<div class="plugin_params_label">Run as Group (GID):</div>
+			<div class="plugin_params_content"><input type="text" id="fe_ep_gid" size="20" value="${escape_text_field_value(plugin.gid)}" placeholder="" spellcheck="false"/></div>
 
 		    <input name="DummyUsername" type="text" style="display:none;">
             <input name="DummyPassword" type="password" style="display:none;"></input>
@@ -581,8 +583,8 @@ Class.add( Page.Admin, {
 		`);
 
 		html += get_form_table_caption(
-		`Optionally enter a working directory path, and/or a custom UID for the Plugin.<br>
-		 The UID may be either numerical or a string ('root', 'wheel', etc.).<br>
+		`Optionally enter a working directory path, and/or a custom UID/GID for the Plugin.<br>
+		 The UID/GID may be either numerical or strings ('root', 'wheel', etc.).<br>
 		`
 		);
 		html += get_form_table_spacer();
@@ -911,8 +913,10 @@ Class.add( Page.Admin, {
 		
 		plugin.cwd = trim( $('#fe_ep_cwd').val() );
 		plugin.uid = trim( $('#fe_ep_uid').val() );
+		plugin.gid = trim( $('#fe_ep_gid').val() );
 		
 		if (plugin.uid.match(/^\d+$/)) plugin.uid = parseInt( plugin.uid );
+		if (plugin.gid.match(/^\d+$/)) plugin.gid = parseInt( plugin.gid );
 		
 		return plugin;
 	}
