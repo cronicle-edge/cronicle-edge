@@ -3,13 +3,13 @@
 cd "$(dirname "$0")"
 
 usage() {
-    echo "Usage: $0 [/path/to/dist]"
+    echo "Usage: $0 [ /path/to/dist ] # default location is dist"
     echo "    [ --s3 | --lmdb | --level | --sftp | --sqlite | --mysql | --oracle | --mysql | --pgsql ] # bundle 1 or more storage engine"
     echo "    [ --dev ]  # avoid minification, add verbosity to esbuild/npm"
     echo "    [ --versbose ]  # add verbosity"
-    echo "    [ --tool ]  # bundle migration and detahced job tools"
+    echo "    [ --tool ]  # storage migration and repair tools"
     echo "    [ --restart ]  # restart cronicle upon bundle completion (in dev mode)"
-    echo "    [ --engine engine] # copy sample_conf/example/storage.engine.json to dist/conf/storage.json (engine: fs/sqlite/s3/...)"
+    echo "    [ --engine engine ] # copy sample_conf/example/storage.engine.json to dist/conf/storage.json (engine: fs/sqlite/s3/...)"
     echo "    [ --test ]  # run unit test upon bundle completion"
     exit 1
 }
