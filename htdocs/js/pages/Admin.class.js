@@ -119,6 +119,7 @@ Class.subclass( Page.Base, "Page.Admin", {
 	onDeactivate: function() {
 		// called when page is deactivated
 		// this.div.html( '' );
+		if(this.observer) this.observer.disconnect() 
 		return true;
 	}
 	

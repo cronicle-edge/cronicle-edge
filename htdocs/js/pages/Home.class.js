@@ -135,6 +135,12 @@ Class.subclass( Page.Base, "Page.Home", {
 		this.refresh_header_stats();
 		this.refresh_completed_job_chart();
 		this.refresh_event_queues();
+
+		const self = this;
+		self.observer = new MutationObserver((mutationList, observer)=> {
+			self.refresh_completed_job_chart(); 
+		});
+		self.observer.observe(document.querySelector('body'), {attributes: true})
 		
 		return true;
 	},
@@ -404,7 +410,7 @@ Class.subclass( Page.Base, "Page.Home", {
 			let scaleType = $('#fe_cmp_job_chart_scale').val() || 'logarithmic';
 
 			// if chart is already generated only update data
-			if(app.jobHistoryChart) { 
+			if(app.jobHistoryChart) {
 				app.jobHistoryChart.data.datasets = datasets;
 				app.jobHistoryChart.data.labels = labels;
 				app.jobHistoryChart.options.scales.yAxes[0].type = scaleType;
@@ -824,6 +830,7 @@ Class.subclass( Page.Base, "Page.Home", {
 	onDeactivate: function() {
 		// called when page is deactivated
 		// this.div.html( '' );
+		if(this.observer) this.observer.disconnect() 
 		return true;
 	}
 	

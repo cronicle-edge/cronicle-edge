@@ -9,8 +9,9 @@ Class.add( Page.Admin, {
 		app.setWindowTitle("Secrets");		
 		self.div.addClass('loading');
 		self.secret = {};
-		self.secretId = args.id
-		
+		self.secretId = args.id		
+		if(self.observer) self.observer.disconnect() // kill old observer if set by editor
+
 		app.api.post('/api/app/get_secret', { id: args.id || 'globalenv' }, self.receive_secrets.bind(self));
 	},
 
@@ -41,6 +42,11 @@ Class.add( Page.Admin, {
 		  });
   
 		 editor.setValue(secret.data || '');
+
+		 self.observer = new MutationObserver((mutationList, observer)=> {
+			editor.setOption('theme', app.getPref('theme') == 'light' ? 'default' : 'solarized dark')
+		});
+		self.observer.observe(document.querySelector('body'), {attributes: true})
 
 	},
 		
