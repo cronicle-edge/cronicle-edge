@@ -27,11 +27,28 @@ cli.global();
 
 // check if --from/--to args
 
+if(args.help) {
+	console.log('Usage: ./storage-migrate ')
+	console.log(' [ --from /path/to/storage.json] # alter source storage config (default is "Storage" property from config.json)')
+	console.log(' [ --to /path/to/storage.json] # alter destincation storage config (default is "NewStorage" property from config.json)')
+	console.log(' [ --notrx # disable transaction on destination storage (only applicable to SQL and Lmdb)')
+	console.log(' [ --sqlite /path/to/file.db  # dump source storage into local sqlite DB (sqlite engine is required')
+	console.log(' [ --full ] # include job log files')
+	console.log(' [ --help ] # see this message again')
+	process.exit(1)
+}
+
 let oldConfPath;
 let newConfPath;
+let sqlitePath;
+
 if(args.from) {
 	if(fs.existsSync(Path.resolve(args.from))) oldConfPath = Path.resolve(args.from)
 	else { console.log("config file does not exist:", Path.resolve(args.from)); process.exit(1)}
+}
+if(args.sqlite) {
+	if(fs.existsSync(Path.dirname(Path.resolve(args.sqlite)))) sqlitePath = Path.resolve(args.sqlite)
+	else { console.log("sqlite file location does not exist:", Path.resolve(args.sqlite)); process.exit(1)}	
 }
 if(args.to) {
 	if(fs.existsSync(Path.resolve(args.to))) newConfPath = Path.resolve(args.to)
@@ -75,6 +92,23 @@ var StorageMigrator = {
 		
 		if(oldConfPath) config.Storage = require(oldConfPath) // custom storage config file
 		if (!config.Storage) this.fatal("Your Cronicle configuration lacks a 'Storage' property");
+		if(sqlitePath) {
+			config.NewStorage = {
+				"engine": "SQL",
+				"list_page_size": 50,
+				"concurrency": 4,
+				"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
+				"SQL": {
+					"client": "sqlite3",
+					"table": "cronicle",
+					"useNullAsDefault": true,
+					"connection": {
+						"filename": sqlitePath
+					}
+				}
+			}
+		}
+
 		if (newConfPath) config.NewStorage = require(newConfPath)
 		if (!config.NewStorage) this.fatal("Your Cronicle configuration lacks a 'NewStorage' property.");
 		
@@ -138,15 +172,12 @@ var StorageMigrator = {
 				function(callback) {
 					self.newStorage.put('test/test1', { "foo1": "bar1" }, function(err) {
 						if (err) return callback(err);
-						self.logPrint(2, "test new foo test");
 
 						// throw new Error('before del')
 						
-						self.newStorage.delete('test/test1', function(err) {
-							
-							self.logPrint(2, "test new before delete", err);
+						self.newStorage.delete('test/test1', function(err) {						
+
 							if (err) return callback(err);
-							self.logPrint(2, "test new delete");
 							
 							callback();
 						});
