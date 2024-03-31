@@ -50,7 +50,7 @@ Class.subclass( Page.Base, "Page.Login", {
 					html += '<tr><td colspan="2"><div class="table_spacer"></div></td></tr>';
 				html += '</table></center>';
 			html += '</div>';
-			
+
 			html += '<div class="dialog_buttons"><center><table><tr>';
 				if (config.free_accounts) {
 					html += '<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().navCreateAccount()">Create Account...</div></td>';
@@ -59,6 +59,10 @@ Class.subclass( Page.Base, "Page.Login", {
 				html += '<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().navPasswordRecovery()">Forgot Password...</div></td>';
 				html += '<td width="20">&nbsp;</td>';
 				html += '<td><div class="button" style="width:120px;" onMouseUp="$P().doLogin()"><i class="fa fa-sign-in">&nbsp;&nbsp;</i>Login</div></td>';
+				if (config.github_client_id) {
+					html += '<td width="20">&nbsp; or </td>';
+					html += '<td><a href="https://' + config.github_host + '/login/oauth/authorize?scope=user:email&client_id=' + config.github_client_id + '"><div class="button" style="width:120px; font-weight:normal;"><span class="fa fa-github">&nbsp;GitHub Login</span></div></a></td>';
+				}
 			html += '</tr></table></center></div>';
 		html += '</div>';
 		
@@ -69,7 +73,7 @@ Class.subclass( Page.Base, "Page.Login", {
 		setTimeout( function() {
 			$( app.getPref('username') ? '#fe_login_password' : '#fe_login_username' ).focus();
 			
-			 $('#fe_login_username, #fe_login_password').keypress( function(event) {
+			$('#fe_login_username, #fe_login_password').keypress( function(event) {
 				if (event.keyCode == '13') { // enter key
 					event.preventDefault();
 					$P().doLogin();
@@ -77,7 +81,23 @@ Class.subclass( Page.Base, "Page.Login", {
 			} ); 
 			
 		}, 1 );
-		
+
+		// handle github callback
+		const urlParams = new URLSearchParams(window.location.search);
+		const code = urlParams.get('code');
+		urlParams.delete('code');
+		window.history.pushState({}, document.title, window.location.pathname);
+		if (code && config.github_client_id) {
+			app.showProgress(1.0, "Logging in with Github...");			
+			app.api.post( 'user/login', {
+				code: code
+			}, 
+			function(resp, tx) {
+				app.hideProgress();
+				app.doUserLogin( resp );				
+				Nav.go( app.navAfterLogin || config.DefaultPage );
+			} ); // post
+		}		
 		return true;
 	},
 	
@@ -114,7 +134,7 @@ Class.subclass( Page.Base, "Page.Login", {
 		// alert("GOT HERE: " + (app.navAfterLogin || config.DefaultPage) );
 	},*/
 	
-	 doLogin: function() {
+	doLogin: function() {
 		// attempt to log user in
 		var username = $('#fe_login_username').val().toLowerCase();
 		var password = $('#fe_login_password').val();

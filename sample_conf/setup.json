@@ -287,6 +287,36 @@
 			"description": "default AD domain for external auth. You can also prepend domain to the username (e.g. user@domain.com)"
 		}],
 		[ "listPush", "global/conf_keys", {
+			"id": "github_host", 
+			"title": "github_host",
+			"key": "github.com",
+			"description": "Github instance used for OAuth endpoint"
+		}],
+		[ "listPush", "global/conf_keys", {
+			"id": "github_client_id", 
+			"title": "github_client_id",
+			"key": "",
+			"description": "Github Client Application ID - used to authorize users of Org/Teams"
+		}],
+		[ "listPush", "global/conf_keys", {
+			"id": "github_client_secret", 
+			"title": "github_client_secret",
+			"key": "",
+			"description": "Github Client Application Secret"
+		}],
+		[ "listPush", "global/conf_keys", {
+			"id": "github_org", 
+			"title": "github_org",
+			"key": "",
+			"description": "Github organization users need to be a member of in order to gain Authorization to login. Leave empty to allow all"
+		}],
+		[ "listPush", "global/conf_keys", {
+			"id": "github_insecure_skip_verify", 
+			"title": "github_insecure_skip_verify",
+			"key": "false",
+			"description": "Allow to ignore Github server certificate"
+		}],
+		[ "listPush", "global/conf_keys", {
 			"id": "smtp_hostname", 
 			"title": "smtp_hostname",
 			"key": "mailrelay.cronicle.com",

@@ -35,7 +35,7 @@ Class.subclass(Page, "Page.Base", {
 						}
 					});
 			}
-			else if (app.config.external_users) {
+			else if (app.config.external_users && app.config.external_user_api) {
 				Debug.trace("User is not logged in, querying external user API");
 				app.doExternalLogin();
 			}
