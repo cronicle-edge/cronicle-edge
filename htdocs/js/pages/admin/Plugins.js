@@ -177,7 +177,7 @@ Class.add( Page.Admin, {
 						let e = plugin.params[i]
 						if(!e.id) return app.doError("One of the plugin parameters is missing [id] property")
 						if(!e.type) return app.doError("One of the plugin parameters is missing [type] property")
-						if(!e.title) return app.doError("One of the plugin parameters is missing [title] property")
+						// if(!e.title) return app.doError("One of the plugin parameters is missing [title] property")
 					}
 				}				
 				
