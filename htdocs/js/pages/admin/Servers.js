@@ -63,7 +63,7 @@ Class.add( Page.Admin, {
 				var tds = [
 					'<div class="td_big" style="font-weight:normal"><div class="ellip" style="max-width:'+col_width+'px;"><i class="fa fa-eye">&nbsp;</i>' + server.hostname.replace(/\.[\w\-]+\.\w+$/, '') + '</div></div>',
 					(server.ip || 'n/a').replace(/^\:\:ffff\:(\d+\.\d+\.\d+\.\d+)$/, '$1'),
-					'-', '(Nearby)', '-', '-', '-', '-', '-', '-',
+					'-', '(Nearby)', '-', '-', '-', '-', '-', '-', '-',
 					'<span class="link" onMouseUp="$P().add_server_from_list('+idx+')"><b>Add Server</b></span>'
 				];
 				tds.className = 'blue';
