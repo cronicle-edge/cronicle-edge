@@ -54,7 +54,7 @@ foreach ($arg in $PSBoundParameters.Values) {
 }
 
 if($Path -like "--*") { 
-  # perhaps user meant some flag, fallback Path to default
+  # User likely meant some flag, fallback Path to default
   $Path = "dist"
 }
 
@@ -81,7 +81,7 @@ function Write-Bold { param($Text, [switch]$U)
 
 $FullPath = mkdir -Force $Path
 
-Write-Bold  "`nInstalling cronicle bundle into $FullPath`n" -U | Write-Host -ForegroundColor Green
+Write-Bold  "`nInstalling cronicle bundle into $FullPath`n" -U
 
 # Write-Host "-----------------------------------------"
 # Write-Host " Installing cronicle bundle into $($Path)"
@@ -370,6 +370,7 @@ if($sqlDrivers.Count -gt 0) {
   $sqlArgs.Add("engines/SQL.js") | Out-Null
 
   Write-Host "     - bundling SQL Engine [$($sqlDrivers -join ",")]"
+  $engines += ", SQL [$($sqlDrivers -join ",")]"
   & npm $sqlInstall
   & esbuild $sqlArgs
   if($Sqlite) {
@@ -453,7 +454,7 @@ Write-Host "  - Init cronicle storage (on the first run): node .\$Path\bin\stora
 Write-Host "  - Start cronicle as manage: node .\$Path\bin\cronicle.js --echo --foreground --manager --color`n"
 
 Write-Bold  "You can also setup/start cronicle using [manager] entrypoint:"
-Write-Host  ".\$Path\bin\manager [ --port 3012 ] [ --storage Path\to\storage.json ] [ --key someSecretKey ]`n"
+Write-Host  ".\$Path\bin\manager [ --port 3012 ] [ --storage Path\to\storage.json ] [ --sqlite Path\to\sqlite.db ] [ --key someSecretKey ]`n"
 
 Write-Bold "To Reinstall/upgrade run (please back up $FullPath first):"
 Write-Host ".\bundle.ps1 $Path -Force`n"

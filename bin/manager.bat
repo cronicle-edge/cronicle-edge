@@ -34,6 +34,15 @@ if /I "%1"=="--port" (
     echo Using custom secret key: *****
     shift
     shift
+) else if /I "%1"=="--sqlite" (
+    if "%2"=="" (
+      echo Sqlite db path is not specified
+      exit
+    )    
+    set CRONICLE_sqlite=%~f2
+    echo Using sqlite as storage: %~f2
+    shift
+    shift
 ) else if /I "%1"=="--help" (
     echo Usage:  .\manager [--port  port] [ --storage /path/to/storage.json]
     shift    

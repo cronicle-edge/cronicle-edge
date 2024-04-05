@@ -27,6 +27,24 @@ if(fs.existsSync(storage_config)) {
         config.Storage = require(storage_config)                                                    
 }
 
+// overwrite storage if sqlite option is specified
+if(process.env['CRONICLE_sqlite']) {
+	config.Storage = {
+		"engine": "SQL",
+		"list_page_size": 50,
+		"concurrency": 4,
+		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
+		"SQL": {
+			"client": "sqlite3",
+			"table": "cronicle",
+			"useNullAsDefault": true,
+			"connection": {
+				"filename": process.env['CRONICLE_sqlite']
+			}
+		}
+	}
+}
+
 // shift commands off beginning of arg array
 var argv = JSON.parse(JSON.stringify(process.argv.slice(2)));
 var commands = [];
