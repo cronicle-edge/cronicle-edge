@@ -13,12 +13,14 @@ param(
     # list collection items
     [Int32]$Limit = 50,
     [Int32]$Offset = 0,
-    [switch]$Full
+    [switch]$Full,
+
+    [switch]$Help
 )
 
 $ErrorActionPreference = "stop"
 
-if (!$Command) {
+if (!$Command -OR $Help) {
     Write-Host "Usage:
 
     .\control.ps1 start [-Manager] [-Echo] [-Force] [-Color] [-WinMon] [-Hide]
