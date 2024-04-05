@@ -13,17 +13,8 @@ Class.subclass( Page.Base, "Page.Home", {
         <!-- Header stats -->
 
         <div id="d_home_header_stats"></div>
-        <div style="height:20px;"></div>
-        
-        <!-- Active jobs -->
+        <div style="height:20px;"></div>       
 
-        <div class="subtitle">
-            Active Jobs
-            <div class="clear"></div>
-        </div>
-        <div id="d_home_active_jobs"></div>
-        <div style="height:20px;"></div>
-        </div>
 
 		<!-- Event Flow -->
 
@@ -54,6 +45,16 @@ Class.subclass( Page.Base, "Page.Home", {
 
 		<canvas id="d_home_completed_jobs" height="40px"></canvas>
 		<div style="height:10px;"></div>
+
+		<!-- Active jobs -->
+
+        <div class="subtitle">
+            Active Jobs
+            <div class="clear"></div>
+        </div>
+        <div id="d_home_active_jobs"></div>
+        <div style="height:20px;"></div>
+        </div>
 
 		<!-- Queued jobs -->
 
