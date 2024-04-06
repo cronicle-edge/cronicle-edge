@@ -47,11 +47,14 @@ stream.on('json', function(job) {
 	if (params.headers) {
 		// allow headers to be substituted using [placeholders]
 		params.headers = Tools.sub( params.headers, job );
-	
-		print("\nRequest Headers:\n" + params.headers.trim() + "\n");
+		print("\nRequest Headers:\n");
 		params.headers.replace(/\r\n/g, "\n").trim().split(/\n/).forEach( function(pair) {
 			if (pair.match(/^([^\:]+)\:\s*(.+)$/)) {
-				request.setHeader( RegExp.$1, RegExp.$2 );
+				const headerKey = RegExp.$1;
+				const headerValue = RegExp.$2;
+				request.setHeader( headerKey, headerValue );
+				const maskedValue = (headerKey.toLowerCase() === 'authorization' && headerValue.trim().includes(' ')) ? headerValue.replace(headerValue.trim().split(' ')[1], '*'.repeat(headerValue.trim().split(' ')[1].length)) : headerValue;
+				print(`${headerKey}: ${maskedValue.trim()}\n` );
 			}
 		} );
 	}
