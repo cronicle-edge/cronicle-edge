@@ -74,9 +74,9 @@ fi
 
 # ---------------------------------------------------------------------
 
-echo "------------------------------------------------------"
-echo " Installing cronicle bundle into $(readlink -f $dist)"
-echo "------------------------------------------------------"
+echo ""
+echo -e "\033[1;4mInstalling cronicle bundle into $(readlink -f $dist)\033[0m"
+echo ""
 
 # debug settings
 minify="--minify=true"
@@ -441,9 +441,8 @@ if [ "$restart" = 1 ]; then
 fi
 
 echo ""
-echo "---------------------------------------------------------------------------------------------------------------------------------------"
+echo -e "\033[1;4mBundle is ready: $(readlink -f $dist)\033[0m"
 echo ""
-echo "Bundle is ready: $(readlink -f $dist)"
 
 if [ "$lmdb" = 1 ]; then
   echo " - Lmdb package was installed in $dist"
@@ -455,6 +454,7 @@ if [ "$restart" = 1 ]; then
  exit 0
 fi
 
+if [ ! "$dev" = 1 ]; then
 cat << EOF
 
 Before you begin:
@@ -462,28 +462,31 @@ Before you begin:
  - Set you Secret key in conf/config.json || conf/secret_key file || CRONICLE_secret_key_file || CRONICLE_secret_key env variables
 
 To setup cronicle storage (on the first run):
- node $dist/bin/storage-cli.js setup
+  node $dist/bin/storage-cli.js setup
 
 Start as manager in foreground:
- node $dist/bin/cronicle.js --echo --foreground --manager --color
+  node $dist/bin/cronicle.js --echo --foreground --manager --color
 
-Or use $dist/bin/manager script to setup storage + start cronicle in single manager mode
+Use $dist/bin/manager entrypoint to complete both steps (use for dev or docker):
+  $dist/bin/manager [--port 3012] [--storage /path/to/storage.json] [--key secretKey] [--sqlite /path/to/sqlite.db] [--color]
 
-To reinstall/upgrade run:  ./bundle.sh $dist -f 
-Please back up $(readlink -f $dist) first for prod deployments
+Or use control.sh tool: 
+  $dist/bin/control.sh [setup|status|start|stop]
+
+Use force flag (-f) to reinstall/upgrade (after git pull or npm package update): 
+  ./bundle.sh $dist -f 
 
 To setup as systemd service (! make sure node version for sudo user is 16 or higher):
- cd $(readlink -f $dist)
- npm i pixl-boot
- sudo node node_modules/pixl-boot/cli.js install
- ### systemctl status croniclex
+  cd $(readlink -f $dist)
+  npm i pixl-boot
+  sudo node node_modules/pixl-boot/cli.js install
+  ### systemctl status croniclex
 
 To remove service:
- sudo node node_modules/pixl-boot/cli.js uninstall
-
----------------------------------------------------------------------------------------------------------------------------------------
-
+  sudo node node_modules/pixl-boot/cli.js uninstall
 EOF
+
+fi
 
 #  OPTIONAL UNIT TEST
 if [ "$test" = 1 ]; then

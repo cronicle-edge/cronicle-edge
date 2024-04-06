@@ -14,6 +14,7 @@ while (( "$#" )); do
         --port ) shift; port=$1 ;;
         --key ) shift; key=$1 ;;
         --storage ) shift; storage=$1 ;;
+        --sqlite ) shift; sqlite=$1 ;;
         --help ) usage ;;
         -*) echo "invalid parameter: $1"; usage ;;
     esac
@@ -23,6 +24,11 @@ done
 if [[ $port ]]; then
   export CRONICLE_WebServer__http_port="$port"
   echo "Custom port set: $port"
+fi
+
+if [[ $sqlite ]]; then
+  export CRONICLE_sqlite="$(realpath $sqlite)"
+  echo "Using custom sqlite db as storage: $sqlite"
 fi
 
 if [[ $storage ]]; then
