@@ -9,7 +9,7 @@ You can quickly try it using Docker using image from Docker Hub:
 ```
 Or build the image locally - clone or download the latest release and run command below from project root
 ```bash
-docker build -t cronicle:edge -f DockerfileDev --build-arg echo=1  .
+docker build -t cronicle/edge -f Dockerfile .
 ```
 
 To test multi-node set up (in swarm mode)
