@@ -8,7 +8,7 @@
         "table": "cronicle",
         "useNullAsDefault": true,
         "connection": {
-            "filename": "/tmp/cronicle.db"
+            "filename": "cronicle.db"
         }
     }
 }

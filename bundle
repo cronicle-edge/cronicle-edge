@@ -3,7 +3,14 @@
 cd "$(dirname "$0")"
 
 usage() {
-    echo "Usage: $0 /path/to/dist [--s3 | --lmdb | --level | --sftp | --sql | --dev | --verbose]"
+    echo "Usage: $0 [ /path/to/dist ] # default location is dist"
+    echo "    [ --s3 | --lmdb | --level | --sftp | --sqlite | --mysql | --oracle | --mysql | --pgsql ] # bundle 1 or more storage engine"
+    echo "    [ --dev ]  # avoid minification, add verbosity to esbuild/npm"
+    echo "    [ --versbose ]  # add verbosity"
+    echo "    [ --tool ]  # storage migration and repair tools"
+    echo "    [ --restart ]  # restart cronicle upon bundle completion (in dev mode)"
+    echo "    [ --engine engine ] # copy sample_conf/example/storage.engine.json to dist/conf/storage.json (engine: fs/sqlite/s3/...)"
+    echo "    [ --test ]  # run unit test upon bundle completion"
     exit 1
 }
 
@@ -41,6 +48,8 @@ while (( "$#" )); do
         --tools | -t ) tools=1 ;; # bundle up repair and migration tools
         --all | -a ) all=1 ;; # install all engines
         --restart | -r ) restart=1 ;; # start cronicle upon completion
+        --engine ) shift; engine=$1 ;;
+        --help ) usage ;;
         -*) echo "invalid parameter: $1"; usage ;;
         * ) dist=$1; x=$(($x + 1))
     esac
@@ -65,9 +74,9 @@ fi
 
 # ---------------------------------------------------------------------
 
-echo "------------------------------------------------------"
-echo " Installing cronicle bundle into $(readlink -f $dist)"
-echo "------------------------------------------------------"
+echo ""
+echo -e "\033[1;4mInstalling cronicle bundle into $(readlink -f $dist)\033[0m"
+echo ""
 
 # debug settings
 minify="--minify=true"
@@ -129,12 +138,12 @@ fi
 
 # ----------------
 
-mkdir -p $dist 
+mkdir -p $dist/bin
 cp -r htdocs $dist/
-cp -r bin  $dist/
+# cp -r bin  $dist/
 cp package.json  $dist/bin/
-
-
+cp bin/manager bin/worker bin/cronicled.init bin/control.sh bin/getnode.sh $dist/bin/
+  
 # ------------------------------- 
 
 writehead "Building frontend"
@@ -311,16 +320,16 @@ fi
 sqlDrivers=()
 sqlArgs=("--bundle" "--minify" "--platform=node" "--outdir=$dist/bin/engines")
 # exclude unused drivers
-sqlArgs+=("--external:better-sqlite3" "--external:mysql" "--external:sqlite3")
+sqlArgs+=("--external:better-sqlite3" "--external:mysql")
 
 if [ "$sql" = 1 ]; then
   oracle=1
   mssql=1
   mysql=1
   pgsql=1
+  sqlite=1
 fi
 
-# for sqlite - just bundle plain SQL engine with no driver
 # driver need to be installed separetly (cannot bundle native libs)
 
 if [ "$mysql" = 1 ]; then
@@ -347,7 +356,13 @@ else
   sqlArgs+=("--external:tedious")
 fi
 
-if [[ ${#sqlDrivers[@]} -gt 0 || "$sqlite" = 1 ]]; then
+if [ "$sqlite" = 1 ]; then
+  sqlDrivers+=("sqlite3")
+else
+  sqlArgs+=("--external:sqlite3")
+fi
+
+if [[ ${#sqlDrivers[@]} -gt 0 ]]; then
   sqlInstall=("install" "--no-save" "--loglevel" "silent" "knex")
   sqlInstall+=("${sqlDrivers[@]}")
 
@@ -356,6 +371,9 @@ if [[ ${#sqlDrivers[@]} -gt 0 || "$sqlite" = 1 ]]; then
   echo "      - bundling SQL Engine [${sqlDrivers[@]}]"
   npm "${sqlInstall[@]}"
   esbuild "${sqlArgs[@]}"
+  if [ "$sqlite" = 1 ]; then
+    cp -r node_modules/sqlite3/build $dist/bin/
+  fi
 fi
 
 if [ "$redis" = 1 ]; then
@@ -382,6 +400,12 @@ if [ ! -d $dist/conf ]; then
   chmod 400 $dist/conf/secret_key
 fi
 
+# -- override storage engine if specified
+if [ -f "sample_conf/examples/storage.$engine.json" ]; then
+  writehead "Overriding stoarge.json for $engine"
+  cp "sample_conf/examples/storage.$engine.json" $dist/conf/storage.json
+fi
+
 
 # ---- set up npm pac in dist if not yet, add some deps if needed
 cd $dist
@@ -395,17 +419,14 @@ if [ ! -e 'package.json' ]; then
 fi
 
 if [ "$lmdb" = 1 ]; then
-  npm i lmdb --loglevel silent
+  npm i lmdb@2.9.4 --loglevel silent
 fi 
 
 cd - &>/dev/null  
 
-# ------  clean up 
-writehead "Final cleanup"
-rm -rf $dist/bin/cronicled.init $dist/bin/debug.sh $dist/bin/install.js $dist/bin/build.js $dist/bin/build-tools.js \
-$dist/bin/manager.bat $dist/bin/worker.bat $dist/bin/win-* $dist/bin/*.ps1
+# ------  final steps
+writehead "Setting up permissions"
 chmod -R 755 $dist/bin
-
 
 # -------------------- we are done 
 
@@ -420,24 +441,20 @@ if [ "$restart" = 1 ]; then
 fi
 
 echo ""
-echo "---------------------------------------------------------------------------------------------------------------------------------------"
+echo -e "\033[1;4mBundle is ready: $(readlink -f $dist)\033[0m"
 echo ""
-echo "Bundle is ready: $(readlink -f $dist)"
-if [ "$sql" = 1 ]; then
-  echo " - SQL Engine is bundled for mysql and postgress only. SQLite, MSSQL Oracle need to be installed separetly in $dist"
-fi 
+
 if [ "$lmdb" = 1 ]; then
-  echo " - Lmdb cannot be fully bundeled. Lmdb package was installed in $dist"
+  echo " - Lmdb package was installed in $dist"
 fi 
-if [ "$level" = 1 ]; then
-  echo " - If not running this on linux, copy OS proper binary from node_modules/classic-level/prebuilds to $dist/bin/engines/prebuilds/"
-fi 
+
 
 if [ "$restart" = 1 ]; then
  echo "Running in dev mode. Version: $CRONICLE_dev_version"
  exit 0
 fi
 
+if [ ! "$dev" = 1 ]; then
 cat << EOF
 
 Before you begin:
@@ -445,28 +462,31 @@ Before you begin:
  - Set you Secret key in conf/config.json || conf/secret_key file || CRONICLE_secret_key_file || CRONICLE_secret_key env variables
 
 To setup cronicle storage (on the first run):
- node $dist/bin/storage-cli.js setup
+  node $dist/bin/storage-cli.js setup
 
 Start as manager in foreground:
- node $dist/bin/cronicle.js --echo --foreground --manager --color
+  node $dist/bin/cronicle.js --echo --foreground --manager --color
 
-Or use $dist/bin/manager script to setup storage + start cronicle in single manager mode
+Use $dist/bin/manager entrypoint to complete both steps (use for dev or docker):
+  $dist/bin/manager [--port 3012] [--storage /path/to/storage.json] [--key secretKey] [--sqlite /path/to/sqlite.db] [--color]
 
-To reinstall/upgrade run:  ./bundle.sh $dist -f 
-Please back up $(readlink -f $dist) first for prod deployments
+Or use control.sh tool: 
+  $dist/bin/control.sh [setup|status|start|stop]
+
+Use force flag (-f) to reinstall/upgrade (after git pull or npm package update): 
+  ./bundle.sh $dist -f 
 
 To setup as systemd service (! make sure node version for sudo user is 16 or higher):
- cd $(readlink -f $dist)
- npm i pixl-boot
- sudo node node_modules/pixl-boot/cli.js install
- ### systemctl status croniclex
+  cd $(readlink -f $dist)
+  npm i pixl-boot
+  sudo node node_modules/pixl-boot/cli.js install
+  ### systemctl status croniclex
 
 To remove service:
- sudo node node_modules/pixl-boot/cli.js uninstall
-
----------------------------------------------------------------------------------------------------------------------------------------
-
+  sudo node node_modules/pixl-boot/cli.js uninstall
 EOF
+
+fi
 
 #  OPTIONAL UNIT TEST
 if [ "$test" = 1 ]; then
@@ -477,3 +497,4 @@ if [ "$test" = 1 ]; then
   # remove test files
   rm $dist/bin/test.js
 fi
+

@@ -1,6 +1,49 @@
 #!/bin/bash
 HOMEDIR="$(dirname "$(cd -- "$(dirname "$(readlink -f "$0")")" && (pwd -P 2>/dev/null || pwd))")"
 
+usage() {
+  echo "USAGE: ./manager [ --port 3012 ] [ --storage /path/to/storage.json ] [ --key secreKey ] [ --color ] "
+  exit 1
+}
+
+color=0
+
+while (( "$#" )); do
+    case $1 in
+        --color ) color=1 ;;
+        --port ) shift; port=$1 ;;
+        --key ) shift; key=$1 ;;
+        --storage ) shift; storage=$1 ;;
+        --sqlite ) shift; sqlite=$1 ;;
+        --help ) usage ;;
+        -*) echo "invalid parameter: $1"; usage ;;
+    esac
+shift
+done
+
+if [[ $port ]]; then
+  export CRONICLE_WebServer__http_port="$port"
+  echo "Custom port set: $port"
+fi
+
+if [[ $sqlite ]]; then
+  export CRONICLE_sqlite="$(realpath $sqlite)"
+  echo "Using custom sqlite db as storage: $sqlite"
+fi
+
+if [[ $storage ]]; then
+  if [[ -f $storage ]]; then
+    export CRONICLE_storage_config="$(realpath $storage)"
+    echo "Custom storage set: $(basename $storage)"
+  else echo "Error: $storage file doesn't exist"; exit 1
+  fi
+fi
+
+if [[ $key ]]; then
+  export CRONICLE_secret_key=$key
+  echo "Custom secret key set: *****"
+fi
+
 # pull data from git if needed
 # if [ ! -d data/global ] && [ -v GIT_REPO ]; then
 #         git clone $GIT_REPO $HOMEDIR/data
@@ -33,12 +76,8 @@ if [ -f "$HOMEDIR/bin/cronicle.js" ]; then
     # echo "starting bundle"
 fi
 
-# check for custom http port (pass as first arg)
-if [ -n "$1" ]; then
-  export CRONICLE_WebServer__http_port="$1"
-fi
 #$HOMEDIR/bin/control.sh start
-exec $BINARY --echo --foreground --manager --color 1
+exec $BINARY --echo --foreground --manager --color $color
 
 
 

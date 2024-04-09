@@ -961,7 +961,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			var last_code = app.state.jobCodes[event_id];
 			var status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
 			if (last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
-			this.div.find('#ss_' + event_id).html(status_html);
+			// this.div.find('#ss_' + event_id).html(status_html);
+			document.getElementById('ss_' + event_id).innerHTML = status_html
+
 		}
 	},
 
@@ -2757,7 +2759,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				"max_children": 1, "timeout": 3600, "catch_up": 0, "queue_max": 1000, "timezone": "America/New_York",
 				"plugin": "testplug",
 				"title": event_title,
-				"category": "general",
+				"category": $("#fe_sch_cat").val() || "general",
 				"target": "allgrp", "algo": "random", "multiplex": 0, "stagger": 0, "retries": 0,
 				"retry_delay": 0, "detached": 0, "queue": 0, "chain": "", "chain_error": "", "notify_success": "", "notify_fail": "", "web_hook": "", "cpu_limit": 0, "cpu_sustain": 0,
 				"memory_limit": 0, "memory_sustain": 0, "log_max_size": 0, "notes": "Randomly Generated Job",

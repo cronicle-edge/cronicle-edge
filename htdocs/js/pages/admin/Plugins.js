@@ -17,6 +17,8 @@ Class.add( Page.Admin, {
 		this.div.removeClass('loading');
 		app.setWindowTitle( "Plugins" );
 		
+		if(this.observer) this.observer.disconnect() // kill old observer if set by editor
+		
 		var size = get_inner_window_size();
 		var col_width = Math.floor( ((size.width * 0.9) + 500) / 6 );
 		
@@ -52,7 +54,8 @@ Class.add( Page.Admin, {
 		html += this.getBasicTable( this.plugins, cols, 'plugin', function(plugin, idx) {
 			var actions = [
 				'<span class="link" onMouseUp="$P().edit_plugin('+idx+')"><b>Edit</b></span>',
-				'<span class="link" onMouseUp="$P().delete_plugin('+idx+')"><b>Delete</b></span>'
+				'<span class="link" onMouseUp="$P().delete_plugin('+idx+')"><b>Delete</b></span>',
+				'<span class="link" onMouseUp="$P().export_plugin('+idx+')"><b>Export</b></span>'
 			];
 			
 			var plugin_events = find_objects( app.schedule, { plugin: plugin.id } );
@@ -78,6 +81,8 @@ Class.add( Page.Admin, {
 		html += '<div style="height:30px;"></div>';
 		html += '<center><table><tr>';
 			html += '<td><div class="button" style="width:140px;" onMouseUp="$P().edit_plugin(-1)"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Add New Plugin...</div></td>';
+			html += '<td width="50">&nbsp;</td>'
+			html += '<td><div class="button" style="width:140px;" onMouseUp="$P().import_plugin()"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i> From JSON</div></td>';
 		html += '</tr></table></center>';
 		
 		html += '</div>'; // padding
@@ -97,6 +102,113 @@ Class.add( Page.Admin, {
 		this.plugin = this.plugins[idx];
 		this.show_delete_plugin_dialog();
 	},
+
+	setImportEditor: function() {
+
+		const self = this;
+		
+		let editor = CodeMirror.fromTextArea(document.getElementById("plugin_import"), {
+			mode: 'application/json',
+			styleActiveLine: true,
+			lineWrapping: false,
+			scrollbarStyle: "overlay",
+			lineNumbers: false,
+			theme: app.getPref('theme') == 'dark' ? 'gruvbox-dark' : 'default',
+			matchBrackets: true,
+			// gutters: [''],
+			lint: true
+		})
+
+		editor.on('change', function(cm){
+			document.getElementById("plugin_import").value = editor.getValue();
+		 });
+
+		editor.setSize('52vw', '52vh')
+
+	},
+
+	export_plugin: function(idx) {
+		let plug = this.plugins[idx];
+		let data;
+		if(plug) {
+			plug = deep_copy_object(plug)
+			delete plug.username
+			delete plug.created
+			delete plug.modified
+			delete plug.id
+			data = JSON.stringify(plug, null, 2)
+		}	
+		else { return }
+
+		app.show_info(`
+		<span > Back Up Scheduler<br><br></span><textarea id="conf_export" rows="22" cols="80">${data}</textarea><br>
+		<div class="caption"> Use this output to import plugin via "From Json" option on some other Cronicle instance (command binary should be exported/installed separetly) </div>
+		`, '', function (result) {
+
+	 });
+
+	},
+
+	import_plugin: function (args) {
+
+		const self = this;
+
+		setTimeout(() => self.setImportEditor(), 30)
+		app.confirm(`<span>Import Plugin from JSON<br><br>
+		<textarea id="plugin_import" rows="16" cols="80"></textarea><br>
+		`, '', "Import", function (result) {
+			if (result) {
+				var importData = document.getElementById('plugin_import').value;
+				let plugin;
+				try {	plugin = JSON.parse(importData)
+				} catch (e) {
+					return app.doError("Invalid JSON: " + e.message)					
+				}
+
+				let newPlugin = {}
+
+				if(!plugin.title) return app.doError("Plugin is missing Title")
+				if(find_object(self.plugins, {title: plugin.title})) return app.doError(`Plugin with title [${plugin.title}] already exist`)
+				if(!plugin.command) return app.doError("Plugin is missing Command")
+
+				if(Array.isArray(plugin.params)) {
+					newPlugin.params = plugin.params
+					for(let i = 0; i < plugin.params.length; i++){
+						let e = plugin.params[i]
+						if(!e.id) return app.doError("One of the plugin parameters is missing [id] property")
+						if(!e.type) return app.doError("One of the plugin parameters is missing [type] property")
+						// if(!e.title) return app.doError("One of the plugin parameters is missing [title] property")
+					}
+				}				
+				
+				newPlugin.title = plugin.title
+				newPlugin.command = plugin.command
+				newPlugin.enabled = !!plugin.enabled
+				newPlugin.ipc = !!plugin.ipc
+				newPlugin.wf = !!plugin.wf
+				newPlugin.stdin = !!plugin.stdin
+				if(typeof plugin.uid === 'string' || parseInt(plugin.uid)) newPlugin.uid = plugin.uid
+				if(typeof plugin.gid === 'string' || parseInt(plugin.gid)) newPlugin.gid = plugin.gid
+				if(typeof plugin.cwd === 'string') newPlugin.cwd = plugin.cwd
+				if(typeof plugin.script === 'string') newPlugin.script = plugin.script 
+
+				app.showProgress(1.0, "Importing...");
+				app.api.post('app/create_plugin', newPlugin, function (resp) {
+					app.hideProgress();
+
+					report = `Plugin ${newPlugin.title} [ ${resp.id} ] has been created`
+					
+					setTimeout(function () {
+						Nav.go('#Admin?sub=plugins', 'force');
+						app.show_info(`<div ><table class="data_table">${report}</table></div>`, '');
+
+					}, 50);
+
+				});
+			}
+		});
+	},
+
 	
 	show_delete_plugin_dialog: function() {
 		// delete selected plugin
@@ -166,7 +278,7 @@ Class.add( Page.Admin, {
 				html += '<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().cancel_plugin_edit()">Cancel</div></td>';
 				html += '<td width="50">&nbsp;</td>';
 				html += '<td><div class="button" style="width:120px;" onMouseUp="$P().do_new_plugin()"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Create Plugin</div></td>';
-			html += '</tr></table>';
+				html += '</tr></table>';
 			
 		html += '</td></tr>';
 		html += '</table></center>';
@@ -375,11 +487,18 @@ Class.add( Page.Admin, {
 				"Esc": (cm) => cm.getOption("fullScreen") ? cm.setOption("fullScreen", false) : null,
 				"Ctrl-/": (cm) => cm.execCommand('toggleComment')
 			}	
-		})		
+		})	
 
-		editor.on('change', (cm) =>  { plugin.script= cm.getValue() });
+		self.observer = new MutationObserver((mutationList, observer)=> {
+			editor.setOption('theme', app.getPref('theme') == 'dark' ? 'ambiance' : 'default')
+		});
+		self.observer.observe(document.querySelector('body'), {attributes: true})
+
+		editor.on('change', (cm) =>  { plugin.script = cm.getValue() });
 		editor.setValue(plugin.script || '');
-		editor.setSize('900px', '25vh')
+		editor.setSize('900px', '25vh');
+
+		  
 	},
 	
 	get_plugin_edit_html: function() {
@@ -453,7 +572,9 @@ Class.add( Page.Admin, {
 			<div class="plugin_params_content"><input type="text" id="fe_ep_cwd" size="50" value="${escape_text_field_value(plugin.cwd)}" placeholder="" spellcheck="false"/></div> 
 			
 			<div class="plugin_params_label">Run as User (UID):</div>
-			<div class="plugin_params_content"><input type="text" id="fe_ep_uid" size="20" value="${escape_text_field_value(plugin.uid)}" placeholder="" spellcheck="false"/></div>           
+			<div class="plugin_params_content"><input type="text" id="fe_ep_uid" size="20" value="${escape_text_field_value(plugin.uid)}" placeholder="" spellcheck="false"/></div> 
+			<div class="plugin_params_label">Run as Group (GID):</div>
+			<div class="plugin_params_content"><input type="text" id="fe_ep_gid" size="20" value="${escape_text_field_value(plugin.gid)}" placeholder="" spellcheck="false"/></div>
 
 		    <input name="DummyUsername" type="text" style="display:none;">
             <input name="DummyPassword" type="password" style="display:none;"></input>
@@ -462,8 +583,8 @@ Class.add( Page.Admin, {
 		`);
 
 		html += get_form_table_caption(
-		`Optionally enter a working directory path, and/or a custom UID for the Plugin.<br>
-		 The UID may be either numerical or a string ('root', 'wheel', etc.).<br>
+		`Optionally enter a working directory path, and/or a custom UID/GID for the Plugin.<br>
+		 The UID/GID may be either numerical or strings ('root', 'wheel', etc.).<br>
 		`
 		);
 		html += get_form_table_spacer();
@@ -792,8 +913,10 @@ Class.add( Page.Admin, {
 		
 		plugin.cwd = trim( $('#fe_ep_cwd').val() );
 		plugin.uid = trim( $('#fe_ep_uid').val() );
+		plugin.gid = trim( $('#fe_ep_gid').val() );
 		
 		if (plugin.uid.match(/^\d+$/)) plugin.uid = parseInt( plugin.uid );
+		if (plugin.gid.match(/^\d+$/)) plugin.gid = parseInt( plugin.gid );
 		
 		return plugin;
 	}

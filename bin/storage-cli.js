@@ -27,6 +27,24 @@ if(fs.existsSync(storage_config)) {
         config.Storage = require(storage_config)                                                    
 }
 
+// overwrite storage if sqlite option is specified
+if(process.env['CRONICLE_sqlite']) {
+	config.Storage = {
+		"engine": "SQL",
+		"list_page_size": 50,
+		"concurrency": 4,
+		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
+		"SQL": {
+			"client": "sqlite3",
+			"table": "cronicle",
+			"useNullAsDefault": true,
+			"connection": {
+				"filename": process.env['CRONICLE_sqlite']
+			}
+		}
+	}
+}
+
 // shift commands off beginning of arg array
 var argv = JSON.parse(JSON.stringify(process.argv.slice(2)));
 var commands = [];
@@ -47,7 +65,13 @@ args = args.get(); // simple hash
 // copy debug flag into config (for standalone)
 config.Storage.debug = args.debug;
 
-// disable storage transactions for CLI
+// indicate that you want to enable engine level transaction
+// to pack multiple crud operation in one transaction
+// this is default for setup/migration, to avoid use --notrx argument
+if(cmd == 'install' || cmd == 'setup') config.Storage.trans = true
+if(args.notrx) config.Storage.trans = false
+
+// disable storage transactions for CLI (this is storage level transaction)
 config.Storage.transactions = false;
 
 var print = function (msg) {

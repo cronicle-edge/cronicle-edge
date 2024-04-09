@@ -7,24 +7,17 @@ Class.subclass( Page.Base, "Page.Home", {
 		this.worker = new Worker('js/home-worker.js');
 		this.worker.onmessage = this.render_upcoming_events.bind(this);
 		
-		var html = '';
-		html += '<div style="padding:10px 20px 20px 20px">';
-		
-		// header stats
-		html += '<div id="d_home_header_stats"></div>';
-		html += '<div style="height:20px;"></div>';
-		
-		// active jobs
-		html += '<div class="subtitle">';
-			html += 'Active Jobs';
-			html += '<div class="clear"></div>';
-		html += '</div>';
-		html += '<div id="d_home_active_jobs"></div>';
-		html += '<div style="height:20px;"></div>';
+		this.div.html(`
+		<div style="padding:10px 20px 20px 20px">
+    
+        <!-- Header stats -->
 
-		// Completed job chart
+        <div id="d_home_header_stats"></div>
+        <div style="height:20px;"></div>       
 
-		html += `
+
+		<!-- Event Flow -->
+
 		<div class="subtitle">
 		  Event Flow
 		  <div class="subtitle_widget"><i class="fa fa-refresh" onClick="$P().refresh_completed_job_chart();$P().refresh_header_stats();$P().refresh_upcoming_events()">&nbsp;</i></div>
@@ -49,46 +42,54 @@ Class.subclass( Page.Base, "Page.Home", {
 		  <div class="subtitle_widget"><span id="chart_times" ></span></div>
 		  <div class="clear"></div>
 		</div>
-		<script src="js/external/Chart.min.js"></script>
-		<script src="js/external/moment.min.js"></script>
-		<script src="js/external/moment-timezone-with-data.min.js"></script>	
+
 		<canvas id="d_home_completed_jobs" height="40px"></canvas>
 		<div style="height:10px;"></div>
-		<script>
-		let ui = app.config.ui || {}
-		let lmt = Number(app.getPref('job_chart_limit') || ui.job_chart_limit || 50)
-		let scale = app.getPref('job_chart_scale') || ui.job_chart_scale || 'linear'
-		let lmtActual = [1, 10, 25, 35, 50, 100, 120, 150, 250, 500].includes(lmt) ? lmt : 50
-		  $('#fe_cmp_job_chart_scale').val(scale)
-		  $('#fe_cmp_job_chart_limit').val(lmtActual)
-	   </script>
-		`
-		
-		// queued jobs
-		html += '<div id="d_home_queue_container" style="display:none">';
-			html += '<div class="subtitle">';
-				html += 'Event Queues';
-				html += '<div class="clear"></div>';
-			html += '</div>';
-			html += '<div id="d_home_queued_jobs"></div>';
-			html += '<div style="height:20px;"></div>';
-		html += '</div>';
-		
-		// upcoming events
-		html += '<div id="d_home_upcoming_header" class="subtitle">';
-		html += '</div>';
-		html += '<div id="d_home_upcoming_events" class="loading"></div>';
-		html += '</div>'; // container
-		
-		this.div.html( html );
+
+		<!-- Active jobs -->
+
+        <div class="subtitle">
+            Active Jobs
+            <div class="clear"></div>
+        </div>
+        <div id="d_home_active_jobs"></div>
+        <div style="height:20px;"></div>
+        </div>
+
+		<!-- Queued jobs -->
+
+		<div id="d_home_queue_container" style="display:none">
+        <div class="subtitle">
+            Event Queues
+            <div class="clear"></div>
+        </div>
+        <div id="d_home_queued_jobs"></div>
+        <div style="height:20px;"></div>
+        </div>
+
+		<!-- Upcoming events-->
+        <div id="d_home_upcoming_header" class="subtitle">
+        </div>
+        <div id="d_home_upcoming_events" class="loading"></div>
+        </div> 
+		`)
 	},
-	
+
 	onActivate: function(args) {
 		// page activation
 		if (!this.requireLogin(args)) return true;
 		
 		if (!args) args = {};
 		this.args = args;
+
+        // initial event flow rendering
+		let ui = app.config.ui || {}
+		let lmt = Number(app.getPref('job_chart_limit') || ui.job_chart_limit || 50)
+		let scale = app.getPref('job_chart_scale') || ui.job_chart_scale || 'linear'
+		let lmtActual = [1, 10, 25, 35, 50, 100, 120, 150, 250, 500].includes(lmt) ? lmt : 50
+		document.getElementById('fe_cmp_job_chart_scale').value = scale;
+		document.getElementById('fe_cmp_job_chart_limit').value = lmtActual;
+
 		
 		app.setWindowTitle('Home');
 		app.showTabBar(true);
@@ -118,23 +119,31 @@ Class.subclass( Page.Base, "Page.Home", {
 		
 		html += '<div class="clear"></div>';
 		
-		$('#d_home_upcoming_header').html( html );
+		// $('#d_home_upcoming_header').html( html );
+		document.getElementById('d_home_upcoming_header').innerHTML = html
 		
 		setTimeout( function() {
-			$('#fe_home_keywords').keypress( function(event) {
-				if (event.keyCode == '13') { // enter key
+			document.getElementById('fe_home_keywords').addEventListener('keypress', function(event) {
+				if (event.key === 'Enter') { // Enter key
 					event.preventDefault();
 					$P().set_search_filters();
 				}
-			} ); 
+			});
 		}, 1 );
 		
 		// refresh datas
-		$('#d_home_active_jobs').html( this.get_active_jobs_html() );
+		// $('#d_home_active_jobs').html( this.get_active_jobs_html() );
+		document.getElementById('d_home_active_jobs').innerHTML = this.get_active_jobs_html()
 		this.refresh_upcoming_events();
 		this.refresh_header_stats();
 		this.refresh_completed_job_chart();
 		this.refresh_event_queues();
+
+		const self = this;
+		self.observer = new MutationObserver((mutationList, observer)=> {
+			self.refresh_completed_job_chart(); 
+		});
+		self.observer.observe(document.querySelector('body'), {attributes: true})
 		
 		return true;
 	},
@@ -187,7 +196,8 @@ Class.subclass( Page.Base, "Page.Home", {
 				</fieldset>
 				`
 
-		$('#d_home_header_stats').html(html);
+		// $('#d_home_header_stats').html(html);
+		document.getElementById('d_home_header_stats').innerHTML = html;
 	},
 	
 	refresh_upcoming_events: function() {
@@ -212,18 +222,18 @@ Class.subclass( Page.Base, "Page.Home", {
 	
 	set_search_filters: function() {
 		// grab values from search filters, and refresh
-		var args = this.args;
-		
-		args.plugin = $('#fe_home_plugin').val();
+		var args = this.args;		
+
+		args.plugin = document.getElementById('fe_home_plugin').value;
 		if (!args.plugin) delete args.plugin;
-		
-		args.target = $('#fe_home_target').val();
+
+		args.target = document.getElementById('fe_home_target').value;
 		if (!args.target) delete args.target;
-		
-		args.category = $('#fe_home_cat').val();
+
+		args.category = document.getElementById('fe_home_cat').value;
 		if (!args.category) delete args.category;
-		
-		args.keywords = $('#fe_home_keywords').val();
+
+		args.keywords = document.getElementById('fe_home_keywords').value;
 		if (!args.keywords) delete args.keywords;
 		
 		this.nav_upcoming(0);
@@ -231,13 +241,13 @@ Class.subclass( Page.Base, "Page.Home", {
 	
 	render_upcoming_events: function(e) {
 		// receive data from worker, render table now
-		var self = this;
+		const self = this;
 		var html = '';
 		var now = app.epoch || hires_time_now();
 		var args = this.args;
 		this.upcoming_events = e.data;
 		
-		var viewType = $("#fe_up_eventlimit").val(); // compact or show all
+		var viewType = document.getElementById('fe_up_eventlimit').value;
 
 		// apply filters
 		var events = [];
@@ -357,39 +367,49 @@ Class.subclass( Page.Base, "Page.Home", {
 			} // row callback
 		}); // table
 		
-		$('#d_home_upcoming_events').removeClass('loading').html( html );
+		// $('#d_home_upcoming_events').removeClass('loading').html( html );
+		let upcoming = document.getElementById('d_home_upcoming_events');
+		upcoming.classList.remove('loading');
+		upcoming.innerHTML = html;
 	},
 
-	refresh_completed_job_chart: function () {
+	refresh_completed_job_chart: async function () {
 	
-		if($('#fe_cmp_job_chart_limit').val() < 2) {
+		if (document.getElementById('fe_cmp_job_chart_limit').value < 2) {
 			
 			if(app.jobHistoryChart) {
 				app.jobHistoryChart.destroy()
 				location.reload(true) // no easy way to kill graph, just reload the page
-			}
-			
+			}			
 			return 
 		}
 
-	    let isDark = app.getPref('theme') === 'dark'
-		let green = isDark ? '#44bb44' : 'lightgreen' // success
-		let orange = isDark ? '#bbbb44' : 'orange'  // warning
-		let red = isDark ? '#bb4444' : 'pink'  // error
+		let jobLimit = document.getElementById('fe_cmp_job_chart_limit').value || 50;
 
-		let statusMap = { 0: green, 255: orange }
+		let body = { offset: 0, limit: jobLimit, session_id: localStorage['session_id']}
 
-		let jobLimit = $('#fe_cmp_job_chart_limit').val() || 50
-
-		app.api.post('app/get_history', { offset: 0, limit: jobLimit }, function (d) {
+		fetch('api/app/get_history', {method: 'POST', body: JSON.stringify(body)})
+		.then(response => {
+			if(!response.ok) throw new Error('Failed to fetch job history')
+			return response.json()
+		})
+		.then(data => { 
 			
-			let jobs = d.rows.reverse().filter(e=>e.event_title);
+			if(!data.rows) throw new Error('Job history: Response has no rows')
+
+			let jobs = data.rows.reverse().filter(e=>e.event_title);
 
 			if(jobs.length > 1) {
 				let jFrom =  moment.unix(jobs[0].time_start).format('MMM DD, HH:mm:ss');
 				let jTo =  moment.unix(jobs[jobs.length-1].time_start + (jobs[jobs.length-1].elapsed || 0)).format('MMM DD, HH:mm:ss');
-				$("#chart_times").text(` from ${jFrom} | to ${jTo}`);
+				document.getElementById('chart_times').textContent  = ` from ${jFrom} | to ${jTo}`
 			}
+
+			let isDark = app.getPref('theme') === 'dark'
+			let green = isDark ? '#44bb44' : 'lightgreen' // success
+			let orange = isDark ? '#bbbb44' : 'orange'  // warning
+			let red = isDark ? '#bb4444' : 'pink'  // error
+			let statusMap = { 0: green, 255: orange }
 
 			let labels = jobs.map(e => '')
 			if(jobLimit < 100) labels = jobs.map((j, i) => i == 0 ? j.event_title.substring(0, 4) : j.event_title);
@@ -401,10 +421,10 @@ Class.subclass( Page.Base, "Page.Home", {
 				jobs: jobs
 				// borderWidth: 0.3
 			}];
-			let scaleType = $('#fe_cmp_job_chart_scale').val() || 'logarithmic';
+			let scaleType =  document.getElementById('fe_cmp_job_chart_scale').value || 'logarithmic';
 
 			// if chart is already generated only update data
-			if(app.jobHistoryChart) { 
+			if(app.jobHistoryChart) {
 				app.jobHistoryChart.data.datasets = datasets;
 				app.jobHistoryChart.data.labels = labels;
 				app.jobHistoryChart.options.scales.yAxes[0].type = scaleType;
@@ -472,8 +492,10 @@ Class.subclass( Page.Base, "Page.Home", {
 				let job = app.jobHistoryChart.data.datasets[firstPoint._datasetIndex].jobs[firstPoint._index]
 				window.open("#JobDetails?id=" + job.id, "_blank");
 			};
+		}) // end respose data processing
+		.catch(e => console.error(e.message));
 			
-		}); // callback
+
 	},
 	
 	get_active_jobs_html: function() {
@@ -637,7 +659,8 @@ Class.subclass( Page.Base, "Page.Home", {
 			
 		} ); // getBasicTable
 		
-		$('#d_home_queued_jobs').html( html );
+		// $('#d_home_queued_jobs').html( html );
+		document.getElementById('d_home_queued_jobs').innerHTML = html
 		$('#d_home_queue_container').show();
 	},
 	
@@ -729,7 +752,8 @@ Class.subclass( Page.Base, "Page.Home", {
 		// received status update (websocket), update page if needed
 		if (data.jobs_changed) {
 			// refresh tables
-			$('#d_home_active_jobs').html( this.get_active_jobs_html() );
+			// $('#d_home_active_jobs').html( this.get_active_jobs_html() );
+			document.getElementById('d_home_active_jobs').innerHTML = this.get_active_jobs_html() 
 		}
 		else {
 			// update progress, time remaining, no refresh
@@ -738,26 +762,32 @@ Class.subclass( Page.Base, "Page.Home", {
 				
 				if (job.pending) {
 					// update countdown
-					$('#d_home_jt_progress_' + job.id).html( this.getNiceJobPendingText(job) );
+					// $('#d_home_jt_progress_' + job.id).html( this.getNiceJobPendingText(job) );
+					document.getElementById('d_home_jt_progress_' + job.id).innerHTML = this.getNiceJobPendingText(job);
 					
 					if (job.log_file) {
 						// retry delay
-						$('#d_home_jt_elapsed_' + job.id).html( this.getNiceJobElapsedTime(job) );
+						// $('#d_home_jt_elapsed_' + job.id).html( this.getNiceJobElapsedTime(job) );
+						document.getElementById('d_home_jt_elapsed_' + job.id).innerHTML = this.getNiceJobElapsedTime(job);
 					}
 				} // pending job
 				else {
-					$('#d_home_jt_elapsed_' + job.id).html( this.getNiceJobElapsedTime(job) );
-					$('#d_home_jt_remaining_' + job.id).html( this.getNiceJobRemainingTime(job) );
+					// $('#d_home_jt_elapsed_' + job.id).html( this.getNiceJobElapsedTime(job) );
+					// $('#d_home_jt_remaining_' + job.id).html( this.getNiceJobRemainingTime(job) );
+					document.getElementById('d_home_jt_elapsed_' + job.id).innerHTML = this.getNiceJobElapsedTime(job);
+					document.getElementById('d_home_jt_remaining_' + job.id).innerHTML = this.getNiceJobRemainingTime(job);
 					
 					if(job.memo) {
 						let memoClass = String(job.memo).startsWith('OK:') ? 'color_label green' : ''
 						if(String(job.memo).startsWith('WARN:')) memoClass = 'color_label yellow'
 						if(String(job.memo).startsWith('ERR:')) memoClass = 'color_label red'
-						$('#d_home_jt_memo_' + job.id).html(`<span class="${memoClass}">${encode_entities(job.memo)}</span>`);
+						// $('#d_home_jt_memo_' + job.id).html(`<span class="${memoClass}">${encode_entities(job.memo)}</span>`);
+						document.getElementById('d_home_jt_memo_' + job.id).innerHTML = `<span class="${memoClass}">${encode_entities(job.memo)}</span>`
 					}
 
 					if(job.cpu) {
-						$('#d_home_jt_perf_' + job.id).text(short_float(job.cpu.current) + '% | ' + get_text_from_bytes(job.mem.current) + ' | ' + get_text_from_bytes(job.log_file_size))
+						// $('#d_home_jt_perf_' + job.id).text(short_float(job.cpu.current) + '% | ' + get_text_from_bytes(job.mem.current) + ' | ' + get_text_from_bytes(job.log_file_size))
+						document.getElementById('d_home_jt_perf_' + job.id).textContent = short_float(job.cpu.current) + '% | ' + get_text_from_bytes(job.mem.current) + ' | ' + get_text_from_bytes(job.log_file_size)
 					}
 					
 					// update progress bar without redrawing it (so animation doesn't jitter)
@@ -824,6 +854,7 @@ Class.subclass( Page.Base, "Page.Home", {
 	onDeactivate: function() {
 		// called when page is deactivated
 		// this.div.html( '' );
+		if(this.observer) this.observer.disconnect() 
 		return true;
 	}
 	

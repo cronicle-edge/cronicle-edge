@@ -708,6 +708,7 @@ td.table_label {
 
 		.CodeMirror {
 			border: 1px solid lightgray;
+			text-align: left;
 			font-family: consolas, monaco, "Andale Mono", monospace;
 			font-style: normal;
 			font-weight: 400;
@@ -750,3 +751,25 @@ td.table_label {
 		span.red2 {
 			background-color: #ac394d;
 		}
+
+		/* WF job details grid*/
+
+		.wflog.grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 20px;
+        }
+
+        .wflog.grid-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+			word-wrap: break-word;
+			overflow: hidden;
+			white-space: normal;
+        }
+
+        .wflog.grid-title {   
+			/* font-weight: bold;        */
+			font-size: 1.6em;
+        }

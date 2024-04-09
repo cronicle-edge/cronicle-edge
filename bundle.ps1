@@ -1,6 +1,5 @@
 
-# $Path = "dist"
-# if($args[0]) { $Path = $args[0] }
+
 param(
   [Parameter(Position = 0)][String]$Path = "dist", # install directory
   [switch]$S3, # bundle s3 engine
@@ -20,16 +19,73 @@ param(
   [Switch]$Tools, # bundle repair/migrate tools
   [Switch]$All, # bundle all storage engines and tools
   [switch]$V, # verbose
-  [switch]$Test, # run unit test at the end
-  [ValidateSet("warning", "debug", "info", "warning", "error","silent")][string]$ESBuildLogLevel = "warning"
+  [switch]$Test, # run unit test at the end  
+  [ValidateSet("warning", "debug", "info", "warning", "error","silent")][string]$ESBuildLogLevel = "warning",
+  [switch]$Help
+  # dummy parameters to capture "--" args
+  ,[Parameter(Position = 1)][String]$arg1
+  ,[Parameter(Position = 2)][String]$arg2
+  ,[Parameter(Position = 3)][String]$arg3
+  ,[Parameter(Position = 4)][String]$arg4
+  ,[Parameter(Position = 5)][String]$arg5
 
 )
 
+foreach ($arg in $PSBoundParameters.Values) {
+  if ($arg -eq "--s3") { $S3 = $true }
+  if ($arg -eq "--sql") { $SQL = $true }
+  if ($arg -eq "--oracle") { $Oracle = $true }
+  if ($arg -eq "--mssql") { $MSSQL = $true }
+  if ($arg -eq "--mysql") { $Mysql = $true }
+  if ($arg -eq "--pgsql") { $Pgsql = $true }
+  if ($arg -eq "--sqlite") { $Sqlite = $true }
+  if ($arg -eq "--redis") { $Redis = $true }
+  if ($arg -eq "--level") { $Level = $true }
+  if ($arg -eq "--lmdb") { $Lmdb = $true }
+  if ($arg -eq "--sftp") { $Sftp = $true }
+  if ($arg -eq "--force") { $Force = $true }
+  if ($arg -eq "--dev") { $Dev = $true }
+  if ($arg -eq "--restart") { $Restart = $true }
+  if ($arg -eq "--tools") { $Tools = $true }
+  if ($arg -eq "--all") { $All = $true }
+  if ($arg -eq "--test") { $Test = $true }
+  if ($arg -eq "--help") { $Help = $true }
+  if ($arg -eq "--verbose") { $V = $true }
+}
+
+if($Path -like "--*") { 
+  # User likely meant some flag, fallback Path to default
+  $Path = "dist"
+}
+
+if($Help) {
+  Write-Host "Usage: ./bundle.ps1 [path\to\dist]  # default bundle location is dist"
+  Write-Host " [ -S3 | -Redis | -Lmdb | -Level | -Redis | -Sftp ] # 1 or more storage engines (FS always added)"
+  Write-Host " [ -Mysql | -Pgsql | -Sqlite | -Oracle | -MSSQL ] # SQL storage engines"
+  Write-Host " [ -Engine engine ] # (for dev) copy storage engine file from sample_conf to dist/conf/storage.json, engine is s3,lmdb,sqlite,..."
+  Write-Host " [ -SQL | -All]  # bundle all sql or just all engines "
+  Write-Host " [ -Force ]  # force reinstall if something is broken in node_modules "
+  Write-Host " [ -Dev ] # prevent minificaiton and add verbosity"
+  Write-Host " [ -Restart ] for dev purposes only: it will force kill cronicle if running, and start it over again once bundling is complete"
+  Write-Host " [ -V ] # add verbosity"
+  Write-Host " [ -Tools ] # bundle repair/migrate tools"
+  Write-Host " [ -Help ] # see this message again"
+  exit
+}
+
 $ErrorActionPreference = 'Stop'
 
-Write-Host "-----------------------------------------"
-Write-Host " Installing cronicle bundle into $Path"
-Write-Host "-----------------------------------------"
+function Write-Bold { param($Text, [switch]$U)
+   $b = "[1m"; if($U) {$b = "[1;4m" }; Write-Output "$( [char]27 )$b$Text$( [char]27 )[0m" 
+}
+
+$FullPath = mkdir -Force $Path
+
+Write-Bold  "`nInstalling cronicle bundle into $FullPath`n" -U
+
+# Write-Host "-----------------------------------------"
+# Write-Host " Installing cronicle bundle into $($Path)"
+# Write-Host "-----------------------------------------"
 
 $proc = $null
 $pidFile = "$Path\logs\cronicled.pid"
@@ -39,7 +95,7 @@ if(Test-Path $pidFile ) {
 }
 
 if($proc) {
-  if($Restart.IsPresent) {
+  if($Restart) {
     Write-Host "Shutting down cronicle..."
     if(!$proc.CloseMainWindow()) {Stop-Process -id $proc.Id }
   }
@@ -54,20 +110,20 @@ $minify = "--minify=true"
 $ESBuildLogLevel = "warning"
 $npmLogLevel = "warn"
 
-if($Restart.IsPresent) { $minify = "--minify=false" }
+if($Restart) { $minify = "--minify=false" }
 
-if ($Dev.IsPresent) { 
+if ($Dev) { 
   $minify = "--minify=false" 
   $ESBuildLogLevel = "info"  
   $npmLogLevel = "info"
 }
 
-if($V.IsPresent) {
+if($V) {
   $ESBuildLogLevel = "info"  
   $npmLogLevel = "info"
 }
 
-if($All.IsPresent) {
+if($All) {
   $S3 = $true
   $Sftp = $true
   $Lmdb = $true
@@ -78,15 +134,13 @@ if($All.IsPresent) {
 
 # -------------------------
 
-# if (!(Get-Command esbuild -ErrorAction SilentlyContinue)) { npm i esbuild -g --loglevel warn }
-
 if(Test-Path $PSScriptRoot\nodejs\node.exe) {
   $env:Path =  "$PSScriptRoot\nodejs\;$env:Path;"
   Write-Warning "Using custom node version $(node -v)"
   # exit 0
 }
 
-if (!(Test-Path .\node_modules) -or $Force.IsPresent) {
+if (!(Test-Path .\node_modules) -or $Force) {
    Write-Host "`n---- Installing npm packages`n"
    npm install --loglevel $npmLogLevel
    Write-Host "`n-----------------------------------------" 
@@ -98,7 +152,7 @@ if (!(Get-Command esbuild -ErrorAction SilentlyContinue)) {
 }
 
 # ---- set up bin and htdocs folders on dist (will overwrite)
-mkdir -Force $Path
+# mkdir -Force $Path | Out-Null
 Copy-Item -Force -r htdocs $Path/
 mkdir -EA SilentlyContinue $Path/htdocs/js/external, $Path/htdocs/css, $Path/htdocs/fonts | Out-Null
 
@@ -181,7 +235,7 @@ Get-Content `
    , node_modules/codemirror/addon/display/placeholder.js `
 	 , node_modules/codemirror/mode/xml/xml.js `
 	 , node_modules/codemirror/mode/sql/sql.js `
-  , node_modules/js-yaml/dist/js-yaml.js `
+   , node_modules/js-yaml/dist/js-yaml.js `
 	 , node_modules/codemirror/addon/lint/lint.js `
 	 , node_modules/codemirror/addon/lint/json-lint.js `
 	 , node_modules/codemirror/addon/lint/yaml-lint.js `
@@ -232,16 +286,16 @@ Copy-Item -Force htdocs/index-bundle.html $Path/htdocs/index.html
   
 # -------- Bundle storage-cli and event plugins ----------------------------------------------- #
 
-Write-Host "`n ---- Building storage-cli and plugins`n"
+Write-Bold "Building storage-cli and plugins"
 
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ `
   --external:../conf/config.json --external:../conf/storage.json --external:../conf/setup.json `
   bin/storage-cli.js
 
-if($Tools.IsPresent) {
-  Write-Host "     - storage-repair.js`n"
+if($Tools) {
+  Write-Host "     - storage-repair.js"
   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:../conf/config.json bin/storage-repair.js
-  Write-Host "     - storage-migrate.js`n"
+  Write-Host "     - storage-migrate.js"
   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:../conf/config.json bin/storage-migrate.js
 }
  
@@ -258,35 +312,35 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
 
 # ------------ Bundle Storage Engines ------------------------------ #
 
-Write-Host "`n ---- Building Storage Engines:`n"
+Write-Bold "Building Storage Engines:"
 
 $engines = "FS"
-Write-Host "     - bundling FS Engine`n"
+Write-Host "     - bundling FS Engine"
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines engines/Filesystem.js
 
-if ($S3.IsPresent ) {
-  Write-Host "     - bundling S3 Engine`n"
+if ($S3 ) {
+  Write-Host "     - bundling S3 Engine"
   $engines += ", S3"
   npm i @aws-sdk/client-s3 @aws-sdk/lib-storage --no-save --loglevel silent 
   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines engines/S3.js
 }
 
-if ($Redis.IsPresent) { 
-  Write-Host "     - bundling Redis Engine`n"
+if ($Redis) { 
+  Write-Host "     - bundling Redis Engine"
   $engines += ", Redis"
   npm i redis@3.1.2 --no-save --loglevel silent 
   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines engines/Redis.js
 }
 
-if ($Sftp.IsPresent) {
-  Write-Host "     - bundling Sftp Engine`n"
+if ($Sftp) {
+  Write-Host "     - bundling Sftp Engine"
   $engines += ", Sftp"
   npm i ssh2-sftp-client --no-save --loglevel silent 
   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines --loader:.node=file engines/Sftp.js
 }
 
-if ($Level.IsPresent) {
-  Write-Host "     - bundling Level Engine`n"
+if ($Level) {
+  Write-Host "     - bundling Level Engine"
   $engines += ", Level"
   npm i level --no-save --loglevel silent 
   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines engines/Level.js
@@ -299,7 +353,7 @@ if ($Level.IsPresent) {
 $sqlDrivers = [System.Collections.ArrayList]::new()
 $sqlArgs = [System.Collections.ArrayList]::new(@("--bundle", "--minify", "--platform=node", "--outdir=$Path/bin/engines"))
 # exclude unused drivers
-$sqlArgs.AddRange(@("--external:better-sqlite3", "--external:mysql", "--external:sqlite3"))
+$sqlArgs.AddRange(@("--external:better-sqlite3", "--external:mysql"))
 
 if($SQL) { $Oracle = $MSSQL = $Mysql = $Pgsql = $true }
 
@@ -307,21 +361,26 @@ $Mysql ? $sqlDrivers.Add("mysql2"): $sqlArgs.Add("--external:mysql2") | Out-Null
 $Pgsql ? $sqlDrivers.AddRange(@("pg", "pg-query-stream")) : $sqlArgs.AddRange(@("--external:pg", "--external:pg-query-stream")) | Out-Null
 $Oracle ? $sqlDrivers.Add("oracledb") : $sqlArgs.Add("--external:oracledb") | Out-Null
 $MSSQL ? $sqlDrivers.Add("tedious") : $sqlArgs.Add("--external:tedious") | Out-Null
+$Sqlite ? $sqlDrivers.Add("sqlite3") : $sqlArgs.Add("--external:sqlite3") | Out-Null
 
 # bundle SQL engine if at least 1 SQL driver selected
-if($sqlDrivers.Count -gt 0 -OR $Sqlite) {
+if($sqlDrivers.Count -gt 0) {
   $sqlInstall = [System.Collections.ArrayList]::new(@("install", "--no-save", "--loglevel", "silent", "knex"))
   $sqlInstall.AddRange($sqlDrivers) | Out-Null
   $sqlArgs.Add("engines/SQL.js") | Out-Null
 
   Write-Host "     - bundling SQL Engine [$($sqlDrivers -join ",")]"
+  $engines += ", SQL [$($sqlDrivers -join ",")]"
   & npm $sqlInstall
   & esbuild $sqlArgs
+  if($Sqlite) {
+    Copy-Item -Recurse -Force node_modules/sqlite3/build $Path/bin/
+  }
 }
 
 # Lmdb, need to install lmdb separetly (npm i lmdb)
-if($Lmdb.IsPresent) {
-  Write-Host "     - bundling Lmdb Engine*`n"
+if($Lmdb) {
+  Write-Host "     - bundling Lmdb Engine*"
   $engines += ", Lmdb"
   esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/engines --external:lmdb engines/Lmdb.js 
 }
@@ -329,7 +388,7 @@ if($Lmdb.IsPresent) {
 #### ------- SET UP CONFIGS ----- only do it if config folder doesnt exist #
 if (!(Test-Path $Path/conf)) {
 
-  Write-Host "`n ---- Setting up initial config files`n"
+  Write-Bold "Setting up initial config files"
 
   Copy-Item -Force -r sample_conf/ $Path/conf
 
@@ -340,27 +399,17 @@ if (!(Test-Path $Path/conf)) {
 
 }
 
-# --- CRONICLE.JS
-Write-Host "`n ---- Bundling cronicle.js`n"
-esbuild --bundle $minify --keep-names --platform=node --outfile=$Path/bin/cronicle.js lib/main.js
+if(Test-Path "sample_conf\examples\storage.$Engine.json") {
+  Copy-Item -Force "sample_conf\examples\storage.$Engine.json" $Path\conf\storage.json
+}
 
 # --- fix  formidable
-Write-Host "`n ---- Applyig some patches"
+Write-Bold "Applyig some patches"
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=node --outdir=$Path/bin/plugins node_modules/formidable/src/plugins/*.js
 
-#  --------------- Final Clean up  ---------------------------
-
-# Remove-Item -Recurse -Force `
-#   $Path/bin/jars `
-#   , $Path/bin/cms `
-#   , $Path/bin/cronicled.init `
-#   , $Path/bin/importkey.sh `
-#   , $Path/bin/debug.sh `
-#   , $Path/bin/java-plugin.js `
-#   , $Path/bin/install.js `
-#   , $Path/bin/build.js `
-#   , $Path/bin/build-tools.js `
-
+# --- CRONICLE.JS
+Write-Bold "Bundling cronicle.js"
+esbuild --bundle $minify --keep-names --platform=node --outfile=$Path/bin/cronicle.js lib/main.js
 
 # --- if needed set up npm package in dist folder to install some deps that cannot be bundled
 Push-Location $Path
@@ -372,70 +421,59 @@ if(!(Test-Path "package.json")) {
   npm pkg set main="bin/cronicle.js"
   npm pkg set scripts.start="node bin/cronicle.js --foreground --echo --manager --color"
 }
-if($Lmdb.IsPresent) { npm i lmdb --loglevel silent}
+if($Lmdb) { npm i "lmdb@2.9.4" --loglevel silent}
 Pop-Location
 
-
-if($Restart.IsPresent) {
-  Write-Host "`n---- Restarting cronicle`n"
+if($Restart) {
+  Write-Bold "`Restarting cronicle"
   # ---
   $env:CRONICLE_dev_version="1.x.dev-$([datetime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))"
-  Start-Process node -WindowStyle Minimized -ArgumentList @("$Path\bin\cronicle.js", "--foreground", "--echo", "--manager", "--color")
+  Start-Process "$Path\bin\manager" -WindowStyle Minimized 
+  #Start-Process node -WindowStyle Minimized -ArgumentList @("$Path\bin\cronicle.js", "--foreground", "--echo", "--manager", "--color")
 }
 
 # --- Print setup info / stats
-Write-Host "`n-------------------------------------------------------------------------------------------------------------------------------------------`n"
-Write-Host "Bundle is ready: $FullPath `n" -ForegroundColor Green
-Write-Host "Minified: $($minify -like '*true*' )"
-Write-Host "Engines bundled: $engines"
-if($SQL.IsPresent) {
-  Write-Host " * SQL bundle includes mysql and postgres drivers. You can additionally install sqlite3, oracledb, tedious (for mssql)"
-}
-if($Lmdb.IsPresent) {
-  Write-Host " * Lmdb cannot be fully bundled. lmdb package is installed in the dist folder using npm"
-}
+Write-Host "`n [ Bundle is ready: $FullPath ] `n" -ForegroundColor Green
+Write-Bold "Info:"
+Write-Host "  - minified: $($minify -like '*true*' )"
+Write-Host "  - engines bundled: $engines"
 
-if($Restart.IsPresent) {
-  Write-Host "Running in dev mode. Version: $env:CRONICLE_dev_version `n"
+if($Restart) {
+  Write-Bold "Running in dev mode. Version: $env:CRONICLE_dev_version `n" -U
   exit 0
 }
 
 if($env:Path.indexOf("$FullPath\bin") -lt 0) { $env:Path = $env:Path + ";$FullPath\bin"; Write-Host "$Path\bin is added to path variable"}
 
-Write-Host "
-Before you begin:
- - Configure you storage engine setting in conf/config.json || conf/storage.json || CRONICLE_storage_config=/path/to/custom/storage.json
- - Set you Secret key in conf/congig.json || conf/secret_key file || CRONICLE_secret_key_file || CRONICLE_secret_key env variables
+if(!$Dev -and !$Restart) {  # do not print below info during  dev or debug
 
-To setup cronicle storage (on the first run):
- node .\$Path\bin\storage-cli.js setup
+Write-Bold "`nBefore you begin:"
+Write-Host "  - Configure you storage engine setting in conf/config.json OR conf/storage.json OR CRONICLE_storage_config=/path/to/custom/storage.json"
+Write-Host "  - Set you Secret key in conf/congig.json OR via conf/secret_key file OR via CRONICLE_secret_key_file / CRONICLE_secret_key env variables"
+Write-Host "  - Init cronicle storage (on the first run): node .\$Path\bin\storage-cli.js setup"
+Write-Host "  - Start cronicle as manage: node .\$Path\bin\cronicle.js --echo --foreground --manager --color`n"
 
-Start as manager in foreground:
- node .\$Path\bin\cronicle.js --echo --foreground --manager --color
+Write-Bold  "You can also setup/start cronicle using [manager] entrypoint:"
+Write-Host  ".\$Path\bin\manager [ --port 3012 ] [ --storage Path\to\storage.json ] [ --sqlite Path\to\sqlite.db ] [ --key someSecretKey ]`n"
 
-Or  both together: .\$Path\bin\manager
+Write-Bold "To Reinstall/upgrade run (please back up $FullPath first):"
+Write-Host ".\bundle.ps1 $Path -Force`n"
 
--------------------------------------------------------------------------------------------------------------------------------------------
-
-to reinstall/upgrade run (please back up $FullPath first):
- .\bundle.ps1 $Path -Force
-
-to install as windows service:
-  cd $Path
+Write-Bold "To install as Windows Service:" -U
+Write-Host "  cd $Path
   npm i node-windows -g
   npm link node-windows
   node bin\install.js
-
-test: Get-Service cronicle
-
-to remove service:
-  node bin\uninstall.js
-
+  ### Make sure it's running: Get-Service cronicle
+  ### Remove service: node bin\uninstall.js
 "
-if($Test.IsPresent) {
+}
 
-  Write-Host "Running unit test"
-  Write-Host "build test script"
+# perform unit test if needed
+if($Test) {
+
+  Write-Bold "Running unit test"
+  Write-Host "     - building test script"
   esbuild --bundle --outdir=$Path/bin/ --platform=node lib/test.js
   node .\node_modules\pixl-unit\unit.js $Path\bin\test.js 
   Remove-Item $Path\bin\test.js 

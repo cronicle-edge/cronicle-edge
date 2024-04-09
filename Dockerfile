@@ -11,7 +11,7 @@ FROM cronicle/base-alpine as build
 RUN apk add --no-cache npm 
 COPY . /build
 WORKDIR /build
-RUN ./bundle /dist --mysql --pgsql --s3 --lmdb
+RUN ./bundle /dist --mysql --pgsql --s3 --sqlite --tools
 
 FROM cronicle/base-alpine 
 

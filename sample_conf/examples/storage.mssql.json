@@ -15,9 +15,9 @@
         "connection": {
             "host": "localhost",
             "port": 1433,
-            "user": "cronicle",
-            "password": "P@ssword",
-            "database": "cronicle"
+            "user": "SA",
+            "password": "StrongPassword123!",
+            "database": "master"
         }
     }
 }

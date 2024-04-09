@@ -29,7 +29,7 @@ Class.add( Page.Admin, {
 		
 		// Active Server Cluster
 		
-		var cols = ['Hostname', 'IP Address', 'PID', 'Node', 'Groups', 'Status', 'Active Jobs', 'Uptime', 'CPU', 'Mem', 'Actions'];
+		var cols = ['Hostname', 'IP Address', 'PID', 'Node', 'Engine', 'Groups', 'Status', 'Active Jobs', 'Uptime', 'CPU', 'Mem', 'Actions'];
 		
 		html += '<div class="subtitle">';
 			html += 'Server Cluster';
@@ -63,7 +63,7 @@ Class.add( Page.Admin, {
 				var tds = [
 					'<div class="td_big" style="font-weight:normal"><div class="ellip" style="max-width:'+col_width+'px;"><i class="fa fa-eye">&nbsp;</i>' + server.hostname.replace(/\.[\w\-]+\.\w+$/, '') + '</div></div>',
 					(server.ip || 'n/a').replace(/^\:\:ffff\:(\d+\.\d+\.\d+\.\d+)$/, '$1'),
-					'-', '(Nearby)', '-', '-', '-', '-', '-', '-',
+					'-', '(Nearby)', '-', '-', '-', '-', '-', '-', '-',
 					'<span class="link" onMouseUp="$P().add_server_from_list('+idx+')"><b>Add Server</b></span>'
 				];
 				tds.className = 'blue';
@@ -108,6 +108,7 @@ Class.add( Page.Admin, {
 				(server.ip || 'n/a').replace(/^\:\:ffff\:(\d+\.\d+\.\d+\.\d+)$/, '$1'),
 				server.pid,
 				server.nodev,
+				server.engine || '',
 				group_names.length ? group_names.join(', ') : '(None)',
 				server.manager ? '<span class="color_label green"><i class="fa fa-check">&nbsp;</i>Manager</span>' : (eligible ? '<span class="color_label purple">Backup</span>' : '<span class="color_label blue">Worker</span>'),
 				num_jobs ? commify( num_jobs ) : '(None)',

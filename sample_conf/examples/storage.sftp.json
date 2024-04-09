@@ -10,13 +10,13 @@
         "expire_set": 1
     },
     "Sftp": {
-        "base_dir": "data",
+        "base_dir": "cronicle",
         "key_namespaces": 1,
         "connection": {
-            "host": "192.168.0.1",
-            "port": 22,
-            "username": "cronicle",
-            "password": "P@ssword"
+            "host": "localhost",
+            "port": 2022,
+            "username": "cron",
+            "password": "cronpass"
         }
     }
 }

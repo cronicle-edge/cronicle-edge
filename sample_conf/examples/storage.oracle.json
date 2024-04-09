@@ -13,10 +13,9 @@
         "client": "oracledb",
         "table": "cronicle",
         "connection": {
-            "connectString": "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost...)))",
+            "connectString": "localhost:1521/CRON",
             "user": "cronicle",
-            "password": "P@ssword",
-            "database": "CRONICLE_SCHEMA"
+            "password": "cronicle"
         }
     }
 }

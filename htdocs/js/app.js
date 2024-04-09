@@ -39,7 +39,7 @@ app.extend({
 		
 		// allow visible app name to be changed in config
 		this.name = config.name;
-		$('#d_header_title').html( '<b>' + this.name + '</b>' );
+		$('#d_header_title').html( '<b>' + filterXSS(this.name) + '</b>' );
 		
 		// hit the manager server directly from now on
 		this.setmanagerHostname( resp.manager_hostname );
@@ -719,16 +719,35 @@ app.extend({
 		//if (!window.zxcvbn) load_script('js/external/zxcvbn.js');
 	},
 	
-	update_password_strength: function($field, $cont) {
+	update_password_strength: function ($field, $cont) {
 		// update password strength indicator after keypress
+		let score = 0
+		let crack_time = 'instant'
+		let password = $field.val()
+
+
 		if (window.zxcvbn) {
-			var password = $field.val();
-			var result = zxcvbn( password );
+			var result = zxcvbn(password);
 			// Debug.trace("Password score: " + password + ": " + result.score);
 			var $bar = $cont.find('div.psi_bar');
 			$bar.removeClass('str0 str1 str2 str3 str4');
 			if (password.length) $bar.addClass('str' + result.score);
 			app.last_password_strength = result;
+		}
+		else { // basic strength checker
+			if (password.match(/[a-z]+/)) score += 0.5
+			if (password.match(/[A-Z]+/)) score += 0.5
+			if (password.match(/[0-9]+/)) score += 1
+			if (password.match(/[$@#&!]+/)) score += 1
+			if (password.length >= 8) {
+				score += 0.5
+				crack_time = 'few hours or days'
+			} else { score -= 0.5}
+
+			app.last_password_strength = {
+				score: score,
+				crack_time_display: crack_time
+			}
 		}
 	},
 	
