@@ -8,12 +8,14 @@ Class.subclass( Page.Base, "Page.Home", {
 		this.worker.onmessage = this.render_upcoming_events.bind(this);
 		
 		this.div.html(`
+		
 		<div style="padding:10px 20px 20px 20px">
     
         <!-- Header stats -->
 
         <div id="d_home_header_stats"></div>
-        <div style="height:20px;"></div>       
+        <div style="height:12px;"></div>     
+		
 
 
 		<!-- Event Flow -->
@@ -46,6 +48,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		<canvas id="d_home_completed_jobs" height="40px"></canvas>
 		<div style="height:10px;"></div>
 
+
 		<!-- Active jobs -->
 
         <div class="subtitle">
@@ -57,7 +60,6 @@ Class.subclass( Page.Base, "Page.Home", {
         </div>
 
 		<!-- Queued jobs -->
-
 		<div id="d_home_queue_container" style="display:none">
         <div class="subtitle">
             Event Queues
@@ -72,6 +74,12 @@ Class.subclass( Page.Base, "Page.Home", {
         </div>
         <div id="d_home_upcoming_events" class="loading"></div>
         </div> 
+		<div id="upcoming_grid" class="upcoming grid-container">
+		</div>
+		
+
+
+
 		`)
 	},
 
@@ -110,9 +118,16 @@ Class.subclass( Page.Base, "Page.Home", {
 		var html = '';
 		html += 'Upcoming Events';
 		
-		html += '<div class="subtitle_widget"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_home_keywords" size="10" placeholder="Find events..." style="border:0px;" value="' + escape_text_field_value( args.keywords ) + '"/></div>';
+		html += '<div class="subtitle_widget"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_home_keywords" size="10" placeholder="Find events..." style="border:0px;border-radius:5px" value="' + escape_text_field_value( args.keywords ) + '"/></div>';
 		
-		html += `<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_up_eventlimit" class="subtitle_menu" onChange="$P().nav_upcoming($P().upcoming_offset);"><option>Compact View</option><option>Show All</option></select></div>`;
+		let ue_options = [
+			{title: "Grid View", id: "grid"},
+			{title: "Compact View", id: "compact"},
+			{title: "Show All", id: "all"}
+		]
+		let up_event_select = render_menu_options( ue_options , app.getPref('fe_up_eventlimit') || 'grid', false ) + '</select>'
+
+		html += `<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_up_eventlimit" class="subtitle_menu" onChange="$P().nav_upcoming($P().upcoming_offset);">${up_event_select}</div>`;
 		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_home_target" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Servers</option>' + this.render_target_menu_options( args.target ) + '</select></div>';
 		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_home_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>' + render_menu_options( app.plugins, args.plugin, false ) + '</select></div>';
 		html += '<div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_home_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>' + render_menu_options( app.categories, args.category, false ) + '</select></div>';
@@ -176,28 +191,51 @@ Class.subclass( Page.Base, "Page.Home", {
 
 		let errBg = stats.jobs_completed > 0 && (stats.jobs_failed || 0)/stats.jobs_completed > (parseFloat(ui.err_rate) || 0.03) ? 'red2' : 'gray'
 		let errTitle = Object.entries(stats.errorLog || {}).slice(0,20).sort((a,b)=> a[1] < b[1] ? 1 : -1).map(e=>`${e[0]}:\t<b>${e[1]}</b>`).join("\n")
+    // xhtml
 
-		html += ` 
-				<fieldset style="margin-top:0px; margin-right:0px; padding-top:10px;"><legend>Server Stats</legend>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>EVENTS:&nbsp;<b> <span class="color_label gray">${ active_events.length}</span>&nbsp;</div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>CATEGORIES:&nbsp;<b> <span class="color_label gray">${app.categories.length}</span>&nbsp;</div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>PLUGINS:&nbsp;<b> <span class="color_label gray">${app.plugins.length}</span>&nbsp;</div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>JOBS COMPLETED TODAY:&nbsp;<b> <span class="color_label gray">${stats.jobs_completed || 0 }</span>&nbsp;</div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>FAILED:&nbsp;<b> 
-				    <span style="cursor:pointer" onclick='Nav.go("History?sub=error_history&error=1&max=${stats.jobs_failed || 0}")' title="${errTitle}" class="color_label ${errBg}">${stats.jobs_failed || 0}</span>&nbsp;
-				  </div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>SUCCESS RATE:&nbsp;<b> <span class="color_label gray">${pct( (stats.jobs_completed || 0) - (stats.jobs_failed || 0), stats.jobs_completed || 1 ) }</span>&nbsp;</div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>AVG LOG SIZE:&nbsp;<b> <span class="color_label gray"> 2K</span>&nbsp;</div>
-  
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>MANAGER UPTIME:&nbsp;<b> <span class="color_label gray">${get_text_from_seconds( mserver.uptime || 0, false, true )}</span>&nbsp;</div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>CPU:&nbsp;<b> <span class="color_label gray">${short_float(total_cpu)}%</span>&nbsp;</div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>MEMORY:&nbsp;<b> <span class="color_label gray">${get_text_from_bytes(total_mem)}</span>&nbsp;</div>
-				  <div style="float:left;padding: 5px 5px 5px 5px;"  class="info_label"><b>SERVERS:&nbsp;<b> <span class="color_label gray">${num_keys(servers)}</span>&nbsp;</div>
-				</fieldset>
-				`
+	let failed_badge = `<span style="cursor:pointer;" onclick='Nav.go("History?sub=error_history&error=1&max=${stats.jobs_failed || 0}")' title="${errTitle}" class="color_label ${errBg}">${stats.jobs_failed || 0}</span>&nbsp;`
 
-		// $('#d_home_header_stats').html(html);
-		document.getElementById('d_home_header_stats').innerHTML = html;
+	status_bar = [
+		{name: "EVENTS", value:  active_events.length},
+		{name: "CATS", value:  app.categories.length},
+		// {name: "PLUGINS", value:  app.plugins.length},
+		{name: "JOBS", value:  stats.jobs_completed || 0},
+		{name: "FAILED", value: failed_badge},
+		{name: "SUCCESS", value:  pct( (stats.jobs_completed || 0) - (stats.jobs_failed || 0), stats.jobs_completed || 1 )},
+		{name: "LOG SIZE", value: '2K'},
+		{name: "UPTIME", value:  get_text_from_seconds( mserver.uptime || 0, false, true )},
+		{name: "CPU", value:  `${short_float(total_cpu)}%`},
+		{name: "MEMORY", value:  get_text_from_bytes(total_mem)},
+		{name: "SERVERS", value:  num_keys(servers)}
+	]
+
+	html = '<div class="stats grid-container">'
+	status_bar.forEach(e=>{
+		html += `<div class="stats grid-item"><div class="flex-container-stats">
+		     <div style="padding:2px"><b>${e.name}:&nbsp;</b></div>
+			 <div style="padding:2px;"><b>&nbsp;${e.value}&nbsp;</b></div>
+		</div></div>
+	`
+	})
+
+	html += "</div>"
+
+	html2 = `
+	<div class="stats grid-container">
+                   <div class="upcoming grid-item"><div class="flex-container"><div><b>EVENTS:&nbsp;</b></div><div><span class="color_label gray">${ active_events.length}</span></div></div></div>
+				   <div class="upcoming grid-item"><div class="flex-container"><b>CATEGORIES:&nbsp;</b> <span class="color_label gray">${app.categories.length}</span>&nbsp;</div></div>
+				   <div class="upcoming grid-item"><div class="flex-container"><b>PLUGINS:&nbsp;</b> <span class="color_label gray">${app.plugins.length}</span>&nbsp;</div></div>
+				   <div class="upcoming grid-item"><div class="flex-container"><b>COMPLETED:&nbsp;</b> <span class="color_label gray">${stats.jobs_completed || 0 }</span>&nbsp;</b></div></div>
+				   <div class="upcoming grid-item"><div class="flex-container"><b>FAILED:&nbsp;</b>${failed_badge}</div></div>
+				   <div class="upcoming grid-item"><div class="flex-container"><b>SUCCESS:&nbsp;</b> <span class="color_label gray">${pct( (stats.jobs_completed || 0) - (stats.jobs_failed || 0), stats.jobs_completed || 1 ) }</span>&nbsp;</div></div>
+				   <div class="upcoming grid-item"><div class="flex-container"><b>LOG SIZE:&nbsp;</b> <span class="color_label gray"> 2K</span>&nbsp; </div></div>
+				   <div class="upcoming grid-item"><div class="flex-container"><b>UPTIME:&nbsp;</b> <span class="color_label gray">${get_text_from_seconds( mserver.uptime || 0, false, true )}</span>&nbsp;</div></div>
+				   <div class="upcoming grid-item"><div class="flex-container"><b>CPU:&nbsp;</b> <span class="color_label gray">${short_float(total_cpu)}%</span>&nbsp; </div></div>
+				   <div class="upcoming grid-item"><div class="flex-container"><b>MEMORY:&nbsp;</b> <span class="color_label gray">${get_text_from_bytes(total_mem)}</span>&nbsp;</div></div>
+				   <div class="upcoming grid-item"><div class="flex-container"><b>SERVERS:&nbsp;</b> <span class="color_label gray">${num_keys(servers)}</span>&nbsp;</div></div>
+		       </div>
+  `
+	document.getElementById('d_home_header_stats').innerHTML = html;
 	},
 	
 	refresh_upcoming_events: function() {
@@ -214,6 +252,7 @@ Class.subclass( Page.Base, "Page.Home", {
 	
 	nav_upcoming: function(offset) {
 		// refresh upcoming events with new offset
+		app.setPref('fe_up_eventlimit', document.getElementById('fe_up_eventlimit').value)
 		this.upcoming_offset = offset;
 		this.render_upcoming_events({
 			data: this.upcoming_events
@@ -259,7 +298,7 @@ Class.subclass( Page.Base, "Page.Home", {
 			var stub = e.data[idx];
 			var item = find_object( app.schedule, { id: stub.id } ) || {};
 			
-			if (viewType == "Compact View") { // one row per event, use badge for job count
+			if (viewType == "compact" || viewType == "grid") { // one row per event, use badge for job count
 				
 			    var currSched = moment.tz(stub.epoch * 1000, item.timezone || app.tz).format("h:mm A z");
 			    var currCD = get_text_from_seconds_round(Math.max(60, stub.epoch - now), false);
@@ -291,12 +330,14 @@ Class.subclass( Page.Base, "Page.Home", {
 			
 			events.push( stub );
 		} // foreach item in schedule
+
+		let xhtml = ''
 		
 		var size = get_inner_window_size();
 		var col_width = Math.floor( ((size.width * 0.9) + 50) / 7 );
 		
 		var cols = ['Event Name', 'Category', 'Plugin', 'Target', 'Scheduled Time', 'Countdown', 'Actions'];
-		var limit = 25;
+		var limit = 24;
 		
 		html += this.getPaginatedTable({
 			resp: {
@@ -305,7 +346,7 @@ Class.subclass( Page.Base, "Page.Home", {
 					length: events.length
 				}
 			},
-			cols: cols,
+			cols: viewType === 'grid' ? [] : cols,
 			data_type: 'pending event',
 			limit: limit,
 			offset: this.upcoming_offset,
@@ -335,7 +376,7 @@ Class.subclass( Page.Base, "Page.Home", {
 				}
 
 				var badge = '';
-				if(viewType == "Compact View") {
+				if(viewType == "compact" || viewType == "grid") {
 				  var overLimitRows = stubCounter[stub.id] > maxSchedRows ? ` + ${stubCounter[stub.id] - maxSchedRows} more` : '';
 				  var scheduleList = stubTitle[stub.id] + `</table><span><b>${overLimitRows}</span></b>`
 				  var jobCount = stubCounter[stub.id]
@@ -344,9 +385,15 @@ Class.subclass( Page.Base, "Page.Home", {
 				}
 
 				var eventName = self.getNiceEvent('<b>' + item.title + '</b>', col_width, 'float:left', '<span>&nbsp;&nbsp;</span>')
+
+				if( viewType == "grid") {
+					badge = stubCounter[stub.id] > 1 ? `+${stubCounter[stub.id]-1}` : ''
+					nice_countdown = `<div title="${scheduleList}">${nice_countdown}</div>`
+					// badge = `<div style="font-size:1.2em">${badge}</div>`
+				}
 				
 				var tds = [
-					`<a style="float:left" href="#Schedule?sub=edit_event&id=${item.id}"> ${eventName}</a> ${badge} <span style="float:left"></span>`,
+					`<a style="float:left" href="#Schedule?sub=edit_event&id=${item.id}"> ${eventName}</a>${badge}`,
 					self.getNiceCategory( cat, col_width ),
 					self.getNicePlugin( plugin, col_width ),
 					self.getNiceGroup( group, item.target, col_width ),
@@ -362,11 +409,36 @@ Class.subclass( Page.Base, "Page.Home", {
 				}
 
 				if(!app.state.enabled) tds.className += ' disabled'
+
+				if( viewType == "grid") {  // tile/grid view
+
+				let proximity  = ''
+				if(stub.epoch*1000 - Date.now() < 1760000) proximity = 'soon'
+				if(stub.epoch*1000 - Date.now() < 360000) proximity = 'minute'
+
+				xhtml += `
+				<div id="${stub.id}" class="upcoming ${proximity} grid-item">
+				 <div class="flex-container" ${ item.title.length > 220 ? 'style="justify-content: space-around;"' : ''}>
+				  <div style="text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">${tds[0]}</div>
+				 <div style="font-size:14px"><b>${nice_countdown}</b></div>
+				</div>
 				
-				return tds;
+				</div>	
+			   `
+			//    <div> <i style="width:20px;cursor:pointer;padding: 2px" class="fa fa fa-plus-circle" title="Add Event" onmouseup="$P().edit_event(-1)"></i></div>
+
+				}
+				else {  // compact table 
+					return tds
+				}
+
+
+
 			} // row callback
 		}); // table
-		
+
+		$('#upcoming_grid').html(xhtml)
+				
 		// $('#d_home_upcoming_events').removeClass('loading').html( html );
 		let upcoming = document.getElementById('d_home_upcoming_events');
 		upcoming.classList.remove('loading');
@@ -406,19 +478,27 @@ Class.subclass( Page.Base, "Page.Home", {
 			}
 
 			let isDark = app.getPref('theme') === 'dark'
-			let green = isDark ? '#44bb44' : 'lightgreen' // success
-			let orange = isDark ? '#bbbb44' : 'orange'  // warning
-			let red = isDark ? '#bb4444' : 'pink'  // error
+			let green = isDark ? '#44bb44DD' : '#90EE90AA' // success
+			let orange = isDark ? '#bbbb44DD' : '#FFA500AA'  // warning
+			let red = isDark ? '#bb4444DD' : '#F88379AA'  // error
 			let statusMap = { 0: green, 255: orange }
 
 			let labels = jobs.map(e => '')
-			if(jobLimit < 100) labels = jobs.map((j, i) => i == 0 ? j.event_title.substring(0, 4) : j.event_title);
+			if(jobLimit <= 100) labels = jobs.map((j, i) => i == 0 ? j.event_title.substring(0, 4) : j.event_title);
+
+			let ctx = document.getElementById('d_home_completed_jobs');
+			// var gradient = ctx.createLinearGradient(0, 0, 0, 400);
+			// gradient.addColorStop(0, 'rgba(250,174,50,1)');   
+			// gradient.addColorStop(1, 'rgba(250,174,50,0)');
+
+
 			let datasets = [{
 				label: 'Completed Jobs',
 				// data: jobs.map(j => Math.ceil(j.elapsed/60)),
 				data: jobs.map(j => Math.ceil(j.elapsed) + 1),
 				backgroundColor: jobs.map(j => statusMap[j.code] || red),
-				jobs: jobs
+				jobs: jobs,
+
 				// borderWidth: 0.3
 			}];
 			let scaleType =  document.getElementById('fe_cmp_job_chart_scale').value || 'logarithmic';
@@ -434,8 +514,7 @@ Class.subclass( Page.Base, "Page.Home", {
 				return
 			} 
 
-			let ctx = document.getElementById('d_home_completed_jobs');
-
+		
 			app.jobHistoryChart = new Chart(ctx, {
 				type: 'bar',
 				data: {
@@ -446,8 +525,10 @@ Class.subclass( Page.Base, "Page.Home", {
 				options: {
 
 					legend: { display: false },
+					animation: {duration: 0},
 					layout: { padding: { bottom: jobLimit > 50 ? 50 : 20 } },
 					tooltips: {
+
 						yAlign: 'top',
 						titleFontSize: 14,
 						titleFontColor: 'orange',
@@ -474,7 +555,7 @@ Class.subclass( Page.Base, "Page.Home", {
 						}],
 						yAxes: [{
 							type: scaleType,
-							gridLines: { color: 'rgb(170, 170, 170)', lineWidth: 0.3 },
+							gridLines: { color: 'rgb(170, 170, 170)', lineWidth: 0.3  },
 							ticks: {
 								display: false,
 								beginAtZero: true,
@@ -516,10 +597,11 @@ Class.subclass( Page.Base, "Page.Home", {
 			return (a.time_start < b.time_start) ? 1 : -1;
 		} );
 		
-		var cols = ['Job ID', 'Event Name', 'Argument', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Performance', 'Memo', 'Actions'];
+		var cols = this.jobs.length > 0 ? ['Job ID', 'Event Name', 'Argument', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Performance', 'Memo', 'Actions'] : [];
 		
 		// render table
 		var self = this;
+
 		html += this.getBasicTable( this.jobs, cols, 'active job', function(job, idx) {
 			var actions = [
 				// '<span class="link" onMouseUp="$P().go_job_details('+idx+')"><b>Details</b></span>',
