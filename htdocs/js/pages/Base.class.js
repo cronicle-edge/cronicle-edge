@@ -60,18 +60,31 @@ Class.subclass(Page, "Page.Base", {
 		return '<div style="white-space:nowrap;"><i class="fa fa-pie-chart">&nbsp;</i>' + id + '</div>';
 	},
 
-	getNiceEvent: function (title, width, style, extra) {
+	getNiceEvent: function (title, width, style, extra, extraTooltip) {
 		if (!width) width = 500;
 		if (!title) return '(None)';
 		if (!style) style = '';
 		if (!extra) extra = '';
+		let tooltip = title.notes ? title.notes.replace(/\"/g, "&quot;") : ""
+		if(extraTooltip) {
+			let cat = title.category_title || '(none)'
+			let plug = title.plugin_title || '(none)'
+			let target = title.group_title || '(none)'
+			tooltip = `<b>Category: </b>${cat}<br><b>Plugin: </b>${plug}<br><b>Target: </b>${target}<b><br>Notes:</b><br>${tooltip}`
+		}
+
+		let cat = title.category_title || ''
+		let plug = title.plugin_title || ''
 		let icon_class = 'fa fa-clock-o';
 		if(title.plugin == 'workflow') icon_class = 'fa fa-folder';
-		let notes = title.notes ? title.notes.replace(/\"/g, "&quot;") : ""
+		
 		if (typeof (title) == 'object') {
 			title = title.title
         }
-		return `<div class="ellip" style="max-width:${width}px;${style}"><i title="${notes}" class="${icon_class}">&nbsp;</i>${title}${extra}</div>`;
+
+		let icon =  `<i title="${tooltip}" class="${icon_class}">&nbsp;</i>`
+		
+		return `<div class="ellip" style="max-width:${width}px;${style}">${icon} ${title}${extra}</div>`;
 	},
 
 	getNiceCategory: function (cat, width, collapse) {

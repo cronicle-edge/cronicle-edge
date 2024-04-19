@@ -222,83 +222,54 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		html += this.get_job_result_banner(job).replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "");
 
 		// fieldset header
-		html += '<fieldset style="margin-top:8px; margin-right:0px; padding-top:10px; position:relative;"><legend>Job Details</legend>';
+		html += '<fieldset style="display:none;margin-top:8px; margin-right:0px; padding-top:10px; position:relative;"><legend>Job Details</legend>';
 
-		// if (event.id && !event.multiplex) html += '<div class="button mini" style="position:absolute; top:15px; left:100%; margin-left:-110px;" onMouseUp="$P().run_again()">Run Again</div>';
+		let eventTitle = '(None)'
+		if (event.id) eventTitle = '<a href="#Schedule?sub=edit_event&id=' + job.event + '">' + this.getNiceEvent(job.event_title, col_width) + '</a>';
+		else if (job.event_title) eventTitle = this.getNiceEvent(job.event_title, col_width);
 
-		html += '<div style="float:left; width:25%;">';
-		html += '<div class="info_label">JOB ID</div>';
-		html += '<div class="info_value">' + job.id + '</div>';
+        let jobCategory = '(None)'
+		if (cat) jobCategory = this.getNiceCategory(cat, col_width);
+		else if (job.category_title) jobCategory= this.getNiceCategory({ title: job.category_title }, col_width);
 
-		html += '<div class="info_label">EVENT NAME</div>';
-		html += '<div class="info_value">';
-		if (event.id) html += '<a href="#Schedule?sub=edit_event&id=' + job.event + '">' + this.getNiceEvent(job.event_title, col_width) + '</a>';
-		else if (job.event_title) html += this.getNiceEvent(job.event_title, col_width);
-		else html += '(None)';
-		html += '</div>';
+        let jobPlugin = '(None)'
+		if (plugin) jobPlugin = this.getNicePlugin(plugin, col_width);
+		else if (job.plugin_title) jobPlugin = this.getNicePlugin({ title: job.plugin_title }, col_width);
 
-		// html += '<div class="info_label">EVENT TIMING</div>';
-		// html += '<div class="info_value">' + (event.enabled ? summarize_event_timing(event.timing, event.timezone) : '(Disabled)') + '</div>';
-		// html += '</div>';
+		let jobTarget = '(None)'
+		if (group || event.target) jobTarget = this.getNiceGroup(group, event.target, col_width);
+		else if (job.nice_target) jobTarget = '<div class="ellip" style="max-width:' + col_width + 'px;">' + job.nice_target + '</div>';
 
-		html += '<div class="info_label">ARGUMENT</div>'; // hist
-		html += '<div class="info_value">' + encode_entities(job.arg || '(no argument)') + '</div>';
-		html += '</div>';
-
-		html += '<div style="float:left; width:25%;">';
-		html += '<div class="info_label">CATEGORY NAME</div>';
-		html += '<div class="info_value">';
-		if (cat) html += this.getNiceCategory(cat, col_width);
-		else if (job.category_title) html += this.getNiceCategory({ title: job.category_title }, col_width);
-		else html += '(None)';
-		html += '</div>';
-
-		html += '<div class="info_label">PLUGIN NAME</div>';
-		html += '<div class="info_value">';
-		if (plugin) html += this.getNicePlugin(plugin, col_width);
-		else if (job.plugin_title) html += this.getNicePlugin({ title: job.plugin_title }, col_width);
-		else html += '(None)';
-		html += '</div>';
-
-		html += '<div class="info_label">EVENT TARGET</div>';
-		html += '<div class="info_value">';
-		if (group || event.target) html += this.getNiceGroup(group, event.target, col_width);
-		else if (job.nice_target) html += '<div class="ellip" style="max-width:' + col_width + 'px;">' + job.nice_target + '</div>';
-		else html += '(None)';
-		html += '</div>';
-		html += '</div>';
-
-		html += '<div style="float:left; width:25%;">';
-		html += '<div class="info_label">JOB SOURCE</div>';
-		html += `<div class="info_value"><div title="${summarize_event_timing(event.timing, event.timezone)}" class="ellip" style="max-width:' + col_width + 'px;">` + (job.source || 'Scheduler') + '</div></div>';
-
-		html += '<div class="info_label">SERVER HOSTNAME</div>';
-		html += '<div class="info_value">' + this.getNiceGroup(null, job.hostname, col_width) + '</div>';
-
-		html += '<div class="info_label">PROCESS ID</div>';
-		html += '<div class="info_value">' + (job.detached_pid || job.pid || '(Unknown)') + '</div>';
-		html += '</div>';
-
-		html += '<div style="float:left; width:25%;">';
-		html += '<div class="info_label">JOB STARTED</div>';
-		html += '<div class="info_value">';
+		let jobStarted = get_nice_date_time(job.time_start, false, true);
 		if ((job.time_start - job.now >= 60) && !event.multiplex && !job.source) {
-			html += '<span style="color:red" title="Scheduled Time: ' + get_nice_date_time(job.now, false, true) + '">';
-			html += get_nice_date_time(job.time_start, false, true);
-			html += '</span>';
+			jobStarted = `<span style="color:red" title="Scheduled Time: ${get_nice_date_time(job.now, false, true)}">${get_nice_date_time(job.time_start, false, true)}</span>`
 		}
-		else html += get_nice_date_time(job.time_start, false, true);
-		html += '</div>';
 
-		html += '<div class="info_label">JOB COMPLETED</div>';
-		html += '<div class="info_value">' + get_nice_date_time(job.time_end, false, true) + '</div>';
-
-		html += '<div class="info_label">ELAPSED TIME</div>';
-		html += '<div class="info_value">' + get_text_from_seconds(job.elapsed, false, false) + '</div>';
-		html += '</div>';
-
-		html += '<div class="clear"></div>';
 		html += '</fieldset>';
+
+		let timing = summarize_event_timing(event.timing, event.timezone)
+
+		html += `
+		  <div class="job-details grid-container">
+		    <div class="job-details  grid-item"><div class="info_label">JOB ID:</div><div class="info_value">${job.id}</div></div>
+			<div class="job-details  grid-item"><div class="info_label">PID:</div><div class="info_value">${(job.detached_pid || job.pid || '(Unknown)')}</div></div>
+		    <div class="job-details  grid-item"><div class="info_label">CAT:</div><div class="info_value">${jobCategory}</div></div>
+		    <div class="job-details  grid-item"><div class="info_label">SOURCE:</div><div class="info_value">${job.source || 'Scheduler'}</div></div>
+			<div class="job-details  grid-item"><div class="info_label">TARGET:</div><div class="info_value">${jobTarget}</div></div>
+		    <div class="job-details  grid-item"><div class="info_label">START:</div><div class="info_value">${jobStarted}</div></div>
+			<div class="job-details  grid-item"><div class="info_label">ELAPSED:</div><div class="info_value">${get_text_from_seconds(job.elapsed, false, false)}</div></div>		    
+		    
+
+			<div class="job-details  grid-item"><div class="info_label">EVENT:</div><div class="info_value">${eventTitle}</div></div>
+			<div class="job-details  grid-item"><div class="info_label">ARG:</div><div class="info_value">${encode_entities(job.arg || '(no argument)')}</div></div>
+			<div class="job-details  grid-item"><div class="info_label">PLUGIN:</div><div class="info_value">${jobPlugin}</div></div>
+			<div class="job-details  grid-item"><div class="info_label">MEMO:</div><div class="info_value">${job.memo || '(none)'}</div></div>
+		    <div class="job-details  grid-item"><div class="info_label">HOST:</div><div class="info_value">${this.getNiceGroup(null, job.hostname, col_width)}</div></div>
+		    <div class="job-details  grid-item"><div class="info_label">END:</div><div class="info_value">${get_nice_date_time(job.time_end, false, true)}</div></div>   				    			
+			<div class="job-details  grid-item"><div class="info_value ellip" title="${timing}"style="max-width:300px"><i class="fa fa-clock-o" aria-hidden="true"></i> ${timing}</div></div>
+		  </div>
+		  <div class="clear"></div>
+		`
 
 		// pies
 		html += '<div style="position:relative; margin-top:15px;">';
@@ -825,76 +796,36 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		html += '<div class="clear"></div>';
 		html += '</div>';
 
-		// fieldset header
-		html += '<fieldset style="margin-top:0px; margin-right:0px; padding-top:10px; position:relative"><legend>Job Details</legend>';
-
-		// html += '<div class="button mini" style="position:absolute; top:15px; left:100%; margin-left:-110px;" onMouseUp="$P().abort_job()">Abort Job...</div>';
-
-		html += '<div style="float:left; width:25%;">';
-		html += '<div class="info_label">JOB ID</div>';
-		html += `<div class="info_value"> <a href="/console?id=${job.id}" target="_blank"><i class="fa fa-pie-chart">&nbsp;&nbsp</i>${job.id}</a></div>`;
-
-		html += '<div class="info_label">EVENT NAME</div>';
-		html += '<div class="info_value"><a href="#Schedule?sub=edit_event&id=' + job.event + '">' + this.getNiceEvent(job.event_title, col_width) + '</a></div>';
-
-		// html += '<div class="info_label">EVENT TIMING</div>';
-		// html += '<div class="info_value">' + (event.enabled ? summarize_event_timing(event.timing, event.timezone) : '(Disabled)') + '</div>';
-		// html += '</div>';
-
-		html += '<div class="info_label">ARGUMENT</div>'; // hist
-		html += '<div class="info_value">' + encode_entities(job.arg || '(no argument)') + '</div>';
-		html += '</div>';
-
-		// html += '<div class="info_label">ARGUMENT</div>';
-		// html += '<div class="info_value">' + encode_entities(job.arg || '') + '</div>';
-		// html += '</div>';
-		
-
-		html += '<div style="float:left; width:25%;">';
-		html += '<div class="info_label">CATEGORY NAME</div>';
-		html += '<div class="info_value">' + this.getNiceCategory(cat, col_width) + '</div>';
-
-		html += '<div class="info_label">PLUGIN NAME</div>';
-		html += '<div class="info_value">' + this.getNicePlugin(plugin, col_width) + '</div>';
-
-		html += '<div class="info_label">EVENT TARGET</div>';
-		html += '<div class="info_value">' + this.getNiceGroup(group, event.target, col_width) + '</div>';
-		html += '</div>';
-
-		html += '<div style="float:left; width:25%;">';
-		html += '<div class="info_label">JOB SOURCE</div>';
-		html += `<div class="info_value"><div title="${summarize_event_timing(event.timing, event.timezone)}" class="ellip" style="max-width:` + col_width + 'px;">' + (job.source || 'Scheduler') + '</div></div>';
-
-		html += '<div class="info_label">SERVER HOSTNAME</div>';
-		html += '<div class="info_value">' + this.getNiceGroup(null, job.hostname, col_width) + '</div>';
-
-		html += '<div class="info_label">PROCESS ID</div>';
-		html += '<div class="info_value" id="d_live_pid">' + job.pid + '</div>';
-		html += '</div>';
-
-		html += '<div style="float:left; width:25%;">';
-		html += '<div class="info_label">JOB STARTED</div>';
-		html += '<div class="info_value">' + get_nice_date_time(job.time_start, false, true) + '</div>';
-
-		html += '<div class="info_label">ELAPSED TIME</div>';
-		var elapsed = Math.floor(Math.max(0, app.epoch - job.time_start));
-		html += '<div class="info_value" id="d_live_elapsed">' + get_text_from_seconds(elapsed, false, false) + '</div>';
-
-		var progress = job.progress || 0;
-		var nice_remain = 'n/a';
+		let eventTitle = `<a href="#Schedule?sub=edit_event&id=${job.event}">${this.getNiceEvent(job.event_title, col_width)}</a>`
+		let elapsed = Math.floor(Math.max(0, app.epoch - job.time_start));
+		let job_progress = job.progress || 0;
+		let nice_remain = 'n/a';
 		if (job.pending && job.when) {
 			nice_remain = 'Retry in ' + get_text_from_seconds(Math.max(0, job.when - app.epoch), true, true) + '';
 		}
-		else if ((elapsed >= 10) && (progress > 0) && (progress < 1.0)) {
-			var sec_remain = Math.floor(((1.0 - progress) * elapsed) / progress);
+		else if ((elapsed >= 10) && (job_progress > 0) && (job_progress < 1.0)) {
+			var sec_remain = Math.floor(((1.0 - job_progress) * elapsed) / job_progress);
 			nice_remain = get_text_from_seconds(sec_remain, false, true);
 		}
-		html += '<div class="info_label">REMAINING TIME</div>';
-		html += '<div class="info_value" id="d_live_remain">' + nice_remain + '</div>';
-		html += '</div>';
 
-		html += '<div class="clear"></div>';
-		html += '</fieldset>';
+		html += `
+		<div class="job-details running grid-container">
+		  <div class="job-details  grid-item"><div class="info_label">JOB ID:</div><div class="info_value">${job.id}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">PID:</div><div id="d_live_pid" class="info_value">${(job.detached_pid || job.pid || '(Unknown)')}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">CAT:</div><div class="info_value">${this.getNiceCategory(cat, col_width)}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">TARGET:</div><div class="info_value">${this.getNiceGroup(group, event.target, col_width) }</div></div> 
+		  <div class="job-details  grid-item"><div class="info_label">SOURCE:</div><div class="info_value">${job.source || 'Scheduler'}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">START:</div><div class="info_value">${get_nice_date_time(job.time_start, false, true) }</div></div>
+
+		  <div class="job-details  grid-item"><div class="info_label">EVENT:</div><div class="info_value">${eventTitle}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">ARG:</div><div class="info_value">${encode_entities(job.arg || '(no argument)')}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">PLUGIN:</div><div class="info_value">${this.getNicePlugin(plugin, col_width)}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">HOST:</div><div class="info_value">${this.getNiceGroup(null, job.hostname, col_width)}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">ELAPSED TIME:</div><div id="d_live_elapsed" class="info_value">${get_text_from_seconds(elapsed, false, false)}</div></div>   				    			
+		  <div class="job-details  grid-item"><div class="info_label">REMAINING TIME:</div><div id="d_live_remain" class="info_value"> ${nice_remain}</div></div>
+		</div>
+		<div class="clear"></div>
+	  `
 
 		// pies
 		html += '<div style="position:relative; margin-top:15px;">';

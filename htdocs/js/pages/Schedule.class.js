@@ -122,7 +122,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		py: "python"
 	},
 
-	setFileEditor: function(fileName) {
+	setFileEditor: function (fileName) {
 		const self = this
 		let editor = CodeMirror.fromTextArea(document.getElementById("fe_ee_pp_file_content"), {
 			mode: self.extension_map[fileName.split('.').pop()] || 'text',
@@ -136,9 +136,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			lint: true
 		})
 
-		editor.on('change', function(cm){
+		editor.on('change', function (cm) {
 			document.getElementById("fe_ee_pp_file_content").value = cm.getValue();
-		 });
+		});
 
 		editor.setSize('52vw', '52vh')
 
@@ -180,7 +180,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="" spellcheck="false"/>`) +
 			get_form_table_spacer() +
 			get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110"></textarea>`)
-			html +=`</table>`
+		html += `</table>`
 
 		setTimeout(() => self.setFileEditor('.text'), 30) // editor needs to wait for a bit for modal window to render
 
@@ -224,7 +224,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="${file.name}" spellcheck="false">`) +
 			get_form_table_spacer() +
 			get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110">${file.content}</textarea>`)
-			html += '</table>'
+		html += '</table>'
 
 		setTimeout(() => self.setFileEditor(file.name), 30) // editor needs to wait for a bit for modal window to render
 
@@ -621,6 +621,12 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	},
 
+	show_event_stats: function(id) {
+		// let evt = find_object(app.schedule, {id: id})
+		// document.getElementById('fe_event_info').innerHTML = `${evt.title}: category: ${evt.category} , plugin: ${evt.plugin}`
+		// $('#ex_' + id).toggle()
+	},
+
 	gosub_events: function (args) {
 		// render table of events with filters and search
 		this.div.removeClass('loading');
@@ -750,35 +756,44 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 
 		// Scheduled Event page:
-
-		let miniButtons = '<div style="float:right;" class="subtitle_widget"><a><i style="width:20px;cursor:pointer;margin-right: 20px" class="fa fa-pie-chart" title="Show Event Graph" onMouseUp="$P().show_graph()"></i></a></div>'
-
-		if (app.isAdmin()) {
-			miniButtons += '<div style="float:right;" class="subtitle_widget"><a><i style="width:20px;cursor:pointer;" class="fa fa-download" title="Backup" onMouseUp="$P().export_schedule()"></i></a></div>'
-		}
+		let miniButtons = ''
 
 		if (app.hasPrivilege('create_events')) {
-			miniButtons += '<div style="float:right;" class="subtitle_widget"><a><i style="width:20px;cursor:pointer;" class="fa fa-random" title="Random Event" onMouseUp="$P().do_random_event()"></i><a/></div>'
-			miniButtons += '<div style="float:right;" class="subtitle_widget"><a><i style="width:20px;cursor:pointer;" class="fa fa fa-plus-circle" title="Add Event" onMouseUp="$P().edit_event(-1)"></i></a></div>'
+			miniButtons += '<div class="subtitle_widget"><i style="width:20px;cursor:pointer;" class="fa fa fa-plus-circle" title="Add Event" onMouseUp="$P().edit_event(-1)"></i></div>'
+			miniButtons += '<div class="subtitle_widget"><i style="width:20px;cursor:pointer;" class="fa fa-bolt" title="Generate Event" onMouseUp="$P().do_random_event()"></i></div>'
 		}
 
+		if (app.isAdmin()) {
+			miniButtons += '<div class="subtitle_widget"><i style="width:20px;cursor:pointer;" class="fa fa-download" title="Backup" onMouseUp="$P().export_schedule()"></i></div>'
+		}
+
+		miniButtons += '<div class="subtitle_widget"><i style="width:20px;cursor:pointer;" class="fa fa-pie-chart" title="Show Event Graph" onMouseUp="$P().show_graph()"></i></div>'
+
+		let eventView = app.getPref('event_view') || 'details'
+		let isGrid = eventView === 'grid' || eventView === 'gridall'
+
 		html += `
-		<div style="padding:20px 20px 20px 20px">
-		 <div class="subtitle">	Scheduled Events ${cycleWarning} 
-		  <div class="subtitle_widget"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="10" placeholder="Find events..." style="border:0px;border-radius:5px" value="${escape_text_field_value(args.keywords)}"/></div>
-		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_target" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Servers</option>${this.render_target_menu_options(args.target)}</select></div>
-		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>${render_menu_options(app.plugins, args.plugin, false)}</select></div>
-		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:95px;" onChange="$P().set_search_filters()"><option value="">All Categories</option>${render_menu_options(app.categories, args.category, false)}</select></div>
-		  <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:75px;" onChange="$P().set_search_filters()"><option value="">All Events</option>${render_menu_options([[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"], ["chained", "Chained"]], args.enabled, false)}</select></div>
-          ${miniButtons}
-		 <div class="clear"></div>
+		 <div class="subtitle flex-container" style="height:auto;padding:8px">
+		 <div style="width: calc(45%)">Scheduled Events ${cycleWarning}</div>
+		 <div class="flex-container" style="width:calc(10%)">${miniButtons}</div>
+		 <div style="width: calc(45%);padding-right:10px">
+		   <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_target" class="subtitle_menu" style="width:70px;" onChange="$P().set_search_filters()"><option value="">All Servers</option>${this.render_target_menu_options(args.target)}</select></div>
+		   <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_plugin" class="subtitle_menu" style="width:70px;" onChange="$P().set_search_filters()"><option value="">All Plugins</option>${render_menu_options(app.plugins, args.plugin, false)}</select></div>
+		   <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_cat" class="subtitle_menu" style="width:70px;" onChange="$P().set_search_filters()"><option value="">All Cats</option>${render_menu_options(app.categories, args.category, false)}</select></div>
+		   <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_sch_enabled" class="subtitle_menu" style="width:70px;" onChange="$P().set_search_filters()"><option value="">All Events</option>${render_menu_options([[1, 'Enabled'], [-1, 'Disabled'], ['success', "Last Run Success"], ['error', "Last Run Error"], ["chained", "Chained"]], args.enabled, false)}</select></div>
+		   <div class="subtitle_widget"><i class="fa fa-chevron-down">&nbsp;</i><select id="fe_event_view" class="subtitle_menu" style="width:70px;" onChange="$P().change_event_view(this.value)"><option value="">Details</option>${render_menu_options([['grid', 'Grid'], ['gridall', "Grid-All"]], eventView, false)}</select></div>
+		 </div>          
+		 
 		</div>
+		<div class="clear"></div>
 		`
 		// prep events for sort
 		this.events.forEach(function (item) {
 			var cat = item.category ? find_object(app.categories, { id: item.category }) : null;
 			var group = item.target ? find_object(app.server_groups, { id: item.target }) : null;
 			var plugin = item.plugin ? find_object(app.plugins, { id: item.plugin }) : null;
+
+			if(item.enabled && cat.enabled) item.active = true
 
 			item.category_title = cat ? cat.title : 'Uncategorized';
 			item.group_title = group ? group.title : item.target;
@@ -799,29 +814,57 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 
 		// header center (group by buttons)
+
 		cols.headerRight = `
 		<div class="schedule_group_button_container">
+		
 		<i class="fa fa-sort-alpha-asc ${group_by ? '' : 'selected'}" title="Sort by Title" onMouseUp="$P().change_group_by(\'\')"></i>
 		<i class="fa fa-clock-o ${group_by == 'modified' ? 'selected' : ''}" title="Sort by Modified" onMouseUp="$P().change_group_by(\'modified\')"></i>	
 		<i class="fa fa-folder-open-o ${group_by == 'category' ? 'selected' : ''}" title="Group by Category" onMouseUp="$P().change_group_by(\'category\')"></i>
 		<i class="fa fa-plug ${group_by == 'plugin' ? 'selected' : ''}" title="Group by Plugin" onMouseUp="$P().change_group_by(\'plugin\')"></i>
 		<i class="mdi mdi-server-network ${((group_by == 'group') ? 'selected' : '')}" title="Group by Target" onMouseUp="$P().change_group_by(\'group\')"></i>
 		<i > </i>
-		<i class="${args.collapse ? 'fa fa-arrow-circle-right' : 'fa fa-arrow-circle-up'}" title="${args.collapse ? 'Expand' : 'Collapse'}" onclick="$P().toggle_group_by()"></i>
+		<i class="${args.collapse ? 'fa fa-arrow-circle-right' : 'fa fa-arrow-circle-up'}" title="${args.collapse ? 'Expand' : 'Collapse'}" onclick="$P().toggle_group_by()"></i>		
 		</div>
 		`
-		// render table
-		var last_group = '';
+		// searchBar
+		cols.headerCenter = `<div style="padding-bottom:8px;padding-right:12px"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="25" onfocus="this.placeholder=''" placeholder="Find events..." class="event-search" autocomplete="one-time-code" value="${escape_text_field_value(args.keywords)}"/></div>`
 
-		var htmlTab = this.getBasicTable2(this.events, cols, 'event', function (item, idx) {
-			var actions = [
-				'<span class="link" onMouseUp="$P().run_event(' + idx + ',event)"><b>Run</b></span>',
-				'<span class="link" onMouseUp="$P().edit_event(' + idx + ')"><b>Edit</b></span>',
-				'<a href="#History?sub=event_stats&id=' + item.id + '"><b>Stats</b></a>',
-				'<a href="#History?sub=event_history&id=' + item.id + '"><b>History</b></a>',
-				'<span class="link" onMouseUp="$P().delete_event(' + idx + ')"><b>Delete</b></span>',
-				// '<span class="link" onMouseUp="$P().delete_event('+idx+')"><b>Delete</b></span>'
-			];
+		// render table
+		let last_group = '';
+
+		let xhtml = '';
+
+		let events = this.events || [];
+
+		let totalEvents = events.length
+
+		if(eventView === 'grid') {
+			totalEvents = `${events.filter(e=>e.active).length} active`
+		}
+
+		var htmlTab = this.getBasicTable2(events, cols, 'event', function (item, idx) {
+
+			let actions;
+
+			if (isGrid) {
+				actions = [
+					'<span class="link event-action" onMouseUp="$P().run_event(' + idx + ',event)"><b>run</b></span>',
+					`<span class="link event-action" onMouseUp="Nav.go('#History?sub=event_history&id=${item.id}')"><b>history</b></span>`,
+					'<span class="link event-action" onMouseUp="$P().delete_event(' + idx + ')"><b>delete</b></span>'
+				]
+
+			}
+			else {
+				actions = [
+					'<span class="link" onMouseUp="$P().run_event(' + idx + ',event)"><b>Run</b></span>',
+					'<span class="link" onMouseUp="$P().edit_event(' + idx + ')"><b>Edit</b></span>',
+					'<a href="#History?sub=event_stats&id=' + item.id + '"><b>Stats</b></a>',
+					'<a href="#History?sub=event_history&id=' + item.id + '"><b>History</b></a>',
+					'<span class="link" onMouseUp="$P().delete_event(' + idx + ')"><b>Delete</b></span>',
+					// '<span class="link" onMouseUp="$P().delete_event('+idx+')"><b>Delete</b></span>'
+				];
+			}
 
 			var cat = item.category ? find_object(app.categories, { id: item.category }) : null;
 			var group = item.target ? find_object(app.server_groups, { id: item.target }) : null;
@@ -854,7 +897,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			if (item.chain_error && !app.event_map[item.chain_error]) chain_error += '<b>' + item.chain_error + '</b><br>';
 			var chain_error_msg = chain_error ? `<i class="fa fa-exclamation-triangle" title="Chain contains unexistent events:<br>${chain_error}">&nbsp;</i>` : '';
 
-			var evt_name = self.getNiceEvent(item, col_width, 'float:left', '<span>&nbsp;&nbsp;</span>');
+			var evt_name = self.getNiceEvent(item, col_width, 'float:left', '<span>&nbsp;&nbsp;</span>', isGrid);
+
 			if (chain_tooltip.length > 0) evt_name += `<i  title="${chain_tooltip.join('<br>')}" class="fa fa-arrow-right">&nbsp;&nbsp;</i>${chain_error_msg}</span>`;
 
 			// check if event is has limited time range
@@ -862,22 +906,22 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			if (item.start_time && Number(item.start_time) > new Date().valueOf() + 60000) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
 			if (item.end_time && Number(item.end_time) < new Date().valueOf()) inactiveTitle = 'Schedule expired on ' + new Date(item.end_time).toLocaleString()
 
-			let niceTiming = summarize_event_timing(item.timing, item.timezone, !inactiveTitle ? item.ticks : null)
+			let niceTiming = summarize_event_timing(item.timing, item.timezone, (inactiveTitle || isGrid) ? null : item.ticks)
 
 			if (inactiveTitle) {
 				niceTiming = `<span title="${inactiveTitle}"><s>${niceTiming}</s>`
-				if (item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`
+				if (item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`				
 			}
 
 			let now = Date.now() / 1000
-
-			var tds = [
+            
+			tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ', this)" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
-				'<div class="td_big"><span class="link" onMouseUp="$P().edit_event(' + idx + ')">' + evt_name + '</span></div>',
+				`<div class="td_big"><span class="link" onMouseUp="$P().edit_event(` + idx + ')">' + evt_name + '</span></div>',
 				self.getNiceCategory(cat, col_width),
 				self.getNicePlugin(plugin, col_width),
 				self.getNiceGroup(group, item.target, col_width),
-				niceTiming + chainInfo,
+				niceTiming + (isGrid ? '' : chainInfo),
 				'<span id="ss_' + item.id + '" onMouseUp="$P().jump_to_last_job(' + idx + ')">' + status_html + '</span>',
 				get_text_from_seconds(now - item.modified, true, true), //modified
 				actions.join('&nbsp;|&nbsp;')
@@ -894,38 +938,108 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				tds.className += cat.color;
 			}
 
+
 			// group by
 			if (group_by) {
+
 				let cur_group = item[group_by + '_title'];
 				tds.className = 'event_group_' + (group_by == 'group' ? item['target'] || 'allgrp' : item[group_by]) + ' ' + tds.className
 
 				if (cur_group != last_group) {
 					last_group = cur_group;
-					var insert_html = '<tr class="nohighlight"><td colspan="' + cols.length + '"><div class="schedule_group_header">';
-					switch (group_by) {
-						case 'category': insert_html += self.getNiceCategory(cat, 500, args.collapse); break;
-						case 'plugin': insert_html += self.getNicePlugin(plugin, 500, args.collapse); break;
-						case 'group': insert_html += self.getNiceGroup(group, item.target, 500, args.collapse); break;
+					let group_title;
+
+					if (isGrid) {  // grid view
+						switch (group_by) {
+							case 'category': group_title = self.getNiceCategory(cat, 500, args.collapse); break;
+							case 'plugin':  group_title = self.getNicePlugin(plugin, 500, args.collapse); break;
+							case 'group':  group_title = self.getNiceGroup(group, item.target, 500, args.collapse); break;
+						}
+						
+						// for regular grid - do not show disabled category
+						if(eventView === 'grid' && group_by === 'category' && !cat.enabled) group_title = null;
+
+						if (group_title) xhtml += `<div class="section-divider"><div class="subtitle">${group_title}</div></div>`
+						// tds.insertAbove = group_title;
 					}
-					insert_html += '</div></td></tr>';
-					tds.insertAbove = insert_html;
+					else {  // table view
+						let insert_html = '<tr class="nohighlight"><td colspan="' + cols.length + '"><div class="schedule_group_header">';
+						switch (group_by) {
+							case 'category': insert_html += self.getNiceCategory(cat, 500, args.collapse); break;
+							case 'plugin': insert_html += self.getNicePlugin(plugin, 500, args.collapse); break;
+							case 'group': insert_html += self.getNiceGroup(group, item.target, 500, args.collapse); break;
+						}
+						tds.insertAbove = `${insert_html}</div></td></tr>`;
+					}
+
 				} // group changed
+
 				if (args.collapse) tds.hide = true
 			} // group_by
 
+
+			let timingTitle = niceTiming;			
+			let timing = niceTiming.length > 20 ? summarize_event_timing_short(item.timing) : tds[5]
+
+	
+			if(item.ticks) {
+				timingTitle += `<br><br>Extra ticks: ${item.ticks}`
+				timing +=  "+"
+			} 
+
+			if(app.chained_jobs[item.id]) {
+				timingTitle += ('<br><br>' + app.chained_jobs[item.id])
+				timing += "<";
+			}
+
+			let lastStatus = 'event-none'
+			let xcode = app.state.jobCodes[item.id];
+			if (xcode === 0) lastStatus = 'event-success'
+			if (xcode > 0) lastStatus = 'event-error'
+			if (xcode === 255) lastStatus = 'event-warning'
+
+			// ${tds[0]}
+			//<div ><span style="font-size:0.8em" class="color_label green">✓</span></div>	
+			let itemVisibility =  eventView === 'grid' && (!item.active || args.collapse) ? 'none' : 'true'
+			// link item to it's group, avoid for disabled event on basic grid view
+			let itemClass = eventView === 'grid' && !item.active ? '' : tds.className 
+
+			xhtml += `
+			<div id="${item.id}" style="display:${itemVisibility}" class="upcoming schedule grid-item ${itemClass}" onclick="">
+			 <div class="flex-container schedule">
+			  <div style="text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">${tds[1]}</div>
+			
+			  <div ><span id="ss_${item.id}" onMouseUp="$P().jump_to_last_job(${idx})" style="cursor:pointer;font-size:1.1em;"><i class="fa fa-circle ${lastStatus}"></i></span></div>			 
+			</div>
+
+			<div class="flex-container">
+			  <div style="padding-left:5px">${actions.join(' | ')}</div>	
+			  <div style="text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">		 
+			  <span title="${timingTitle}" style="overflow:hidden;text-overflow: ellipsis;white-space:nowrap">${timing}</span> 
+			  </div>		 
+		    </div>
+			</div>
+				
+		   `
 			return tds;
 		});
 
+		if (isGrid) html += `
+	   <div class="flex-container widget" style="padding-bottom:6px">
+	    <div id="fe_event_info" style="width:100px;margin-left:60px;font-weight:bold" class="subtitle_widget">${totalEvents} events</div>
+ 	     ${cols.headerCenter}
+		 <div style="padding-right:30px" >${cols.headerRight}</div>
+	   </div> 
+	   <div id="scheduled_grid" class="upcoming schedule grid-container">${xhtml}</div>`
+		else html += `<div id="schedule_table"> ${htmlTab} </div>`
+
 		// table and graph (hide latter by default)
-		html += `
-		  <div id="schedule_table"> ${htmlTab} </div>
-		  <div style="height:30px;"></div>
-		  <center><table><tr>
-		`
+		html += ` <center><table><tr><div style="height:30px;"></div>`
+
 		if (app.hasPrivilege('create_events')) {
 			html += `<td><div class="button" style="width:130px;" onMouseUp="$P().edit_event(-1)"><i class="fa fa-plus-circle">&nbsp;&nbsp;</i>Add Event...</div></td>
 			<td width="40">&nbsp;</td>
-			<td><div class="button" style="width:130px;" onMouseUp="$P().do_random_event()"><i class="fa fa-random">&nbsp;&nbsp;</i>Random</div></td>
+			<td><div class="button" style="width:130px;" onMouseUp="$P().do_random_event()"><i class="fa fa-bolt">&nbsp;&nbsp;</i>Generate</div></td>
 			<td width="40">&nbsp;</td>
 			`
 		}
@@ -956,13 +1070,24 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	update_job_last_runs: function () {
 		// update last run state for all jobs, called when state is updated
 		if (!app.state.jobCodes) return;
+		let isGrid = app.getPref('event_view') === 'grid' || app.getPref('event_view') == 'gridall'
 
 		for (var event_id in app.state.jobCodes) {
-			var last_code = app.state.jobCodes[event_id];
-			var status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
-			if (last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
-			// this.div.find('#ss_' + event_id).html(status_html);
-			document.getElementById('ss_' + event_id).innerHTML = status_html
+			let last_code = app.state.jobCodes[event_id];
+			let status_html;
+
+			if (isGrid) {
+				status_html = last_code ? 'event-error' : 'event-success'
+				if (last_code == 255) status_html = 'event-warning'
+				status_html = `<i class="fa fa-circle ${status_html}"></i>`
+			}
+			else {
+				status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
+				if (last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
+			}
+
+			let statusIcon = document.getElementById('ss_' + event_id)
+			if (statusIcon) statusIcon.innerHTML = status_html
 
 		}
 	},
@@ -988,6 +1113,14 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// change grop by setting and refresh schedule display
 		app.setPref('schedule_group_by', group_by);
 		this.gosub_events(this.args);
+	},
+
+	change_event_view: function (view_type) {
+		//  if( ['Grid', 'Details', 'Grid-All'].indexOf(view_type) < 0 ) view_type = 'Details'
+		if (['details', 'grid', 'gridall'].indexOf(view_type) < 0) view_type = 'details'
+		app.setPref('event_view', view_type)
+		this.gosub_events(this.args);
+
 	},
 
 	toggle_group_by: function () {
@@ -1524,7 +1657,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		} // check for update
 
 		delete this.old_event;
-		if (event.secret_value && typeof event.secret_value === 'string' ) {
+		if (event.secret_value && typeof event.secret_value === 'string') {
 			delete event.secret_value
 			$('#fe_ee_secret').val('').attr('placeholder', '[*****]')
 		}
@@ -1734,9 +1867,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 
 		// Secret
-		let sph = event.secret_preview ? '[' + event.secret_preview  + ']' : '';
+		let sph = event.secret_preview ? '[' + event.secret_preview + ']' : '';
 		html += get_form_table_row('Secret', `<textarea  style="width:620px; height:45px;resize:vertical;" id="fe_ee_secret" oninput="$P().set_event_secret(this.value)" placeholder="${sph}" spellcheck="false"></textarea>`);
-		html += get_form_table_caption("Specify KEY=VALUE pairs to be mounted as env variables (to this job process)");
+		html += get_form_table_caption("Specify KEY=VALUE pairs to be mounted as env variables (to this job process). When using Docker plugin, KEY should be prefixed with DOCKER_ to pass custom variable to docker container. When using SSH plugin, KEY should be prefixed with SSH_ to pass to remote machine.");
 		html += get_form_table_spacer();
 
 		// max children
@@ -2537,13 +2670,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		this.refresh_plugin_params();
 	},
-	
-	setScriptEditor: function() {		
-		
+
+	setScriptEditor: function () {
+
 		let params = this.event.params || {}
 		let el = document.getElementById("fe_ee_pp_script")
 
-		if(!el) return 
+		if (!el) return
 
 		let privs = app.user.privileges;
 		let canEdit = privs.admin || privs.edit_events || privs.create_events;
@@ -2585,45 +2718,45 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			gutters: [gutter],
 			lint: lint,
 			extraKeys: {
-			  "F11": (cm) => cm.setOption("fullScreen", !cm.getOption("fullScreen")),
-			  "Esc": (cm) => cm.getOption("fullScreen") ? cm.setOption("fullScreen", false) : null,
-			  "Ctrl-/": (cm) => cm.execCommand('toggleComment')
-			}							  
-		  });
+				"F11": (cm) => cm.setOption("fullScreen", !cm.getOption("fullScreen")),
+				"Esc": (cm) => cm.getOption("fullScreen") ? cm.setOption("fullScreen", false) : null,
+				"Ctrl-/": (cm) => cm.execCommand('toggleComment')
+			}
+		});
 
 		editor.on('change', (cm) => { el.value = cm.getValue() })
 
 		// syntax selector
-		document.getElementById("fe_ee_pp_lang").addEventListener("change", function(){
+		document.getElementById("fe_ee_pp_lang").addEventListener("change", function () {
 			let ln = this.options[this.selectedIndex].value;
 
 			editor.setOption("gutters", ['']);
 			editor.setOption("lint", false)
 
-			if(ln == 'java') {ln = 'text/x-java'}
-			if(ln == 'scala') {ln = 'text/x-scala'}
-			if(ln == 'csharp') {ln = 'text/x-csharp'}
+			if (ln == 'java') { ln = 'text/x-java' }
+			if (ln == 'scala') { ln = 'text/x-scala' }
+			if (ln == 'csharp') { ln = 'text/x-csharp' }
 			if (ln == 'sql') { ln = 'text/x-sql' }
 			if (ln == 'dockerfile') { ln = 'text/x-dockerfile' }
 			if (ln == 'toml') { ln = 'text/x-toml' }
-			if (ln == 'json') { 
+			if (ln == 'json') {
 				ln = 'application/json'
 				editor.setOption("lint", CodeMirror.lint.json)
-			 }
+			}
 			if (ln == 'props') { ln = 'text/x-properties' }
 			if (ln == 'yaml') {
 				ln = 'text/x-yaml'
 				editor.setOption("gutters", ['CodeMirror-lint-markers']);
 				editor.setOption("lint", CodeMirror.lint.yaml)
 			}
-		editor.setOption("mode", ln);
+			editor.setOption("mode", ln);
 		});
 
 		// theme 
-		document.getElementById("fe_ee_pp_theme").addEventListener("change", function(){
+		document.getElementById("fe_ee_pp_theme").addEventListener("change", function () {
 			var thm = this.options[this.selectedIndex].value;
-			if(thm === 'default' && app.getPref('theme') === 'dark') thm = 'gruvbox-dark';
-			if(thm === 'light') thm = 'default';
+			if (thm === 'default' && app.getPref('theme') === 'dark') thm = 'gruvbox-dark';
+			if (thm === 'light') thm = 'default';
 			editor.setOption("theme", thm);
 		});
 	},
@@ -2725,7 +2858,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	refresh_plugin_params: function () {
 		// redraw plugin param area after change
 		$('#d_ee_plugin_params').html(this.get_plugin_params_html());
-		this.setScriptEditor(); 
+		this.setScriptEditor();
 	},
 
 	get_random_event: function () {

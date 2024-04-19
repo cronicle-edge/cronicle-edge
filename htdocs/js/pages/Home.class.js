@@ -16,8 +16,6 @@ Class.subclass( Page.Base, "Page.Home", {
         <div id="d_home_header_stats"></div>
         <div style="height:12px;"></div>     
 		
-
-
 		<!-- Event Flow -->
 
 		<div class="subtitle">
@@ -48,7 +46,6 @@ Class.subclass( Page.Base, "Page.Home", {
 		<canvas id="d_home_completed_jobs" height="40px"></canvas>
 		<div style="height:10px;"></div>
 
-
 		<!-- Active jobs -->
 
         <div class="subtitle">
@@ -74,12 +71,7 @@ Class.subclass( Page.Base, "Page.Home", {
         </div>
         <div id="d_home_upcoming_events" class="loading"></div>
         </div> 
-		<div id="upcoming_grid" class="upcoming grid-container">
-		</div>
-		
-
-
-
+		<div id="upcoming_grid" class="upcoming grid-container"></div>
 		`)
 	},
 
@@ -194,7 +186,7 @@ Class.subclass( Page.Base, "Page.Home", {
     // xhtml
 
 	let failed_badge = `<span style="cursor:pointer;" onclick='Nav.go("History?sub=error_history&error=1&max=${stats.jobs_failed || 0}")' title="${errTitle}" class="color_label ${errBg}">${stats.jobs_failed || 0}</span>&nbsp;`
-
+	
 	status_bar = [
 		{name: "EVENTS", value:  active_events.length},
 		{name: "CATS", value:  app.categories.length},
@@ -202,7 +194,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		{name: "JOBS", value:  stats.jobs_completed || 0},
 		{name: "FAILED", value: failed_badge},
 		{name: "SUCCESS", value:  pct( (stats.jobs_completed || 0) - (stats.jobs_failed || 0), stats.jobs_completed || 1 )},
-		{name: "LOG SIZE", value: '2K'},
+		{name: "LOG SIZE", value: get_text_from_bytes((stats.jobs_log_size || 0) / (stats.jobs_completed || 1))},
 		{name: "UPTIME", value:  get_text_from_seconds( mserver.uptime || 0, false, true )},
 		{name: "CPU", value:  `${short_float(total_cpu)}%`},
 		{name: "MEMORY", value:  get_text_from_bytes(total_mem)},
@@ -212,29 +204,14 @@ Class.subclass( Page.Base, "Page.Home", {
 	html = '<div class="stats grid-container">'
 	status_bar.forEach(e=>{
 		html += `<div class="stats grid-item"><div class="flex-container-stats">
-		     <div style="padding:2px"><b>${e.name}:&nbsp;</b></div>
-			 <div style="padding:2px;"><b>&nbsp;${e.value}&nbsp;</b></div>
+		     <div style="padding:2px;font-size:100%"><b>${e.name}:&nbsp;</b></div>
+			 <div style="padding:2px;font-size:100%"><b>&nbsp;${e.value}&nbsp;</b></div>
 		</div></div>
 	`
 	})
 
 	html += "</div>"
 
-	html2 = `
-	<div class="stats grid-container">
-                   <div class="upcoming grid-item"><div class="flex-container"><div><b>EVENTS:&nbsp;</b></div><div><span class="color_label gray">${ active_events.length}</span></div></div></div>
-				   <div class="upcoming grid-item"><div class="flex-container"><b>CATEGORIES:&nbsp;</b> <span class="color_label gray">${app.categories.length}</span>&nbsp;</div></div>
-				   <div class="upcoming grid-item"><div class="flex-container"><b>PLUGINS:&nbsp;</b> <span class="color_label gray">${app.plugins.length}</span>&nbsp;</div></div>
-				   <div class="upcoming grid-item"><div class="flex-container"><b>COMPLETED:&nbsp;</b> <span class="color_label gray">${stats.jobs_completed || 0 }</span>&nbsp;</b></div></div>
-				   <div class="upcoming grid-item"><div class="flex-container"><b>FAILED:&nbsp;</b>${failed_badge}</div></div>
-				   <div class="upcoming grid-item"><div class="flex-container"><b>SUCCESS:&nbsp;</b> <span class="color_label gray">${pct( (stats.jobs_completed || 0) - (stats.jobs_failed || 0), stats.jobs_completed || 1 ) }</span>&nbsp;</div></div>
-				   <div class="upcoming grid-item"><div class="flex-container"><b>LOG SIZE:&nbsp;</b> <span class="color_label gray"> 2K</span>&nbsp; </div></div>
-				   <div class="upcoming grid-item"><div class="flex-container"><b>UPTIME:&nbsp;</b> <span class="color_label gray">${get_text_from_seconds( mserver.uptime || 0, false, true )}</span>&nbsp;</div></div>
-				   <div class="upcoming grid-item"><div class="flex-container"><b>CPU:&nbsp;</b> <span class="color_label gray">${short_float(total_cpu)}%</span>&nbsp; </div></div>
-				   <div class="upcoming grid-item"><div class="flex-container"><b>MEMORY:&nbsp;</b> <span class="color_label gray">${get_text_from_bytes(total_mem)}</span>&nbsp;</div></div>
-				   <div class="upcoming grid-item"><div class="flex-container"><b>SERVERS:&nbsp;</b> <span class="color_label gray">${num_keys(servers)}</span>&nbsp;</div></div>
-		       </div>
-  `
 	document.getElementById('d_home_header_stats').innerHTML = html;
 	},
 	
@@ -287,6 +264,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		this.upcoming_events = e.data;
 		
 		var viewType = document.getElementById('fe_up_eventlimit').value;
+		let isGrid = viewType === 'grid'
 
 		// apply filters
 		var events = [];
@@ -298,7 +276,7 @@ Class.subclass( Page.Base, "Page.Home", {
 			var stub = e.data[idx];
 			var item = find_object( app.schedule, { id: stub.id } ) || {};
 			
-			if (viewType == "compact" || viewType == "grid") { // one row per event, use badge for job count
+			if (viewType == "compact" || isGrid) { // one row per event, use badge for job count
 				
 			    var currSched = moment.tz(stub.epoch * 1000, item.timezone || app.tz).format("h:mm A z");
 			    var currCD = get_text_from_seconds_round(Math.max(60, stub.epoch - now), false);
@@ -337,7 +315,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		var col_width = Math.floor( ((size.width * 0.9) + 50) / 7 );
 		
 		var cols = ['Event Name', 'Category', 'Plugin', 'Target', 'Scheduled Time', 'Countdown', 'Actions'];
-		var limit = 24;
+		var limit = Math.round(window.innerWidth/350)*5 // try to fit 5 rows
 		
 		html += this.getPaginatedTable({
 			resp: {
@@ -346,7 +324,7 @@ Class.subclass( Page.Base, "Page.Home", {
 					length: events.length
 				}
 			},
-			cols: viewType === 'grid' ? [] : cols,
+			cols: isGrid ? [] : cols,
 			data_type: 'pending event',
 			limit: limit,
 			offset: this.upcoming_offset,
@@ -368,6 +346,7 @@ Class.subclass( Page.Base, "Page.Home", {
 				var nice_countdown = 'Now';
 				if (stub.epoch > now) {
 					nice_countdown = get_text_from_seconds_round( Math.max(60, stub.epoch - now), false );
+					nice_countdown_short = get_text_from_seconds_round( Math.max(60, stub.epoch - now), true ).replace(' hr', 'h');
 				}
 				
 				if (group && item.multiplex) {
@@ -375,21 +354,29 @@ Class.subclass( Page.Base, "Page.Home", {
 					group.multiplex = 1;
 				}
 
-				var badge = '';
-				if(viewType == "compact" || viewType == "grid") {
+				let badge = '';
+				if(viewType == "compact" || isGrid) {
 				  var overLimitRows = stubCounter[stub.id] > maxSchedRows ? ` + ${stubCounter[stub.id] - maxSchedRows} more` : '';
 				  var scheduleList = stubTitle[stub.id] + `</table><span><b>${overLimitRows}</span></b>`
 				  var jobCount = stubCounter[stub.id]
-				  if(jobCount < 10) jobCount = `&nbsp;${jobCount}&nbsp;`;
-				  var badge = `<span title="${scheduleList}" class="color_label gray">${jobCount}</span>`;
+				  if(jobCount < 10 ) jobCount = `&nbsp;${jobCount}&nbsp;`;
+				  badge = `<span title="${scheduleList}" class="color_label gray">${jobCount}</span>`;
 				}
 
-				var eventName = self.getNiceEvent('<b>' + item.title + '</b>', col_width, 'float:left', '<span>&nbsp;&nbsp;</span>')
+				let extraSpace = isGrid ? '<span>&nbsp;</span>' : '<span>&nbsp;&nbsp;</span>'
+				let eventName = self.getNiceEvent('<b>' + item.title + '</b>', col_width, 'float:left', extraSpace)
 
-				if( viewType == "grid") {
+				if(isGrid) {
+					
 					badge = stubCounter[stub.id] > 1 ? `+${stubCounter[stub.id]-1}` : ''
-					nice_countdown = `<div title="${scheduleList}">${nice_countdown}</div>`
-					// badge = `<div style="font-size:1.2em">${badge}</div>`
+
+					// turn minute/hour to min/h if event name is too long
+					if(Math.max(60, stub.epoch - now) <= 60*5) { // for minute/soon (larger font)
+						nice_countdown = `<div title="${scheduleList}">${item.title.length > 18 ? nice_countdown_short : nice_countdown}</div>`
+					}
+					else { // regular
+					   nice_countdown = `<div title="${scheduleList}">${item.title.length > 26 ? nice_countdown_short : nice_countdown}</div>`
+					}					
 				}
 				
 				var tds = [
@@ -410,22 +397,20 @@ Class.subclass( Page.Base, "Page.Home", {
 
 				if(!app.state.enabled) tds.className += ' disabled'
 
-				if( viewType == "grid") {  // tile/grid view
+				if (isGrid) {
+					let proximity = ''
+					if (stub.epoch - now <= 60*5) proximity = 'soon'
+					if (stub.epoch - now <= 60) proximity = 'minute'
 
-				let proximity  = ''
-				if(stub.epoch*1000 - Date.now() < 1760000) proximity = 'soon'
-				if(stub.epoch*1000 - Date.now() < 360000) proximity = 'minute'
-
-				xhtml += `
+					xhtml += `
 				<div id="${stub.id}" class="upcoming ${proximity} grid-item">
-				 <div class="flex-container" ${ item.title.length > 220 ? 'style="justify-content: space-around;"' : ''}>
+				 <div class="flex-container">
 				  <div style="text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">${tds[0]}</div>
 				 <div style="font-size:14px"><b>${nice_countdown}</b></div>
-				</div>
-				
+				</div>				
 				</div>	
 			   `
-			//    <div> <i style="width:20px;cursor:pointer;padding: 2px" class="fa fa fa-plus-circle" title="Add Event" onmouseup="$P().edit_event(-1)"></i></div>
+					//    <div> <i style="width:20px;cursor:pointer;padding: 2px" class="fa fa fa-plus-circle" title="Add Event" onmouseup="$P().edit_event(-1)"></i></div>
 
 				}
 				else {  // compact table 
@@ -591,10 +576,15 @@ Class.subclass( Page.Base, "Page.Home", {
 		for (var id in app.activeJobs) {
 			jobs.push( app.activeJobs[id] );
 		}
+
+		if(jobs.length === 0) return '<div style="display:flex;justify-content: center;font-weight:bold;">No active jobs found<div>'
 		
 		// sort events by time_start descending
 		this.jobs = jobs.sort( function(a, b) {
-			return (a.time_start < b.time_start) ? 1 : -1;
+			if(a.plugin === 'workflow') return  -1
+			if(b.plugin === 'workflow') return 1
+			return (a.time_start - b.time_start)
+			// return (a.time_start > b.time_start) ? 1 : -1;
 		} );
 		
 		var cols = this.jobs.length > 0 ? ['Job ID', 'Event Name', 'Argument', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Performance', 'Memo', 'Actions'] : [];
