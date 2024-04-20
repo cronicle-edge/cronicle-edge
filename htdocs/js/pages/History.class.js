@@ -378,7 +378,7 @@ Class.subclass( Page.Base, "Page.History", {
 			}
 			
 		html += `
-		<div class="job-details running grid-container" style="padding:12px">
+		<div class="job-details grid-container running" style="margin:8px">
 		  <div class="job-details  grid-item"><div class="info_label">EVENT NAME:</div><div class="info_value">${eventTitle}</div></div>
 		  <div class="job-details  grid-item"><div class="info_label">CATEGORY:</div><div class="info_value">${this.getNiceCategory(cat, col_width) }</div></div>
 		  <div class="job-details  grid-item"><div class="info_label">PLUGIN:</div><div class="info_value">${this.getNicePlugin(plugin, col_width)}</div></div>

@@ -209,7 +209,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		html += 'Completed Job';
 
 		if (event.id && !event.multiplex) html += '<div class="subtitle_widget" style="margin-left:2px;"><span class="link" onMouseUp="$P().run_again()"><i class="fa fa-repeat">&nbsp;</i><b>Run Again</b></span></div>';
-		if (event.id) html += `<div class="subtitle_widget" style="margin-left:5px;"><a href="#History?sub=event_history&id=${event.id}"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to History</b></a></div>`;
+		let jumpToHist = `<div><a href="#History?sub=event_history&id=${event.id}"><i class="fa fa-arrow-circle-right">&nbsp;</i><b>Jump to History</b></a></div>`;
 		//adding edit button on job detail page
 		if (event.id) html += '<div class="subtitle_widget" style="margin-left:2px;"><a href="#Schedule?sub=edit_event&id=' + event.id + '" target="_self"><span class="link"><i class="fa fa-edit">&nbsp;</i><b>Edit</b></span></a></div>';
 		if (app.isAdmin()) html += '<div class="subtitle_widget"><span class="link abort" onMouseUp="$P().delete_job()"><i class="fa fa-trash-o">&nbsp;</i><b>Delete Job</b></span></div>';
@@ -254,7 +254,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		    <div class="job-details  grid-item"><div class="info_label">JOB ID:</div><div class="info_value">${job.id}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">PID:</div><div class="info_value">${(job.detached_pid || job.pid || '(Unknown)')}</div></div>
 		    <div class="job-details  grid-item"><div class="info_label">CAT:</div><div class="info_value">${jobCategory}</div></div>
-		    <div class="job-details  grid-item"><div class="info_label">SOURCE:</div><div class="info_value">${job.source || 'Scheduler'}</div></div>
+		    <div class="job-details  grid-item"><div class="info_label">SOURCE:</div><div title="${timing}" class="info_value">${job.source || 'Scheduler'}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">TARGET:</div><div class="info_value">${jobTarget}</div></div>
 		    <div class="job-details  grid-item"><div class="info_label">START:</div><div class="info_value">${jobStarted}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">ELAPSED:</div><div class="info_value">${get_text_from_seconds(job.elapsed, false, false)}</div></div>		    
@@ -266,13 +266,16 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 			<div class="job-details  grid-item"><div class="info_label">MEMO:</div><div class="info_value">${job.memo || '(none)'}</div></div>
 		    <div class="job-details  grid-item"><div class="info_label">HOST:</div><div class="info_value">${this.getNiceGroup(null, job.hostname, col_width)}</div></div>
 		    <div class="job-details  grid-item"><div class="info_label">END:</div><div class="info_value">${get_nice_date_time(job.time_end, false, true)}</div></div>   				    			
-			<div class="job-details  grid-item"><div class="info_value ellip" title="${timing}"style="max-width:300px"><i class="fa fa-clock-o" aria-hidden="true"></i> ${timing}</div></div>
+			<div class="job-details  grid-item"><div class="info_value">${jumpToHist }</div></div>
+			
 		  </div>
 		  <div class="clear"></div>
 		`
 
+		// <div class="job-details  grid-item"><div class="info_value ellip" title="${timing}"style="max-width:300px"><i class="fa fa-clock-o" aria-hidden="true"></i> ${timing}</div></div>
+
 		// pies
-		html += '<div style="position:relative; margin-top:15px;">';
+		html += '<div style="position:relative; margin-top:25px;">';
 
 		html += '<div class="pie-column column-left">';
 		html += '<div class="pie-title">Performance Metrics</div>';
@@ -809,7 +812,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		}
 
 		html += `
-		<div class="job-details running grid-container">
+		<div class="job-details grid-container running">
 		  <div class="job-details  grid-item"><div class="info_label">JOB ID:</div><div class="info_value">${job.id}</div></div>
 		  <div class="job-details  grid-item"><div class="info_label">PID:</div><div id="d_live_pid" class="info_value">${(job.detached_pid || job.pid || '(Unknown)')}</div></div>
 		  <div class="job-details  grid-item"><div class="info_label">CAT:</div><div class="info_value">${this.getNiceCategory(cat, col_width)}</div></div>
