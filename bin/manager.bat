@@ -48,12 +48,13 @@ if /I "%1"=="--port" (
       echo Missing cluster value. Specify comma-separatd hostnames
       exit
     )    
-    set CRONICLE_cluster=%~f2
-    echo These servers will be added on setup: %~f2
+    set CRONICLE_cluster=%2
+    echo These servers will be added on setup: %2
     shift
     shift
 ) else if /I "%1"=="--reset" (
   set CRONICLE_RESET=1
+  shift
 ) else if /I "%1"=="--help" (
     echo Usage:  .\manager [--port  port] [ --storage /path/to/storage.json] 
     echo         [ --reset ]  # make current host the manager
@@ -75,6 +76,7 @@ IF EXIST "%~dp0..\nodejs\node.exe" (
 REM setup or reset manager
 if "%CRONICLE_RESET%"=="1" (
   node .\storage-cli.js reset
+  echo Croncile manager was reset to current host
 ) else (
   node .\storage-cli.js setup
 )
