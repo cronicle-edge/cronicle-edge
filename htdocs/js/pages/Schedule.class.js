@@ -993,7 +993,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			}
 
 			let lastStatus = 'event-none'
-			let xcode = app.state.jobCodes[item.id];
+			let jobCodes = app.state.jobCodes || {} 
+			let xcode = jobCodes[item.id];
 			if (xcode === 0) lastStatus = 'event-success'
 			if (xcode > 0) lastStatus = 'event-error'
 			if (xcode === 255) lastStatus = 'event-warning'
