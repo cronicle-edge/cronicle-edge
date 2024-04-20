@@ -43,8 +43,21 @@ if /I "%1"=="--port" (
     echo Using sqlite as storage: %~f2
     shift
     shift
+) else if /I "%1"=="--cluster" (
+    if "%2"=="" (
+      echo Missing cluster value. Specify comma-separatd hostnames
+      exit
+    )    
+    set CRONICLE_cluster=%~f2
+    echo These servers will be added on setup: %~f2
+    shift
+    shift
+) else if /I "%1"=="--reset" (
+  set CRONICLE_RESET=1
 ) else if /I "%1"=="--help" (
-    echo Usage:  .\manager [--port  port] [ --storage /path/to/storage.json]
+    echo Usage:  .\manager [--port  port] [ --storage /path/to/storage.json] 
+    echo         [ --reset ]  # make current host the manager
+    echo         [ --cluster "server1,server2"]  # add extra workers on setup
     shift    
 ) else (exit)
 
@@ -59,11 +72,11 @@ IF EXIST "%~dp0..\nodejs\node.exe" (
   SET "PATH=%~dp0..\nodejs;%PATH%"
 )
 
-node .\storage-cli.js setup
-
-if not "%~1"=="" (
-    set "CRONICLE_WebServer__http_port=%1"
-    echo CRONICLE_http_port is set to %1
+REM setup or reset manager
+if "%CRONICLE_RESET%"=="1" (
+  node .\storage-cli.js reset
+) else (
+  node .\storage-cli.js setup
 )
 
 node .\cronicle.js --manager --echo --foreground --color
