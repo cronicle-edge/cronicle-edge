@@ -62,6 +62,7 @@ const docker = new Docker(dockerOpts)
 const ENTRYPOINT_PATH = process.env['ENTRYPOINT_PATH'] || '/cronicle.sh'
 const cname = 'cronicle-' + (process.env['JOB_ID'] || process.pid)
 let imageName = process.env['IMAGE'] || 'alpine'
+let network = process.env['NETWORK']
 let script = process.env['SCRIPT'] ?? "#!/bin/sh\necho 'No script specified'"
 const autoPull = !!parseInt(process.env['PULL_IMAGE'])
 const autoRemove = !parseInt(process.env['KEEP_CONTAINER'])
@@ -139,6 +140,8 @@ if (!keepEntrypoint) {
     createOptions.Entrypoint = [ENTRYPOINT_PATH]
     createOptions.WorkingDir = path.dirname(ENTRYPOINT_PATH)
 }
+
+if(network) createOptions.HostConfig['NetworkMode'] = network
 
 
 // ----------------RUNNING CONTAINER -------- //

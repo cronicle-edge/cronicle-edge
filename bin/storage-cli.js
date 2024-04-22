@@ -10,6 +10,7 @@ var os = require('os');
 var fs = require('fs');
 var async = require('async');
 var bcrypt = require('bcrypt-node');
+var dns = require('dns')
 
 var Args = require('pixl-args');
 var Tools = require('pixl-tools');
@@ -155,6 +156,27 @@ for (var env_key in process.env) {
 	}
 }
 
+// helper function to resolve IPs for CRONICLE_cluster
+const getIPsForHostnames = async (hostnames) => {
+    const ipPromises = hostnames.map(hostname => {
+        return new Promise((resolve, reject) => {
+            dns.lookup(hostname.trim(), (err, ip) => {
+                if (err) resolve({ hostname: hostname.trim(), ip: null });
+				else resolve({ hostname: hostname.trim(), ip });
+            });
+        });
+    });
+
+    try {
+        // Wait for all DNS lookups to finish
+        const ips = await Promise.all(ipPromises);
+        return ips;
+    } catch (error) {
+        console.error("Error fetching IP addresses:", error);
+        return [];
+    }
+};
+
 // construct standalone storage server
 var storage = new StandaloneStorage(config.Storage, function (err) {
 	if (err) throw err;
@@ -188,10 +210,17 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 
 			// make sure this is only run once
 			// changing exit code to 0, so it won't break docker entry point
-			storage.get('global/users', function (err) {
+			storage.get('global/users', async function (err) {
 				if (!err) {
 					print("Storage has already been set up.  There is no need to run this command again.\n\n");
 					process.exit(0);
+				}
+
+				if(process.env['CRONICLE_cluster']) {
+					let servers = await getIPsForHostnames(process.env['CRONICLE_cluster'].split(','))
+					servers.forEach(server =>{
+						setup.storage.push(["listPush", "global/servers", server])
+					})
 				}
 
 				async.eachSeries(setup.storage,
@@ -227,6 +256,34 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 						storage.shutdown(function () { process.exit(0); });
 					}
 				);
+			});
+			break;
+
+		case 'reset':
+
+			let newGroup = { regexp: '^(' + Tools.escapeRegExp(hostname) + ')$' }
+
+			storage.listFindUpdate('global/server_groups', { id: "maingrp" }, newGroup, function (err) {
+				if (err) throw err;
+				print(`Main group regex is set to [ ${newGroup.regexp} ]`);
+				print("\n");
+
+					storage.listFind("global/servers", { hostname: hostname }, function (err, item) {
+						// already exist?
+						if (item) {
+							print(`${hostname} already exist in server list\n`);
+							storage.shutdown(function () { process.exit(1); });
+						}
+						else {
+							storage.listPush("global/servers", { hostname: hostname, ip: ip }, function (err) {
+								if (err) throw err;
+								print(`Added ${hostname} to server list (remove old servers from UI as needed)\n`);								
+								storage.shutdown(function () { process.exit(0); });
+							})
+						}
+
+					})
+
 			});
 			break;
 

@@ -9,7 +9,10 @@ const fs = require('fs')
 // read job info from stdin (sent by Cronicle engine)
 const job = JSON.parse(fs.readFileSync(process.stdin.fd))
 
-const print = (text) => process.stdout.write(text + EOL)
+let pref = ''
+if(job.params.annotate) pref = `[${new Date().toISOString()}] `
+
+const print = (text) => process.stdout.write(pref + text + EOL)
 const printInfo = (text) => process.stdout.write(`[INFO] \x1b[32m${text}\x1b[0m` + EOL)
 const printWarning = (text) => process.stdout.write(`[INFO] \x1b[33m${text}\x1b[0m` + EOL)
 const printError = (text) => process.stdout.write(`\x1b[31m${text}\x1b[0m` + EOL)

@@ -819,6 +819,18 @@ function get_pretty_int_list(arr, ranges) {
 	return arr.slice(0, arr.length - 1).join(', ') + ' and ' + arr[ arr.length - 1 ];
 }
 
+function summarize_event_timing_short(timing) {		
+	if(!timing) return "On Demand"
+	let type = 'Hourly'
+	let total = (timing.minutes || []).length || 60
+	if(timing.hours) { total = total*(timing.hours.length || 24); type = 'Daily'} else { total = total*24}
+	if(timing.weekdays) { total = total*(timing.weekdays.length || 1); type = 'Weekly'}
+	if(timing.days) { total = total*(timing.days.length || 1); type = 'Monthly'}
+	if(timing.months) { total = total*(timing.months.length || 1); type = 'Yearly'}
+	if(timing.years) { total = total*(timing.years.length || 1); type = 'Custom'}
+	return `${type} :: ${total}`
+}
+
 function summarize_event_timing(timing, timezone, extra) {
 	// summarize event timing into human-readable string
 	if (!timing && extra) {
