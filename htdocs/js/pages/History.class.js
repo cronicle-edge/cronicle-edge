@@ -300,6 +300,13 @@ Class.subclass( Page.Base, "Page.History", {
 		if (!args.limit) args.limit = 50;
 		app.api.post( 'app/get_event_history', copy_object(args), this.receive_event_stats.bind(this) );
 	},
+
+	togglePerfLegend: function() {
+		let chart = this.charts.perf
+		if(!chart) return;
+		chart.options.legend.display = !chart.options.legend.display
+		chart.update()
+	},
 	
 	receive_event_stats: function(resp) {
 		// render event stats page
@@ -335,32 +342,11 @@ Class.subclass( Page.Base, "Page.History", {
 				['error_history', "Query History"],
 			]
 		);
-		html += '<div style="padding:20px 20px 30px 20px">';
+		// html += '<div style="padding:20px 20px 30px 20px">';
+
+		let eventTitle = `<a href="#Schedule?sub=edit_event&id=${event.id}">${this.getNiceEvent(event.title, col_width)}</a>`
 		
-		html += '<fieldset style="margin-top:0px; margin-right:0px; padding-top:10px;"><legend>Event Stats</legend>';
-			
-			html += '<div style="float:left; width:25%;">';
-				html += '<div class="info_label">EVENT NAME</div>';
-				html += '<div class="info_value"><a href="#Schedule?sub=edit_event&id='+event.id+'">' + this.getNiceEvent(event.title, col_width) + '</a></div>';
-				
-				html += '<div class="info_label">CATEGORY NAME</div>';
-				html += '<div class="info_value">' + this.getNiceCategory(cat, col_width) + '</div>';
-				
-				html += '<div class="info_label">EVENT TIMING</div>';
-				html += '<div class="info_value">' + (event.enabled ? summarize_event_timing(event.timing, event.timezone) : '(Disabled)') + '</div>';
-			html += '</div>';
-			
-			html += '<div style="float:left; width:25%;">';
-				html += '<div class="info_label">USERNAME</div>';
-				html += '<div class="info_value">' + this.getNiceUsername(event, false, col_width) + '</div>';
-				
-				html += '<div class="info_label">PLUGIN NAME</div>';
-				html += '<div class="info_value">' + this.getNicePlugin(plugin, col_width) + '</div>';
-				
-				html += '<div class="info_label">EVENT TARGET</div>';
-				html += '<div class="info_value">' + this.getNiceGroup(group, event.target, col_width) + '</div>';
-			html += '</div>';
-			
+	
 			var total_elapsed = 0;
 			var total_cpu = 0;
 			var total_mem = 0;
@@ -391,35 +377,29 @@ Class.subclass( Page.Base, "Page.History", {
 				} 
 			}
 			
-			html += '<div style="float:left; width:25%;">';
-				html += '<div class="info_label">AVG. ELAPSED</div>';
-				html += '<div class="info_value">' + get_text_from_seconds(total_elapsed / count, true, false) + '</div>';
-				
-				html += '<div class="info_label">AVG. CPU</div>';
-				html += '<div class="info_value">' + short_float(total_cpu / count) + '%</div>';
-				
-				html += '<div class="info_label">AVG. MEMORY</div>';
-				html += '<div class="info_value">' + get_text_from_bytes( total_mem / count ) + '</div>';
-			html += '</div>';
-			
-			html += '<div style="float:left; width:25%;">';
-				html += '<div class="info_label">SUCCESS RATE</div>';
-				html += '<div class="info_value">' + pct(total_success, count) + '</div>';
-				
-				html += '<div class="info_label">LAST RESULT</div>';
-				html += '<div class="info_value" style="position:relative; top:1px;">' + nice_last_result + '</div>';
-				
-				html += '<div class="info_label">AVG. LOG SIZE</div>';
-				html += '<div class="info_value">' + get_text_from_bytes( total_log_size / count ) + '</div>';
-			html += '</div>';
-			
-			html += '<div class="clear"></div>';
-		html += '</fieldset>';
+		html += `
+		<div class="job-details grid-container running" style="margin:8px">
+		  <div class="job-details  grid-item"><div class="info_label">EVENT NAME:</div><div class="info_value">${eventTitle}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">CATEGORY:</div><div class="info_value">${this.getNiceCategory(cat, col_width) }</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">PLUGIN:</div><div class="info_value">${this.getNicePlugin(plugin, col_width)}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">EVENT TARGET:</div><div class="info_value">${this.getNiceGroup(group, event.target, col_width)}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">USERNAME:</div><div id="d_live_pid" class="info_value">${this.getNiceUsername(event, false, col_width)}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">EVENT TIMING:</div><div class="info_value">${event.enabled ? summarize_event_timing(event.timing, event.timezone) : '(Disabled)'}</div></div>
+ 	  
+		  <div class="job-details  grid-item"><div class="info_label">AVG CPU:</div><div class="info_value">${short_float(total_cpu / count)}%</div></div>		  
+		  <div class="job-details  grid-item"><div class="info_label">AVG MEMORY:</div><div id="d_live_elapsed" class="info_value">${get_text_from_bytes( total_mem / count )}</div></div>   				    			
+		  <div class="job-details  grid-item"><div class="info_label">AVG LOG SIZE:</div><div id="d_live_remain" class="info_value"> ${get_text_from_bytes( total_log_size / count )}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">AVG ELAPSED:</div><div class="info_value">${get_text_from_seconds(total_elapsed / count, true, false)}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">SUCCESS RATE:</div><div class="info_value">${pct(total_success, count)}</div></div> 
+		  <div class="job-details  grid-item"><div class="info_label">LAST RESULT:</div><div class="info_value">${nice_last_result}</div></div>
+		</div>
+		<div class="clear"></div>
+	  `
 		
 		// graph containers
 		html += '<div style="margin-top:15px;">';
-			html += '<div class="graph-title">Performance History</div>';
-			html += '<div id="d_graph_hist_perf" style="position:relative; width:100%; height:300px; overflow:hidden;"><canvas id="c_graph_hist_perf"></canvas></div>';
+			html += '<div class="graph-title" onclick="$P().togglePerfLegend()"><span title="click to toggle legend on History">Performance History<span></div>';
+			html += `<div id="d_graph_hist_perf" style="position:relative; width:100%; height:100%; overflow:hidden;"><canvas height=${Math.round(window.innerHeight/3)} id="c_graph_hist_perf" ></canvas></div>`; // $P().togglePerfLegend()`
 		html += '</div>';
 		
 		html += '<div style="margin-top:10px; margin-bottom:20px; height:1px; background:#ddd;"></div>';
@@ -550,11 +530,14 @@ Class.subclass( Page.Base, "Page.History", {
 					labels: {
 						fontStyle: 'bold',
 						padding: 15
-					}
+					},
+
 				},
+
+
 				title:{
 					display: false,
-					text: ""
+					text: "toggle legend"
 				},
 				scales: {
 					xAxes: [{
@@ -576,13 +559,16 @@ Class.subclass( Page.Base, "Page.History", {
 							callback: function(value, index, values) {
 								if (value < 0) return '';
 								return '' + get_text_from_seconds_round_custom(value, true);
-							}
+							},
+							onClick: function(e,i) {$P().togglePerfLegend()}
 						},
 						scaleLabel: {
 							display: true,
+							onClick: $P().togglePerfLegend
 							// labelString: 'value'
 						}
-					}]
+					}],
+
 				},
 				tooltips: {
 					mode: 'nearest',

@@ -3,6 +3,8 @@ HOMEDIR="$(dirname "$(cd -- "$(dirname "$(readlink -f "$0")")" && (pwd -P 2>/dev
 
 usage() {
   echo "USAGE: ./manager [ --port 3012 ] [ --storage /path/to/storage.json ] [ --key secreKey ] [ --color ] "
+  echo "                 [ --reset ]  # set current host as manager"
+  echo "                 [ --cluster "server1,server2" ]  # add extra workers on setup"
   exit 1
 }
 
@@ -15,6 +17,8 @@ while (( "$#" )); do
         --key ) shift; key=$1 ;;
         --storage ) shift; storage=$1 ;;
         --sqlite ) shift; sqlite=$1 ;;
+        --reset ) shift; reset=1 ;;
+        --cluster ) shift; cluster=$1 ;;
         --help ) usage ;;
         -*) echo "invalid parameter: $1"; usage ;;
     esac
@@ -44,12 +48,29 @@ if [[ $key ]]; then
   echo "Custom secret key set: *****"
 fi
 
+if [[ $cluster ]]; then
+  export CRONICLE_cluster="$cluster"
+  echo "Following nodes will be added on setup: $cluster"
+fi
+
 # pull data from git if needed
 # if [ ! -d data/global ] && [ -v GIT_REPO ]; then
 #         git clone $GIT_REPO $HOMEDIR/data
 # fi
 
-$HOMEDIR/bin/control.sh setup
+# check for custom nodejs binary
+if [ -f $HOMEDIR/nodejs/bin/node ]; then
+      export PATH="$HOMEDIR/nodejs/bin:$PATH"
+      echo "using custom node version: $(node -v)"
+fi
+
+
+# setup storage OR make current host the primary manager if needed
+if [ "$reset" = 1 ]; then
+  node $HOMEDIR/bin/storage-cli.js reset
+else $HOMEDIR/bin/control.sh setup
+fi
+
 
 if [ -f "$HOMEDIR/logs/cronicled.pid" ]; then
   echo 'removing old pid file'
@@ -61,12 +82,6 @@ fi
 if [ -f "$HOMEDIR/data/backup.json" ]; then
   cat "$HOMEDIR/data/backup.json" | grep -v 'global/server' |  $HOMEDIR/bin/control.sh import || echo 'failed to import from backup'
   rm "$HOMEDIR/data/backup.json"
-fi
-
-# check for custom nodejs binary
-if [ -f $HOMEDIR/nodejs/bin/node ]; then
-      export PATH="$HOMEDIR/nodejs/bin:$PATH"
-      echo "using custom node version: $(node -v)"
 fi
 
 BINARY="node $HOMEDIR/lib/main.js"
