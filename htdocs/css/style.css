@@ -952,7 +952,7 @@ td.table_label {
 
 		.upcoming.schedule.grid-item {
             /* background-color: #fafafa */
-			background-color: var(--box-background-color);
+			background-color: var(--background-color);
 			/* color: #fff */
         }
 

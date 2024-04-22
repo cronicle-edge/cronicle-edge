@@ -315,7 +315,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		var col_width = Math.floor( ((size.width * 0.9) + 50) / 7 );
 		
 		var cols = ['Event Name', 'Category', 'Plugin', 'Target', 'Scheduled Time', 'Countdown', 'Actions'];
-		var limit = Math.round((window.innerWidth-200)/350)*4 // try to fit 4 rows
+		var limit = Math.round((window.innerWidth)/350)*4 // try to fit 4 rows
 		
 		html += this.getPaginatedTable({
 			resp: {
