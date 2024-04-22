@@ -73,16 +73,21 @@ Class.subclass(Page, "Page.Base", {
 			tooltip = `<b>Category: </b>${cat}<br><b>Plugin: </b>${plug}<br><b>Target: </b>${target}<b><br>Notes:</b><br>${tooltip}`
 		}
 
-		let cat = title.category_title || ''
-		let plug = title.plugin_title || ''
 		let icon_class = 'fa fa-clock-o';
 		if(title.plugin == 'workflow') icon_class = 'fa fa-folder';
-		
+
+		let icon =  `<i title="${tooltip}" class="${icon_class}">&nbsp;</i>`
+
+		if (extraTooltip) {
+			if (title.plugin == 'dockerplug') icon = `<span title="${tooltip}" class="mdi mdi-docker"></span>`
+			if (title.plugin == 'shellplug') icon = `<span title="${tooltip}" class="mdi mdi-script"></span>`
+			if (title.plugin == 'sshxplug' || title.plugin == 'sshplug') icon = `<span title="${tooltip}" class="mdi mdi-console"></span>`
+			if (title.plugin == 'urlplug') icon = `<span title="${tooltip}" class="mdi mdi-web"></span>`
+		}
+
 		if (typeof (title) == 'object') {
 			title = title.title
         }
-
-		let icon =  `<i title="${tooltip}" class="${icon_class}">&nbsp;</i>`
 		
 		return `<div class="ellip" style="max-width:${width}px;${style}">${icon} ${title}${extra}</div>`;
 	},
