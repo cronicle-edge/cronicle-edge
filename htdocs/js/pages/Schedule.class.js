@@ -1870,7 +1870,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// Secret
 		let sph = event.secret_preview ? '[' + event.secret_preview + ']' : '';
 		html += get_form_table_row('Secret', `<textarea  style="width:620px; height:45px;resize:vertical;" id="fe_ee_secret" oninput="$P().set_event_secret(this.value)" placeholder="${sph}" spellcheck="false"></textarea>`);
-		html += get_form_table_caption("Specify KEY=VALUE pairs to be mounted as env variables (to this job process). When using Docker plugin, KEY should be prefixed with DOCKER_ to pass custom variable to docker container. When using SSH plugin, KEY should be prefixed with SSH_ to pass to remote machine.");
+		html += get_form_table_caption("Specify KEY=VALUE pairs to set ENV variables. Some plugins require KEY prefix (e.g. DOCKER_ or SSH_ ) to pass it to job runtime.");
 		html += get_form_table_spacer();
 
 		// max children
