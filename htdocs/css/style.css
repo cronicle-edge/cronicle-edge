@@ -801,8 +801,8 @@ td.table_label {
 		.upcoming.grid-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); 
-            gap: 12px;
-            padding: 10px;
+            gap: 9px;
+            padding: 8px;
 			direction: ltr;
         }
 
@@ -942,6 +942,10 @@ td.table_label {
 
 		.upcoming.grid-item.focus {
 			animation: 4s focus;
+		}
+
+		.upcoming.grid-item.disabled {
+			text-decoration: line-through;
 		}
 
 

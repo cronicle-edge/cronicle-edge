@@ -1003,10 +1003,10 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			//<div ><span style="font-size:0.8em" class="color_label green">✓</span></div>	
 			let itemVisibility =  eventView === 'grid' && (!item.active || args.collapse) ? 'none' : 'true'
 			// link item to it's group, avoid for disabled event on basic grid view
-			let itemClass = eventView === 'grid' && !item.active ? '' : tds.className 
+			let itemClass = eventView === 'grid' && !item.active ? '' : (tds.className || '')
 
 			xhtml += `
-			<div id="${item.id}" style="display:${itemVisibility}" class="upcoming schedule grid-item ${itemClass}" onclick="">
+			<div id="${item.id}" style="display:${itemVisibility}" class="upcoming schedule grid-item ${itemClass }" onclick="">
 			 <div class="flex-container schedule">
 			  <div style="text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">${tds[1]}</div>
 			

@@ -80,7 +80,7 @@ Class.subclass(Page, "Page.Base", {
 
 		if (extraTooltip) {
 			if (title.plugin == 'dockerplug') icon = `<span title="${tooltip}" class="mdi mdi-docker"></span>`
-			if (title.plugin == 'shellplug') icon = `<span title="${tooltip}" class="mdi mdi-script"></span>`
+			// if (title.plugin == 'shellplug') icon = `<span title="${tooltip}" class="mdi mdi-script"></span>`
 			if (title.plugin == 'sshxplug' || title.plugin == 'sshplug') icon = `<span title="${tooltip}" class="mdi mdi-console"></span>`
 			if (title.plugin == 'urlplug') icon = `<span title="${tooltip}" class="mdi mdi-web"></span>`
 		}

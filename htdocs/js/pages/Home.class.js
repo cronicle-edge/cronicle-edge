@@ -43,7 +43,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		  <div class="clear"></div>
 		</div>
 
-		<canvas id="d_home_completed_jobs" height="40px"></canvas>
+		<canvas id="d_home_completed_jobs" height="35px"></canvas>
 		<div style="height:10px;"></div>
 
 		<!-- Active jobs -->
@@ -403,7 +403,7 @@ Class.subclass( Page.Base, "Page.Home", {
 					if (stub.epoch - now <= 60) proximity = 'minute'
 
 					xhtml += `
-				<div id="${stub.id}" class="upcoming ${proximity} grid-item">
+				<div id="${stub.id}" class="upcoming ${proximity} grid-item ${tds.className || ''}">
 				 <div class="flex-container">
 				  <div style="text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">${tds[0]}</div>
 				 <div style="font-size:14px"><b>${nice_countdown}</b></div>
