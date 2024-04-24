@@ -261,9 +261,9 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		    
 
 			<div class="job-details  grid-item"><div class="info_label">EVENT:</div><div class="info_value">${eventTitle}</div></div>
-			<div class="job-details  grid-item"><div class="info_label">ARG:</div><div class="info_value">${encode_entities(job.arg || '(no argument)')}</div></div>
+			<div class="job-details  grid-item"><div class="info_label">ARG:</div><div class="info_value">${encode_entities(job.arg || '(None)')}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">PLUGIN:</div><div class="info_value">${jobPlugin}</div></div>
-			<div class="job-details  grid-item"><div class="info_label">MEMO:</div><div class="info_value">${job.memo || '(none)'}</div></div>
+			<div class="job-details  grid-item"><div class="info_label">MEMO:</div><div class="info_value">${job.memo || '(None)'}</div></div>
 		    <div class="job-details  grid-item"><div class="info_label">HOST:</div><div class="info_value">${this.getNiceGroup(null, job.hostname, col_width)}</div></div>
 		    <div class="job-details  grid-item"><div class="info_label">END:</div><div class="info_value">${get_nice_date_time(job.time_end, false, true)}</div></div>   				    			
 			<div class="job-details  grid-item"><div class="info_value">${jumpToHist }</div></div>
@@ -821,7 +821,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		  <div class="job-details  grid-item"><div class="info_label">START:</div><div class="info_value">${get_nice_date_time(job.time_start, false, true) }</div></div>
 
 		  <div class="job-details  grid-item"><div class="info_label">EVENT:</div><div class="info_value">${eventTitle}</div></div>
-		  <div class="job-details  grid-item"><div class="info_label">ARG:</div><div class="info_value">${encode_entities(job.arg || '(no argument)')}</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">ARG:</div><div class="info_value">${encode_entities(job.arg || '(None)')}</div></div>
 		  <div class="job-details  grid-item"><div class="info_label">PLUGIN:</div><div class="info_value">${this.getNicePlugin(plugin, col_width)}</div></div>
 		  <div class="job-details  grid-item"><div class="info_label">HOST:</div><div class="info_value">${this.getNiceGroup(null, job.hostname, col_width)}</div></div>
 		  <div class="job-details  grid-item"><div class="info_label">ELAPSED TIME:</div><div id="d_live_elapsed" class="info_value">${get_text_from_seconds(elapsed, false, false)}</div></div>   				    			
