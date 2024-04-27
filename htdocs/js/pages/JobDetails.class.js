@@ -250,7 +250,8 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		let timing = summarize_event_timing(event.timing, event.timezone)
 
 		html += `
-		  <div class="job-details grid-container">
+		  <div class="job-details grid-container" style="font-size:1.1em">
+		    
 		    <div class="job-details  grid-item"><div class="info_label">JOB ID:</div><div class="info_value">${job.id}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">PID:</div><div class="info_value">${(job.detached_pid || job.pid || '(Unknown)')}</div></div>
 		    <div class="job-details  grid-item"><div class="info_label">CAT:</div><div class="info_value">${jobCategory}</div></div>
@@ -259,8 +260,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		    <div class="job-details  grid-item"><div class="info_label">START:</div><div class="info_value">${jobStarted}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">ELAPSED:</div><div class="info_value">${get_text_from_seconds(job.elapsed, false, false)}</div></div>		    
 		    
-
-			<div class="job-details  grid-item"><div class="info_label">EVENT:</div><div class="info_value">${eventTitle}</div></div>
+			<div class="job-details  grid-item"><div class="info_value">${eventTitle}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">ARG:</div><div class="info_value">${encode_entities(job.arg || '(None)')}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">PLUGIN:</div><div class="info_value">${jobPlugin}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">MEMO:</div><div class="info_value">${job.memo || '(None)'}</div></div>
