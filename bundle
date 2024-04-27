@@ -386,9 +386,10 @@ fi
 writehead "Bundling cronicle.js"
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=node --outfile=$dist/bin/cronicle.js lib/main.js
 
-writehead "Applyig some patches"
+# no need to fix formidable since using 3.x version
+#writehead "Applyig some patches"
 # fix formidable 
-esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=node --outdir=$dist/bin/plugins node_modules/formidable/src/plugins/*.js
+#esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=node --outdir=$dist/bin/plugins node_modules/formidable/src/plugins/*.js
 
 # --- setup configs on the initial run
 if [ ! -d $dist/conf ]; then

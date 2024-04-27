@@ -403,9 +403,10 @@ if(Test-Path "sample_conf\examples\storage.$Engine.json") {
   Copy-Item -Force "sample_conf\examples\storage.$Engine.json" $Path\conf\storage.json
 }
 
+# no need to fix formidable since using 3.x version
 # --- fix  formidable
-Write-Bold "Applyig some patches"
-esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=node --outdir=$Path/bin/plugins node_modules/formidable/src/plugins/*.js
+#Write-Bold "Applyig some patches"
+# esbuild --bundle --log-level=$ESBuildLogLevel $minify --keep-names --platform=node --outdir=$Path/bin/plugins node_modules/formidable/src/plugins/*.js
 
 # --- CRONICLE.JS
 Write-Bold "Bundling cronicle.js"
