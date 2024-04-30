@@ -85,7 +85,22 @@ module.exports = class SQLEngine extends Component {
         // some column name aliases to adjust to default DB case
         let CREATED = 'created'
         let UPDATED = 'updated'
-                
+
+	/*Postgres requires "length" instead of len for bytea fields. Noticed failures during head operations. 
+	 The other option would be to create a postgres function called len() on setup create which wraps the length() operation.
+	 CREATE OR REPLACE FUNCTION len(byteafield bytea)
+	 RETURNS int AS
+	 $$
+	 BEGIN
+    		RETURN length(byteafield);
+	END;
+	$$
+	LANGUAGE plpgsql IMMUTABLE;
+	*/
+        if (this.client === 'pg'){
+		this.getBlobSizefn = "length(\"V\")"
+	}
+	    
         if (this.client === 'mssql') {
             this.getBlobSizeFn = 'len(V)'
             this.mergeStmt = `
