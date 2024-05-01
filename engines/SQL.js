@@ -85,7 +85,13 @@ module.exports = class SQLEngine extends Component {
         // some column name aliases to adjust to default DB case
         let CREATED = 'created'
         let UPDATED = 'updated'
-                
+
+	// Postgres requires quoted "V" field since the schema was created with the quoted "V" field. 
+	 
+        if (this.client === 'pg'){
+		this.getBlobSizefn = 'length("V")'
+	}
+	    
         if (this.client === 'mssql') {
             this.getBlobSizeFn = 'len(V)'
             this.mergeStmt = `
