@@ -1435,7 +1435,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// this.opts = event.options || {}
 
 		// check for autosave recovery
-		if (app.autosave_event) {
+		// sync to 0.9.47 - disable autosave
+		if (0 && app.autosave_event) {
 			if (args.id == app.autosave_event.id) {
 				Debug.trace("Recovering autosave data for: " + args.id);
 				event = app.autosave_event;
