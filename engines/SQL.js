@@ -87,7 +87,7 @@ module.exports = class SQLEngine extends Component {
         let UPDATED = 'updated'
 
 	// Postgres requires quoted "V" field since the schema was created with the quoted "V" field. 
-	 T
+	 
         if (this.client === 'pg'){
 		this.getBlobSizefn = 'length("V")'
 	}
