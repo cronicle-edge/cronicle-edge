@@ -59,7 +59,8 @@ if /I "%1"=="--port" (
     echo Usage:  .\manager [--port  port] [ --storage /path/to/storage.json] 
     echo         [ --reset ]  # make current host the manager
     echo         [ --cluster "server1,server2"]  # add extra workers on setup
-    shift    
+    shift
+    exit    
 ) else (exit)
 
 goto parseArgs

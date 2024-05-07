@@ -31,7 +31,7 @@ CREATE TABLE cronicle (
 )
 
 ------- oracle 
-CREATE TABLE cronicle5 (
+CREATE TABLE cronicle (
   K varchar(256) PRIMARY KEY,
   V blob,
   created timestamp DEFAULT CURRENT_TIMESTAMP,

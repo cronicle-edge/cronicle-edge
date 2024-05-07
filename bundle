@@ -345,7 +345,7 @@ else
 fi
 
 if [ "$oracle" = 1 ]; then
-  sqlDrivers+=("oracledb")
+  sqlDrivers+=("oracledb@6.5.0")
 else
   sqlArgs+=("--external:oracledb")
 fi

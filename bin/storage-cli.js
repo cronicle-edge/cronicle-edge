@@ -208,6 +208,8 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 			// setup new manager server
 			var setup = require('../conf/setup.json');
 
+			let minimal = (process.env['CRONICLE_setup'] === 'minimal')
+
 			// make sure this is only run once
 			// changing exit code to 0, so it won't break docker entry point
 			storage.get('global/users', async function (err) {
@@ -230,18 +232,29 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 						var func = params.shift();
 						params.push(callback);
 
+						let obj = {}
+
 						// massage a few params
 						if (typeof (params[1]) == 'object') {
-							var obj = params[1];
+							 obj = params[1];
 							if (obj.created) obj.created = Tools.timeNow(true);
 							if (obj.modified) obj.modified = Tools.timeNow(true);
 							if (obj.regexp && (obj.regexp == '_HOSTNAME_')) obj.regexp = '^(' + Tools.escapeRegExp(hostname) + ')$';
 							if (obj.hostname && (obj.hostname == '_HOSTNAME_')) obj.hostname = hostname;
 							if (obj.ip && (obj.ip == '_IP_')) obj.ip = ip;
+							//if (obj.optional) { verbose("skipping " + params[0]); return callback(); }
 						}
 
-						// call storage directly
-						storage[func].apply(storage, params);
+						
+						if(minimal && obj.optional) {
+							// skip optional objects 
+							callback()
+						}
+						else {
+							// call storage directly
+							storage[func].apply(storage, params);
+						}
+
 					},
 					function (err) {
 						if (err) throw err;

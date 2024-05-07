@@ -908,9 +908,16 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			let niceTiming = summarize_event_timing(item.timing, item.timezone, (inactiveTitle || isGrid) ? null : item.ticks)
 
+			let gridTiming = niceTiming.length > 20 ? summarize_event_timing_short(item.timing) : niceTiming 
+			let gridTimingTitle = niceTiming;
+
 			if (inactiveTitle) {
+				gridTiming = `<s>${gridTiming}</s>`
+				gridTimingTitle = `${inactiveTitle}<br><s>${niceTiming}</s>`	
 				niceTiming = `<span title="${inactiveTitle}"><s>${niceTiming}</s>`
-				if (item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`				
+				if (item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`	
+				
+
 			}
 
 			let now = Date.now() / 1000
@@ -921,7 +928,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				self.getNiceCategory(cat, col_width),
 				self.getNicePlugin(plugin, col_width),
 				self.getNiceGroup(group, item.target, col_width),
-				niceTiming + (isGrid ? '' : chainInfo),
+				niceTiming + chainInfo,
 				'<span id="ss_' + item.id + '" onMouseUp="$P().jump_to_last_job(' + idx + ')">' + status_html + '</span>',
 				get_text_from_seconds(now - item.modified, true, true), //modified
 				actions.join('&nbsp;|&nbsp;')
@@ -978,18 +985,16 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			} // group_by
 
 
-			let timingTitle = niceTiming;			
-			let timing = niceTiming.length > 20 ? summarize_event_timing_short(item.timing) : tds[5]
-
-	
+            // timing title in grid view
+			
 			if(item.ticks) {
-				timingTitle += `<br><br>Extra ticks: ${item.ticks}`
-				timing +=  "+"
+				gridTimingTitle += `<br><br>Extra ticks: ${item.ticks}`
+				gridTiming +=  "+"
 			} 
 
 			if(app.chained_jobs[item.id]) {
-				timingTitle += ('<br><br>' + app.chained_jobs[item.id])
-				timing += "<";
+				gridTimingTitle += ('<br><br>' + app.chained_jobs[item.id])
+				gridTiming += "<";
 			}
 
 			let lastStatus = 'event-none'
@@ -1016,7 +1021,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			<div class="flex-container">
 			  <div style="padding-left:5px">${actions.join(' | ')}</div>	
 			  <div style="text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">		 
-			  <span title="${timingTitle}" style="overflow:hidden;text-overflow: ellipsis;white-space:nowrap">${timing}</span> 
+			  <span title="${gridTimingTitle}" style="overflow:hidden;text-overflow: ellipsis;white-space:nowrap">${gridTiming}</span> 
 			  </div>		 
 		    </div>
 			</div>

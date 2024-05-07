@@ -359,7 +359,7 @@ if($SQL) { $Oracle = $MSSQL = $Mysql = $Pgsql = $true }
 
 $Mysql ? $sqlDrivers.Add("mysql2"): $sqlArgs.Add("--external:mysql2") | Out-Null
 $Pgsql ? $sqlDrivers.AddRange(@("pg", "pg-query-stream")) : $sqlArgs.AddRange(@("--external:pg", "--external:pg-query-stream")) | Out-Null
-$Oracle ? $sqlDrivers.Add("oracledb") : $sqlArgs.Add("--external:oracledb") | Out-Null
+$Oracle ? $sqlDrivers.Add("oracledb@6.5.0") : $sqlArgs.Add("--external:oracledb") | Out-Null
 $MSSQL ? $sqlDrivers.Add("tedious") : $sqlArgs.Add("--external:tedious") | Out-Null
 $Sqlite ? $sqlDrivers.Add("sqlite3") : $sqlArgs.Add("--external:sqlite3") | Out-Null
 
