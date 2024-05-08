@@ -61,6 +61,10 @@ There is a new default API to view live log. It does not require direct connecti
 ### External auth with AD
 When creating user check "external" checkbox and use samaccountname as username. To specify AD domain use `ad_domain` config, or you can also add it to username (e.g. `user@my.domain.com`).
 
+### External auth with Github
+Setup `github_client_id`, `github_client_secret` and optionally `github_org` to enable OAuth login flow via a Github instance. To allow Github Enterprise instances use `github_host` and in case you use a self signed cert, you can set `github_insecure_skip_verify`, however it is not recommended!
+Currently it is recommended to closly check the users, as invalidation/revocation and token handling is not fully implemented. Additional permissions should be set from an existing `admin` user. If no `github_org` is set, any user from the configured Github instance can login, please make sure to consider using a Github organization to limit user access.
+
 ### Run API limitations
 In order to modify shell plug script and run it manually user should have Admin or Editor privilege. Run privilege only let user to invoke event by ID (on UI side editor will be locked). Run users will still be able to modify arguments. This way you can let external teams to run some jobs without allowing running arbitrary code.
 

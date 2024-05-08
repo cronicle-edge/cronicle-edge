@@ -203,7 +203,7 @@ app.extend({
 			self.clock_visible = false;
 			self.checkScrollTime();
 			
-			if (app.config.external_users) {
+			if (app.config.external_users && app.config.external_user_api) {
 				// external user api
 				Debug.trace("User session cookie was deleted, querying external user API");
 				setTimeout( function() {
