@@ -8,7 +8,7 @@
 # RUN apk add --no-cache bash nodejs tini util-linux bash openssl procps coreutils curl tar jq
 
 FROM cronicle/base-alpine as build
-RUN apk add --no-cache npm 
+RUN apk add --no-cache npm python3 alpine-sdk
 COPY . /build
 WORKDIR /build
 RUN ./bundle /dist --mysql --pgsql --s3 --sqlite --tools
