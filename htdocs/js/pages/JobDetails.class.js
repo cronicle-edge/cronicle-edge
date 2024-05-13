@@ -240,9 +240,9 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		if (group || event.target) jobTarget = this.getNiceGroup(group, event.target, col_width);
 		else if (job.nice_target) jobTarget = '<div class="ellip" style="max-width:' + col_width + 'px;">' + job.nice_target + '</div>';
 
-		let jobStarted = get_nice_date_time(job.time_start, false, true);
+		let jobStarted = get_nice_date_time(job.time_start, true, true);
 		if ((job.time_start - job.now >= 60) && !event.multiplex && !job.source) {
-			jobStarted = `<span style="color:red" title="Scheduled Time: ${get_nice_date_time(job.now, false, true)}">${get_nice_date_time(job.time_start, false, true)}</span>`
+			jobStarted = `<span style="color:red" title="Scheduled Time: ${get_nice_date_time(job.now, true, true)}">${get_nice_date_time(job.time_start, true, true)}</span>`
 		}
 
 		html += '</fieldset>';
@@ -265,7 +265,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 			<div class="job-details  grid-item"><div class="info_label">PLUGIN:</div><div class="info_value">${jobPlugin}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">MEMO:</div><div class="info_value">${job.memo || '(None)'}</div></div>
 		    <div class="job-details  grid-item"><div class="info_label">HOST:</div><div class="info_value">${this.getNiceGroup(null, job.hostname, col_width)}</div></div>
-		    <div class="job-details  grid-item"><div class="info_label">END:</div><div class="info_value">${get_nice_date_time(job.time_end, false, true)}</div></div>   				    			
+		    <div class="job-details  grid-item"><div class="info_label">END:</div><div class="info_value">${get_nice_date_time(job.time_end, true, true)}</div></div>   				    			
 			<div class="job-details  grid-item"><div class="info_value">${jumpToHist }</div></div>
 			
 		  </div>
@@ -818,7 +818,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		  <div class="job-details  grid-item"><div class="info_label">CAT:</div><div class="info_value">${this.getNiceCategory(cat, col_width)}</div></div>
 		  <div class="job-details  grid-item"><div class="info_label">TARGET:</div><div class="info_value">${this.getNiceGroup(group, event.target, col_width) }</div></div> 
 		  <div class="job-details  grid-item"><div class="info_label">SOURCE:</div><div class="info_value">${job.source || 'Scheduler'}</div></div>
-		  <div class="job-details  grid-item"><div class="info_label">START:</div><div class="info_value">${get_nice_date_time(job.time_start, false, true) }</div></div>
+		  <div class="job-details  grid-item"><div class="info_label">START:</div><div class="info_value">${get_nice_date_time(job.time_start, true, true) }</div></div>
 
 		  <div class="job-details  grid-item"><div class="info_label">EVENT:</div><div class="info_value">${eventTitle}</div></div>
 		  <div class="job-details  grid-item"><div class="info_label">ARG:</div><div class="info_value">${encode_entities(job.arg || '(None)')}</div></div>
