@@ -25,7 +25,7 @@ app.extend({
 		// receive config from server
 		if (resp.code) {
 			app.showProgress( 1.0, "Waiting for manager server..." );
-			setTimeout( function() { load_script( '/api/app/config' ); }, 1000 );
+			setTimeout( function() { load_script( 'api/app/config' ); }, 1000 );
 			return;
 		}
 		delete resp.code;
@@ -34,6 +34,10 @@ app.extend({
 		for (var key in resp) {
 			this[key] = resp[key];
 		}
+
+		if(config.external_prefix) {
+			this.config.base_api_uri = config.external_prefix + "api";
+		}		
 
 		this.initTheme()
 		
@@ -84,7 +88,7 @@ app.extend({
 		for (var idx = 0, len = this.preload_images.length; idx < len; idx++) {
 			var filename = '' + this.preload_images[idx];
 			var img = new Image();
-			img.src = '/images/'+filename;
+			img.src = 'images/'+filename;
 		}
 		
 		// populate prefs for first time user
@@ -241,7 +245,7 @@ app.extend({
 	doExternalLogin: function() {
 		// login using external user management system
 		// Force API to hit current page hostname vs. manager server, so login redirect URL reflects it
-		app.api.post( '/api/user/external_login', { cookie: document.cookie }, function(resp) {
+		app.api.post( 'user/external_login', { cookie: document.cookie }, function(resp) {
 			if (resp.user) {
 				Debug.trace("User Session Resume: " + resp.username + ": " + resp.session_id);
 				app.hideProgress();
@@ -306,7 +310,12 @@ app.extend({
 			if (this.socket.connected) this.socket.disconnect();
 			this.socket = null;
 		}
-		
+
+		var socket_io_path = "/socket.io";
+		if(config.external_prefix) {
+			socket_io_path = config.external_prefix + "socket.io";
+		}
+	
 		var socket = this.socket = io( url, {
 			// forceNew: true,
 			transports: config.socket_io_transports || ['websocket'],
@@ -314,7 +323,8 @@ app.extend({
 			reconnectionDelay: 1000,
 			reconnectionDelayMax: 2000,
 			reconnectionAttempts: 9999,
-			timeout: 3000
+			timeout: 3000,
+			path: socket_io_path
 		} );
 		
 		socket.on('connect', function() {

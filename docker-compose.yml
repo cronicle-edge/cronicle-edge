@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+
+  reverse-proxy:
+    # The official v3 Traefik docker image
+    image: traefik:v3.0
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+    ports:
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.strip-prefix.stripprefix.prefixes=/cron
+
+  batch-scheduler:
+    image: ghcr.io/cronicle-edge/cronicle-edge:main
+    build:
+      context: .
+      dockerfile: Dockerfile
+    #command: ["tail", "-f", "/dev/null"]
+    command: [ "bash", "/opt/cronicle/bin/manager" ]
+    environment:
+      - CRONICLE_manager=1
+      - TZ=America/New_York
+      - CRONICLE_foreground=1
+      - CRONICLE_echo=1
+      - CRONICLE_base_app_url=http://localhost/cron
+      - CRONICLE_web_socket_use_hostnames=1
+      - CRONICLE_server_comm_use_hostnames=1
+      - CRONICLE_WebServer__http_port=3012
+      - CRONICLE_WebServer__http_bind_address=0.0.0.0
+      - CRONICLE_WebServer__https=0
+      - CRONICLE_web_direct_connect=0
+      - CRONICLE_external_prefix=/cron/
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.batch-scheduler.rule=PathPrefix(`/cron/`)
+      - traefik.http.routers.batch-scheduler.entrypoints=web      
+      - traefik.http.services.batch-scheduler.loadbalancer.server.port=3012
+      - traefik.http.routers.batch-scheduler.middlewares=strip-prefix  
