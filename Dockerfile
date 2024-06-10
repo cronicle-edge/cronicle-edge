@@ -11,7 +11,7 @@ FROM cronicle/base-alpine as build
 RUN apk add --no-cache npm python3 alpine-sdk
 COPY . /build
 WORKDIR /build
-RUN bash ./bundle /dist --mysql --pgsql --s3 --sqlite --tools
+RUN ./bundle /dist --mysql --pgsql --s3 --sqlite --tools
 
 FROM cronicle/base-alpine 
 
