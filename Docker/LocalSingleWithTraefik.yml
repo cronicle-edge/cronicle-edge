@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
 
   reverse-proxy:
@@ -24,13 +22,13 @@ services:
   batch-scheduler:
     image: ghcr.io/cronicle-edge/cronicle-edge:main
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
-    #command: ["tail", "-f", "/dev/null"]
     command: [ "bash", "/opt/cronicle/bin/manager" ]
     environment:
+      - TZ=America/New_York    
       - CRONICLE_manager=1
-      - TZ=America/New_York
+      - CRONICLE_container=1
       - CRONICLE_foreground=1
       - CRONICLE_echo=1
       - CRONICLE_base_app_url=http://localhost/cron
@@ -46,4 +44,13 @@ services:
       - traefik.http.routers.batch-scheduler.rule=PathPrefix(`/cron/`)
       - traefik.http.routers.batch-scheduler.entrypoints=web      
       - traefik.http.services.batch-scheduler.loadbalancer.server.port=3012
-      - traefik.http.routers.batch-scheduler.middlewares=strip-prefix  
+      - traefik.http.routers.batch-scheduler.middlewares=strip-prefix
+    volumes:
+      - cronicle-data:/opt/cronicle/data
+      - cronicle-logs:/opt/cronicle/logs
+      - cronicle-plugins:/opt/cronicle/plugins
+
+volumes:
+  cronicle-data:
+  cronicle-logs:
+  cronicle-plugins:          

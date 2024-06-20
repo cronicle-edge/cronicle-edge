@@ -208,67 +208,91 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 			// setup new manager server
 			var setup = require('../conf/setup.json');
 
-			let minimal = (process.env['CRONICLE_setup'] === 'minimal')
+			let minimal = (process.env['CRONICLE_setup'] === 'minimal');
+			let container = (process.env['CRONICLE_container'] === '1');
 
-			// make sure this is only run once
-			// changing exit code to 0, so it won't break docker entry point
 			storage.get('global/users', async function (err) {
+
 				if (!err) {
-					print("Storage has already been set up.  There is no need to run this command again.\n\n");
-					process.exit(0);
-				}
 
-				if(process.env['CRONICLE_cluster']) {
-					let servers = await getIPsForHostnames(process.env['CRONICLE_cluster'].split(','))
-					servers.forEach(server =>{
-						setup.storage.push(["listPush", "global/servers", server])
-					})
-				}
+					// Already setup
+					// If we are running in a container, update regex, hostname and ip.
+					if(container) {
+						print(`Running in a container, using a single manager ${hostname}:${ip}`);
+						print('\n');
 
-				async.eachSeries(setup.storage,
-					function (params, callback) {
-						verbose("Executing: " + JSON.stringify(params) + "\n");
-						// [ "listCreate", "global/users", { "page_size": 100 } ]
-						var func = params.shift();
-						params.push(callback);
+						let newGroup = { regexp: '^(' + Tools.escapeRegExp(hostname) + ')$' }
 
-						let obj = {}
-
-						// massage a few params
-						if (typeof (params[1]) == 'object') {
-							 obj = params[1];
-							if (obj.created) obj.created = Tools.timeNow(true);
-							if (obj.modified) obj.modified = Tools.timeNow(true);
-							if (obj.regexp && (obj.regexp == '_HOSTNAME_')) obj.regexp = '^(' + Tools.escapeRegExp(hostname) + ')$';
-							if (obj.hostname && (obj.hostname == '_HOSTNAME_')) obj.hostname = hostname;
-							if (obj.ip && (obj.ip == '_IP_')) obj.ip = ip;
-							//if (obj.optional) { verbose("skipping " + params[0]); return callback(); }
-						}
-
-						
-						if(minimal && obj.optional) {
-							// skip optional objects 
-							callback()
-						}
-						else {
-							// call storage directly
-							storage[func].apply(storage, params);
-						}
-
-					},
-					function (err) {
-						if (err) throw err;
-						print("\n");
-						print("Setup completed successfully!\n");
-						print("This server (" + hostname + ") has been added as the single primary manager server.\n");
-						print("An administrator account has been created with username 'admin' and password 'admin'.\n");
-						print("You should now be able to start the service by typing: '/opt/cronicle/bin/control.sh start'\n");
-						print("Then, the web interface should be available at: http://" + hostname + ":" + config.WebServer.http_port + "/\n");
-						print("Please allow for up to 60 seconds for the server to become manager.\n\n");
-
+						storage.listFindUpdate('global/server_groups', { id: "maingrp" }, newGroup, function (err) {
+							if (err) throw err;
+							storage.listDelete('global/servers', false, function (err) {
+								if (err) throw err;
+								storage.listPush('global/servers', { hostname: hostname, ip: ip }, function (err) {
+									if (err) throw err;
+									storage.shutdown(function () { process.exit(0); });
+								});
+							});		
+						});						
+					} else {
 						storage.shutdown(function () { process.exit(0); });
 					}
-				);
+
+				} else {
+
+					// Setup, only runs once
+					
+					if(process.env['CRONICLE_cluster']) {
+						let servers = await getIPsForHostnames(process.env['CRONICLE_cluster'].split(','))
+						servers.forEach(server =>{
+							setup.storage.push(["listPush", "global/servers", server])
+						})
+					}
+
+					async.eachSeries(setup.storage,
+						function (params, callback) {
+							verbose("Executing: " + JSON.stringify(params) + "\n");
+							// [ "listCreate", "global/users", { "page_size": 100 } ]
+							var func = params.shift();
+							params.push(callback);
+
+							let obj = {}
+
+							// massage a few params
+							if (typeof (params[1]) == 'object') {
+								obj = params[1];
+								if (obj.created) obj.created = Tools.timeNow(true);
+								if (obj.modified) obj.modified = Tools.timeNow(true);
+								if (obj.regexp && (obj.regexp == '_HOSTNAME_')) obj.regexp = '^(' + Tools.escapeRegExp(hostname) + ')$';
+								if (obj.hostname && (obj.hostname == '_HOSTNAME_')) obj.hostname = hostname;
+								if (obj.ip && (obj.ip == '_IP_')) obj.ip = ip;
+								//if (obj.optional) { verbose("skipping " + params[0]); return callback(); }
+							}
+
+							
+							if(minimal && obj.optional) {
+								// skip optional objects 
+								callback()
+							}
+							else {
+								// call storage directly
+								storage[func].apply(storage, params);
+							}
+
+						},
+						function (err) {
+							if (err) throw err;
+							print("\n");
+							print("Setup completed successfully!\n");
+							print("This server (" + hostname + ") has been added as the single primary manager server.\n");
+							print("An administrator account has been created with username 'admin' and password 'admin'.\n");
+							print("You should now be able to start the service by typing: '/opt/cronicle/bin/control.sh start'\n");
+							print("Then, the web interface should be available at: http://" + hostname + ":" + config.WebServer.http_port + "/\n");
+							print("Please allow for up to 60 seconds for the server to become manager.\n\n");
+
+							storage.shutdown(function () { process.exit(0); });
+						}
+					);
+				}
 			});
 			break;
 
