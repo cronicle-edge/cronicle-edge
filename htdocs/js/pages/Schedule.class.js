@@ -2513,7 +2513,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		html += '<div class="info_label">The event will run:</div>';
 		html += '<div class="info_value" id="d_ee_timing_summary">' + summarize_event_timing(timing, event.timezone).replace(/(every\s+minute)/i, '<span style="color:red">$1</span>');
 		// add event webhook info if "On demand" is selected
-		let apiUrl = '/api/app/run_event?id=' + (event.id || 'eventId') + '&post_data=1&api_key=API_KEY'
+		let apiUrl = 'api/app/run_event?id=' + (event.id || 'eventId') + '&post_data=1&api_key=API_KEY'
 		let webhookInfo = !timing ? '<br><span title="Use this Url to trigger event via webhook. API_KEY with [Run Events] privelege should be created by admin user. If using Gitlab webhook - api_key can be also set via SECRET parameter"> <br>[webhook] </span>' + window.location.origin + apiUrl : ' '
 		html += webhookInfo + '</div>';
 
