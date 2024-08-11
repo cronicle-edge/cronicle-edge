@@ -2720,7 +2720,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			lineWrapping: false,
 			scrollbarStyle: "overlay",
 			lineNumbers: true,
-			theme: theme,
+			theme: theme || 'default',
 			matchBrackets: true,
 			gutters: [gutter],
 			lint: lint,
