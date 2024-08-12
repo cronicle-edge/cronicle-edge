@@ -1,13 +1,33 @@
-#!/bin/sh
+#!/bin/bash
 HOMEDIR="$(dirname "$(cd -- "$(dirname "$(readlink -f "$0")")" && (pwd -P 2>/dev/null || pwd))")"
 
-DEFAULT_VERSION="20.11.0"
+DEFAULT_VERSION="20.16.0"
 
 # Use the specified version from the command line argument, if provided
 NODEJS_VERSION="${1:-$DEFAULT_VERSION}"
 
+get_arch () {
+	local arch
+	arch=$(uname -m)
+    os="linux"
+    if [[ "$(uname)" == "Darwin" ]]; then os="darwin"; fi 
+
+	[[ ! $arch ]] && return 1
+	case $arch in 
+		x86_64)  binArch='x64' ;; 
+		# armhf)   binArch='armv6' ;; 
+		armv7)   binArch='armv7l' ;; 
+		aarch64) binArch='arm64' ;; 
+		ppc64el|ppc64le) binArch='ppc64le' ;; 
+		s390x)   binArch='s390x' ;; 
+		# .*386.*) binArch='amd32' ;;
+		*) return 2 ;;\
+	esac; 
+    echo "$os-$binArch"
+}
+
 # Define the download URL for the specified version of Node.js
-NODEJS_URL="https://nodejs.org/dist/v$NODEJS_VERSION/node-v$NODEJS_VERSION-linux-x64.tar.xz"
+NODEJS_URL="https://nodejs.org/dist/v$NODEJS_VERSION/node-v$NODEJS_VERSION-$(get_arch).tar.xz"
 
 # Specify the directory to store the downloaded Node.js archive
 TARGET_DIR="$HOMEDIR/nodejs"
