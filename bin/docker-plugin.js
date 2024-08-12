@@ -123,7 +123,7 @@ let exclude = ['SSH_HOST', 'SSH_KEY', 'SSH_PASSWORD', 'DOCKER_PASSWORD']
 let include = ['BASE_URL', 'BASE_APP_URL', 'DOCKER_HOST', 'PULL_IMAGE', 'KEEP_CONTAINER', 'IMAGE', 'ENTRYPOINT_PATH']
 let vars = Object.entries(process.env)
     .filter(([k, v]) => ((k.startsWith('JOB_') || k.startsWith('DOCKER_') || k.startsWith('ARG') || include.indexOf(k) > -1) && exclude.indexOf(k) === -1))
-    .map(([k, v]) => `${truncVar ? k.replace(/^SSH_/, '') : k}=${v}`)
+    .map(([k, v]) => `${truncVar ? k.replace(/^DOCKER_/, '') : k}=${v}`)
 
 // CONTAINER SETTING
 const createOptions = {
