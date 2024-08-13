@@ -220,6 +220,7 @@
 				{ "type":"text", "id":"timeout", "title":"Timeout (Seconds)", "size":5, "value":"30" }, 
 				{ "type":"checkbox", "id":"follow", "title":"Follow Redirects", "value":0 }, 
 				{ "type":"checkbox", "id":"ssl_cert_bypass", "title":"SSL Cert Bypass", "value":0 }, 
+				{ "type":"checkbox", "id":"parse_auth", "title":"Parse AUTH variable/secret as header", "value":1 }, 
 				{ "type":"text", "id":"success_match", "title":"Success Match", "size":20, "value":"" }, 
 				{ "type":"text", "id":"error_match", "title":"Error Match", "size":20, "value":"" }
 			]
