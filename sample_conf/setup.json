@@ -88,7 +88,9 @@
 				{ "id":"kill_cmd", "type":"text", "size":40, "title":"Kill Command", "value": "pkill -s $$" },
 				{ "id":"script", "type":"textarea", "rows":10, "title":"Script", "value": "\n#!/bin/sh\n\necho \"Running SSHX job on $HOSTNAME\"\n\nsleep 10\n\n# Specify conneciton info using URI format:\n# [ssh://]user[:Password]@host[:port]?[privateKey=/path/to/file&passphrase=Password]\n# URI can be passed directly or as a reference to environment variable\n# If passing password via URI, you'd need to encode special characters (e.g. @ => %40)\n# You can also set SSH_KEY/SSH_PASSWORD/SSH_PASSPHRASE as variables in event/plugin secrets\n\n# If no SSH Host specified on event parameters, it can be resolved from WF argument\n\n# Kill Command parameter is used to properly handle job abortion\n# Default command is [pkill -S $$]\n# $$ is refering to PID of your script parent process (bootstrap script)\n\n# To pass variables other then JOB_ / ARG*, use SSH_ prefix on variable name\n# If this event is chained by other job, you can access chain data using CHAIN_DATA variable\n\n" },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
+				{ "id":"trunc_var", "type":"checkbox", "title":"Truncate Environment Variable Prefix", "value": 0 },
 				{ "type": "checkbox", "id": "annotate", "title": "Add Date/Time Stamps to Log",	"value": 0 },
+				{ "type":"select","id":"target_os","title":"syntax","items":["linux","darwin","windows"],"value":"linux"},
 				{ "type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
 				{ "type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"}
 			]
@@ -115,6 +117,7 @@
 				{ "id":"pull_image", "type":"checkbox", "title":"Pull Image", "value": 1 },
 				{ "id":"keep_container", "type":"checkbox", "title":"Keep Container", "value": 0 },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
+				{ "id":"trunc_var", "type":"checkbox", "title":"Truncate Environment Variable Prefix", "value": 0 },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
 				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"},
 				{"type":"filelist","id":"files","title":"File List","theme":"default", "value":0}
@@ -217,6 +220,7 @@
 				{ "type":"text", "id":"timeout", "title":"Timeout (Seconds)", "size":5, "value":"30" }, 
 				{ "type":"checkbox", "id":"follow", "title":"Follow Redirects", "value":0 }, 
 				{ "type":"checkbox", "id":"ssl_cert_bypass", "title":"SSL Cert Bypass", "value":0 }, 
+				{ "type":"checkbox", "id":"parse_auth", "title":"Parse AUTH variable/secret as header", "value":1 }, 
 				{ "type":"text", "id":"success_match", "title":"Success Match", "size":20, "value":"" }, 
 				{ "type":"text", "id":"error_match", "title":"Error Match", "size":20, "value":"" }
 			]

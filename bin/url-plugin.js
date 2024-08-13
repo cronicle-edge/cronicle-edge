@@ -60,7 +60,7 @@ stream.on('json', function(job) {
 	}
 
 	// set athentication header if set via secrets
-	if(process.env['AUTH'])  {
+	if(params.parse_auth && process.env['AUTH'])  {
 		process.env['AUTH'].replace(/\r\n/g, "\n").trim().split(/\n/).forEach( function(pair) {
 			if (pair.match(/^([^\:]+)\:\s*(.+)$/)) {
 				request.setHeader( RegExp.$1, RegExp.$2 );
