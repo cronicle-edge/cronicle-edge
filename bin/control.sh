@@ -19,7 +19,7 @@
 # --------------------                              --------------------
 # 
 # the name of your binary
-NAME="Cronicle Daemon"
+NAME="Cronicle Server"
 #
 # home directory
 #HOMEDIR="$(dirname "$(cd -- "$(dirname "$0")" && (pwd -P 2>/dev/null || pwd))")"
@@ -54,20 +54,29 @@ fi
 
 for ARG in $@ $ARGS
 do
-    # check for pidfile
-    if [ -f $PIDFILE ] ; then
+	# check for pidfile
+	if [ -f $PIDFILE ] ; then
 		PID=`cat $PIDFILE`
-	if [ "x$PID" != "x" ] && kill -0 $PID 2>/dev/null ; then
-	    STATUS="$NAME running (pid $PID)"
-	    RUNNING=1
+		if [ "x$PID" != "x" ] && kill -0 $PID 2>/dev/null ; then
+			# make sure process is actually ours
+			PS=`ps -p $PID -o args= | sed 's/[ \t]*$//'`
+			
+			if [ "$PS" = "$NAME" ] ; then
+				STATUS="$NAME running (pid $PID)"
+				RUNNING=1
+			else
+				STATUS="$NAME not running (pid $PID?)"
+				RUNNING=0
+			fi
+			
+		else
+			STATUS="$NAME not running (pid $PID?)"
+			RUNNING=0
+		fi
 	else
-	    STATUS="$NAME not running (pid $PID?)"
-	    RUNNING=0
-	fi
-    else
 		STATUS="$NAME not running (no pid file)"
 		RUNNING=0
-    fi
+	fi
 
     case $ARG in
     start)
