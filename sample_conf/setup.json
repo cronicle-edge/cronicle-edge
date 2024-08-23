@@ -90,7 +90,7 @@
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{ "id":"trunc_var", "type":"checkbox", "title":"Truncate Environment Variable Prefix", "value": 0 },
 				{ "type": "checkbox", "id": "annotate", "title": "Add Date/Time Stamps to Log",	"value": 0 },
-				{ "type":"select","id":"target_os","title":"syntax","items":["linux","darwin","windows"],"value":"linux"},
+				{ "type":"select","id":"target_os","title":"Target OS","items":["linux","darwin","windows"],"value":"linux"},
 				{ "type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
 				{ "type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"}
 			]
