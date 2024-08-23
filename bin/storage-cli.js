@@ -277,8 +277,12 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 			let newGroup = { regexp: '^(' + Tools.escapeRegExp(hostname) + ')$' }
 
 			storage.listFindUpdate('global/server_groups', { id: "maingrp" }, newGroup, function (err) {
-				if (err) throw err;
-				print(`Main group regex is set to [ ${newGroup.regexp} ]`);
+				if (err) {
+					print('Nothing to reset');
+					storage.shutdown(function () { process.exit(1); });
+				}
+				else {
+				print(`Resetting main server group to [ ${newGroup.regexp} ]`);
 				print("\n");
 
 					storage.listFind("global/servers", { hostname: hostname }, function (err, item) {
@@ -296,7 +300,7 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 						}
 
 					})
-
+				}
 			});
 			break;
 
