@@ -20,6 +20,8 @@ param(
 
 $ErrorActionPreference = "stop"
 
+$conf = (Get-Content  "$PSScriptRoot\..\conf\config.json" -ErrorAction SilentlyContinue) ?? @{}
+
 if (!$Command -OR $Help) {
     Write-Host "Usage:
 
@@ -156,7 +158,9 @@ if ($Command -in "list", "ls") {
 
 
 # -------------------- check if process is up
-$pidFile = "$PSScriptRoot\..\logs\cronicled.pid"
+
+$pidFile = $env:CRONICLE_pid_file ?? $conf.pid_file ?? "$PSScriptRoot\..\logs\cronicled.pid"
+
 $proc = $null
 $state = "Stopped"
 if (Test-Path $pidFile) {

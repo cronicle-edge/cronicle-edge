@@ -41,7 +41,7 @@ fi
 
 #
 # the path to your PID file
-PIDFILE=$HOMEDIR/logs/cronicled.pid
+PIDFILE=${CRONICLE_pid_file:-$(node -e "console.log(JSON.parse(fs.readFileSync('$HOMEDIR/conf/config.json')).pid_file || 'logs/cronicled.pid')")}
 #
 # --------------------                              --------------------
 # ||||||||||||||||||||   END CONFIGURATION SECTION  ||||||||||||||||||||
