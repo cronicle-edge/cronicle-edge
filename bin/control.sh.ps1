@@ -20,7 +20,8 @@ param(
 
 $ErrorActionPreference = "stop"
 
-$conf = (Get-Content  "$PSScriptRoot\..\conf\config.json" -ErrorAction SilentlyContinue) ?? @{}
+# if this commanfd crashes - there shu;d be something wrong with config file
+$conf = Get-Content "$PSScriptRoot\..\conf\config.json" | ConvertFrom-Json -Depth 10 
 
 if (!$Command -OR $Help) {
     Write-Host "Usage:
@@ -48,7 +49,6 @@ if (!$Command -OR $Help) {
      
 "
 }
-# $conf = Get-Content "$PSScriptRoot\..\conf\config.json" | ConvertFrom-Json -Depth 10
 
 if(Test-Path $PSScriptRoot\..\nodejs\node.exe) {
     $env:Path =  "$PSScriptRoot\..\nodejs\;$env:Path;"
@@ -159,7 +159,9 @@ if ($Command -in "list", "ls") {
 
 # -------------------- check if process is up
 
-$pidFile = $env:CRONICLE_pid_file ?? $conf.pid_file ?? "$PSScriptRoot\..\logs\cronicled.pid"
+Push-Location "$PSScriptRoot/.."
+$pidFile = Get-ChildItem ($env:CRONICLE_pid_file ?? $conf.pid_file ?? "logs\cronicled.pid") -ErrorAction SilentlyContinue
+Pop-Location
 
 $proc = $null
 $state = "Stopped"
