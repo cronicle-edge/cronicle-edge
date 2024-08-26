@@ -76,7 +76,7 @@ IF EXIST "%~dp0..\nodejs\node.exe" (
 
 REM setup or reset manager
 if "%CRONICLE_RESET%"=="1" (
-  node .\storage-cli.js reset
+  node .\storage-cli.js reset || node .\storage-cli.js setup
   echo Croncile manager was reset to current host
 ) else (
   node .\storage-cli.js setup

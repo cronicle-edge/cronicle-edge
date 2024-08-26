@@ -65,11 +65,13 @@ Class.subclass(Page, "Page.Base", {
 		if (!title) return '(None)';
 		if (!style) style = '';
 		if (!extra) extra = '';
+		
 		let tooltip = title.notes ? title.notes.replace(/\"/g, "&quot;") : ""
+		let cat = title.category_title || '(none)'
+		let plug = title.plugin_title || '(none)'
+		let target = title.group_title || '(none)'
+
 		if(extraTooltip) {
-			let cat = title.category_title || '(none)'
-			let plug = title.plugin_title || '(none)'
-			let target = title.group_title || '(none)'
 			tooltip = `<b>Category: </b>${cat}<br><b>Plugin: </b>${plug}<br><b>Target: </b>${target}<b><br>Notes:</b><br>${tooltip}`
 		}
 
@@ -79,10 +81,10 @@ Class.subclass(Page, "Page.Base", {
 		let icon =  `<i title="${tooltip}" class="${icon_class}">&nbsp;</i>`
 
 		if (extraTooltip) {
-			if (title.plugin == 'dockerplug') icon = `<span title="${tooltip}" class="mdi mdi-docker"></span>`
+			if (plug.toUpperCase().startsWith("DOCKER")) icon = `<span title="${tooltip}" class="mdi mdi-docker"></span>`
 			// if (title.plugin == 'shellplug') icon = `<span title="${tooltip}" class="mdi mdi-script"></span>`
-			if (title.plugin == 'sshxplug' || title.plugin == 'sshplug') icon = `<span title="${tooltip}" class="mdi mdi-console"></span>`
-			if (title.plugin == 'urlplug') icon = `<span title="${tooltip}" class="mdi mdi-web"></span>`
+			if (plug.toUpperCase().startsWith("SSH")) icon = `<span title="${tooltip}" class="mdi mdi-console"></span>`
+			if (plug.toUpperCase().startsWith("HTTP")) icon = `<span title="${tooltip}" class="mdi mdi-web"></span>`
 		}
 
 		if (typeof (title) == 'object') {

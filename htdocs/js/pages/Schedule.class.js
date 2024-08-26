@@ -1011,7 +1011,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			let itemClass = eventView === 'grid' && !item.active ? '' : (tds.className || '')
 
 			xhtml += `
-			<div id="${item.id}" style="display:${itemVisibility}" class="upcoming schedule grid-item ${itemClass }" onclick="">
+			<div id="${item.id}" style="display:${itemVisibility}" class="upcoming schedule grid-item ${itemClass || '' }" onclick="">
 			 <div class="flex-container schedule">
 			  <div style="text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">${tds[1]}</div>
 			
@@ -2720,7 +2720,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			lineWrapping: false,
 			scrollbarStyle: "overlay",
 			lineNumbers: true,
-			theme: theme,
+			theme: theme || 'default',
 			matchBrackets: true,
 			gutters: [gutter],
 			lint: lint,

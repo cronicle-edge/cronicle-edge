@@ -37,6 +37,8 @@ hostInfo = process.env[hostInfo] || hostInfo // host info might be passed as nam
 
 let json = parseInt(process.env['JSON'])
 
+let truncVar = parseInt(process.env['TRUNC_VAR']) // optionally remove SSH_ prefix from passed vars
+
 let ext = { powershell: 'ps1', csharp: 'cs', java: 'java', python: 'py', javascript: 'js' } // might be useful in Windows (TODO)
 
 let tmpFile = '/tmp/cronicle-' + process.env['JOB_ID'] + '.' + (ext[process.env['LANG']] || 'sh')
@@ -55,7 +57,7 @@ process.env['JOB_CHAIN_DATA'] = JSON.stringify(job.chain_data) || 'has no data'
 
 let vars = Object.entries(process.env)
     .filter(([k, v]) => ((k.startsWith('JOB_') || k.startsWith('SSH_') || k.startsWith('ARG') || include.indexOf(k) > -1) && exclude.indexOf(k) === -1))
-    .map(([key, value]) => `export ${key}=$(printf "${Buffer.from(value).toString('base64')}" | base64 -di)`)
+    .map(([key, value]) => `export ${truncVar ? key.replace(/^SSH_/, '') : key}=$(printf "${Buffer.from(value).toString('base64')}" | base64 -di)`)
     .join('\n')
 
 let script = `
@@ -79,6 +81,10 @@ echo "trap:${killCmd}"
 
 ${prefix} $temp_file
 `
+
+if(process.env['TARGET_OS'] === 'darwin') {
+    script = script.replace(/base64 -di/g, "base64 -D");
+}
 
 let stderr_msg = ""
 

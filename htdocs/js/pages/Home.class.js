@@ -181,8 +181,15 @@ Class.subclass( Page.Base, "Page.Home", {
 			if (job.mem) total_mem += (job.mem.current || 0);
 		}
 
+		 // fix "sticky" tooltip
+		$(document).tooltip("disable")
+		$(document).tooltip("enable")
+
 		let errBg = stats.jobs_completed > 0 && (stats.jobs_failed || 0)/stats.jobs_completed > (parseFloat(ui.err_rate) || 0.03) ? 'red2' : 'gray'
-		let errTitle = Object.entries(stats.errorLog || {}).slice(0,20).sort((a,b)=> a[1] < b[1] ? 1 : -1).map(e=>`${e[0]}:\t<b>${e[1]}</b>`).join("\n")
+		let errorLog = Object.entries(stats.errorLog || {})
+		let runs_failed = Object.values(stats.errorLog || {}).reduce((a,b)=>a+b, 0)
+		let errTitle = errorLog.slice(0,21).sort((a,b)=> a[1] < b[1] ? 1 : -1).map(e=>`${e[0]}:\t<b>${e[1]}</b>`).join("\n")
+		if(stats.jobs_failed > runs_failed ) errTitle  = `<u>Failed to start: <b>${stats.jobs_failed - runs_failed }</b></u> \n` + errTitle 
     // xhtml
 
 	let failed_badge = `<span style="cursor:pointer;" onclick='Nav.go("History?sub=error_history&error=1&max=${stats.jobs_failed || 0}")' title="${errTitle}" class="color_label ${errBg}">${stats.jobs_failed || 0}</span>&nbsp;`
@@ -211,6 +218,8 @@ Class.subclass( Page.Base, "Page.Home", {
 	})
 
 	html += "</div>"
+
+	
 
 	document.getElementById('d_home_header_stats').innerHTML = html;
 	},

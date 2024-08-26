@@ -2,17 +2,58 @@
 
 This is a fork of [jhuckaby/Cronicle](https://github.com/jhuckaby/Cronicle) with quite a few new features and APIs. The main purpose of this fork is to make Cronicle work better with Docker, and add some experimental features that are only expected in Cronicle 2.0 (a.k.a. Orchestra)
 
-You can quickly try it using Docker using image from Docker Hub:
+![image](https://github.com/user-attachments/assets/10aabe1a-59be-47ab-a785-341c0e3cc56a)
+
+# Install:
+## Docker
+Images:
+ - dockerhub (auto, releases, arm64 supported): **cronicle/edge:latest  | cronicle/edge:v1.x.y**
+ - github (auto, main/releases): **ghcr.io/cronicle-edge/cronicle-edge:main  | ghcr.io/cronicle-edge/cronicle-edge:v1.x.y**
+ - arm32 (raspberry pi): **cronicle/edge-pi:latest**
+ - classic cronicle: **cronicle/cronicle:latest**  (it also supports manager/worker entrypoint)
+
 ```bash
+ # test latest and greatest:
  docker run -it --rm -p 3012:3012 ghcr.io/cronicle-edge/cronicle-edge:main manager
- # images are also generated for each release, e.g. ghcr.io/cronicle-edge/cronicle-edge:v1.7.0
+
+# typicall local setup
+ mkdir -p $HOME/cron && docker run -d --name cron \
+ --hostname manager1 \
+ -p 3012:3012 --restart always  \
+ -v $HOME/cron:/opt/cronicle/data  \
+ -e CRONICLE_secret_key=mysecretKey  \
+ cronicle/edge:v1.9.6 manager 
 ```
-Or build the image locally - clone or download the latest release and run command below from project root
+
+Above images based on alpine linux, and include some demo items and storage engines (S3/SQL). If you need custom base image or to include you custom patches, build you own image, use Dockerfile as an example:
 ```bash
 docker build -t cronicle/edge -f Dockerfile .
 ```
+Instead of using tini as entrypoint you can use Docker's --init option.
 
-To test multi-node set up (in swarm mode)
+# Building locally / on VM (linux/windows)
+
+```bash
+git clone https://github.com/cronicle-edge/cronicle-edge && cd cronicle-edge
+
+# basic install, will bundle cronicle into "dist" folder using default storage engine (Filesystem)
+./bundle
+# add extra storage engines, and custom output dir:
+./bundle /path/to/dir --S3 --mysql
+# check all options:
+./bundle --help
+```
+To avoid including some demo stuff on initial setup (e.g. Config Keys) set this variable CRONICLE_setup=minimal
+
+After bundling is complete you can use this commands to start cronicle:
+```bash
+./dist/bin/manager # (or worker, use --help for more option) - will start cronicle on foregound in manager/worker mode (meant for docker entrypoint)
+./dist/bin/control.sh start  # (use --help for more info) - will start cronicle on background
+./dist/bin/cronicle.js --options # use if need to set custom option
+```
+bundle script will also print instruction how to setup cronicle as service.
+
+## Try multinode setup with Docker swarm
 ```bash
 # before deploying stack, set up a secret_key as docker secret, e.g.:
 # echo 123456 | docker secret create secret_key -
@@ -21,15 +62,6 @@ docker stack deploy --compose-file  Docker/LocalCluster.yaml cron_stack
 ```
 
 You can import some demo jobs from **sample_conf/backup** file. This can be done via UI (see below). Check [Docker](https://github.com/cronicle-edge/cronicle-edge/tree/main/Docker) section for Dockerfile and other examples for real life use. 
-
-To try/test/compare original cronicle (jhuckaby/Cronicle) use tags below. You can keep using manager/worker commands as entry point
-- cronicle/cronicle  ```latest version```
-- cronicle/cronicle:0.9.2 ``` specific version```
-```bash
- docker run -it  -p 3012:3012 -e CRONICLE_master=1 cronicle/cronicle manager 
-```
-
-or build custom version using [DockerfileClassic](https://github.com/cronicle-edge/cronicle-edge/blob/main/DockerfileClassic) dockerfile.
 
 # New Features
 

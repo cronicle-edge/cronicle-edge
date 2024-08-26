@@ -67,7 +67,7 @@ fi
 
 # setup storage OR make current host the primary manager if needed
 if [ "$reset" = 1 ]; then
-  node $HOMEDIR/bin/storage-cli.js reset
+  node $HOMEDIR/bin/storage-cli.js reset || $HOMEDIR/bin/control.sh setup
 else $HOMEDIR/bin/control.sh setup
 fi
 
