@@ -294,7 +294,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		   `
 
 			let wfe = wf_events[idx]
-			let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;"><a href="/#Schedule?sub=edit_event&id=${wfe.id}" target="_blank">${wfe.id}</a></span>`
+			let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;"><a href="#Schedule?sub=edit_event&id=${wfe.id}" target="_blank">${wfe.id}</a></span>`
 			let title = `${schedTitles[wfe.id] || '<span style="color:red">[Unknown]</span>'}`.substring(0, 40)
 			let arg = wfe.arg || ''
 			if (arg.length > 40) arg = arg.substring(0, 37) + '...'

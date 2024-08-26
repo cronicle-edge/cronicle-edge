@@ -364,7 +364,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		html += 'Console Output';
 		var logSize = ""
 		if (job.log_file_size) logSize += ' (' + get_text_from_bytes(job.log_file_size, 1) + ')';
-		html += '<div class="subtitle_widget" style="margin-left:2px;"><a href="/console?id=' + job.id + '" target="_blank"><i class="fa fa-external-link">&nbsp;</i><b>View Full Log</b></a></div>';
+		html += '<div class="subtitle_widget" style="margin-left:2px;"><a href="console?id=' + job.id + '" target="_blank"><i class="fa fa-external-link">&nbsp;</i><b>View Full Log</b></a></div>';
 		html += '<div class="subtitle_widget"><a style="cursor:pointer" onMouseUp="$P().do_download_log()"><i class="fa fa-download">&nbsp;</i><b>Download Log ' + logSize + '</b></a></div>';
 		html += '<div class="clear"></div>';
 		html += '</div>';
@@ -877,7 +877,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		html += '<div class="subtitle" style="margin-top:15px;">';
 		html += `Live Job Event Log `;
 		//html += '<div class="subtitle_widget" style="margin-left:2px;"><a href="' + remote_api_url + '/app/get_live_job_log?id=' + job.id + '" target="_blank"><i class="fa fa-external-link">&nbsp;</i><b>View Full Log</b></a></div>';
-		html += `<div class="subtitle_widget"><a target="_blank" href="/console?id=${job.id}&download=1"><i class="fa fa-download">&nbsp;</i><b>View Full Log</b></a></div>`;
+		html += `<div class="subtitle_widget"><a target="_blank" href="console?id=${job.id}&download=1"><i class="fa fa-download">&nbsp;</i><b>View Full Log</b></a></div>`;
 		html += '<div class="clear"></div>';
 		html += '</div>';
 
