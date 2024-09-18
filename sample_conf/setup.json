@@ -296,6 +296,13 @@
 			"optional": true
 		}],
 		[ "listPush", "global/conf_keys", {
+			"id": "force_ldap", 
+			"title": "force_ldap",
+			"key": "false",
+			"description": "Specifies wether to login on an Active Directory server using simple AD or force LDAP.\nIf set to 'true' please create a configuration for an 'ldap' config key in JSON format with an 'ldapOpts' object as exemplified here: 'https://github.com/shaozi/ldap-authentication'.",
+			"optional": true
+		}],
+		[ "listPush", "global/conf_keys", {
 			"id": "smtp_hostname", 
 			"title": "smtp_hostname",
 			"key": "mailrelay.cronicle.com",
