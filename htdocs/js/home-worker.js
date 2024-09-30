@@ -17,7 +17,7 @@ const FMT = {} // formatter cache for getFMT (generating formatter is expensive)
  */
 function getFMT(tz) {
 	if (!FMT[tz]) {
-		FMT[tz] = new Intl.DateTimeFormat('se-SE', { // se locale follows ISO-8601
+		FMT[tz] = new Intl.DateTimeFormat('en-CA', { // moving from se to en-CA to get ISO in chrome
 			timeZone: tz,
 			year: 'numeric',
 			month: '2-digit',
