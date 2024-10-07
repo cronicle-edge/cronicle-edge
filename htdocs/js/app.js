@@ -819,6 +819,18 @@ function get_pretty_int_list(arr, ranges) {
 	return arr.slice(0, arr.length - 1).join(', ') + ' and ' + arr[ arr.length - 1 ];
 }
 
+function summarize_event_interval(interval, short) {	
+	if(!parseInt(interval)) return 'Inactive Interval' // sanity, should check before passing this arg
+	if(interval % (3600*24) === 0) {
+		return (short ? `Every ${interval/(3600*24)} days` : `Interval: Every ${interval/(3600*24)} days`)
+	}
+	if(interval % 3600 === 0) {
+		return (short ? `Every ${interval/3600} hours` : `Interval: Every ${interval/3600} hours`)
+	}
+	return  (short ? `Every ${interval/60} min` : `Interval: Every ${interval/60} minutes` )
+
+}
+
 function summarize_event_timing_short(timing) {		
 	if(!timing) return "On Demand"
 	let type = 'Hourly'
@@ -836,7 +848,7 @@ function summarize_event_timing(timing, timezone, extra) {
 	if (!timing && extra) {
 		return `<span title="${'Extra Ticks: ' + extra.toString().split(/[\,\;\|]/).filter(e => e).join(', ')}">On Demand +</span>`
 	}
-	if (!timing) { return "On demand" };
+	if (!timing) { return "On demand" };	
 	
 	// years
 	var year_str = '';

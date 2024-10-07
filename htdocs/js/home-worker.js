@@ -94,6 +94,8 @@ onmessage = function (e) {
 		// setup moment, and floor to the hour
 		let tz = item.timezone || default_tz;
 
+		// -------  EXTRA TICKS ---------
+
 		if (item.ticks) { // this should be in line with checkEventTicks function on scheduler.js
 			let currDate = getFMT(tz).format(Date.now()).substring(0, 10) // yyyy-mm-dd @ tz
 			let ticks = []
@@ -115,6 +117,30 @@ onmessage = function (e) {
 			})
 
 		}
+
+		// ------ INTERVALS -------
+
+		let interval = parseInt(item.interval) 
+		if(interval) {
+			let interval_start = parseInt(item.interval_start) || 0
+			let intervalsPassed = now > interval_start ? Math.ceil((now - interval_start)/interval) : 0
+			let nextRun = interval_start + intervalsPassed*interval
+
+			for(let cur = nextRun; cur <= now + 60*60*24; cur += interval) {
+				if (item.start_time && parseInt(item.start_time) > cur*1000) {
+					continue
+				} 
+				if (item.end_time && parseInt(item.end_time) < cur*1000 ) {
+					continue
+				} 
+				if(cur > now) {
+					events.push({ epoch: cur, id: item.id });
+				} 
+			}
+		}
+
+
+		// ------ NORMAL SCHEDULE -------
 
 		var hour_start = Math.floor(now / 3600) * 3600 // trunc now to the hour
 		let margs = momentTz(hour_start * 1000, tz)

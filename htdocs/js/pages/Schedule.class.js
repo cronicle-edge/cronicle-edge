@@ -411,7 +411,6 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				else {
 					evt.arg = $('#fe_ee_pp_wf_evt_arg').val()
 					self.event.workflow.push(evt)
-					//    console.log('added to wf: ', evt)
 				}
 				Dialog.hide();
 
@@ -906,10 +905,29 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			if (item.start_time && Number(item.start_time) > new Date().valueOf() + 60000) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
 			if (item.end_time && Number(item.end_time) < new Date().valueOf()) inactiveTitle = 'Schedule expired on ' + new Date(item.end_time).toLocaleString()
 
-			let niceTiming = summarize_event_timing(item.timing, item.timezone, (inactiveTitle || isGrid) ? null : item.ticks)
+			// let gridTiming
+			// let gridTimingTitle
+			// let niceTiming
 
-			let gridTiming = niceTiming.length > 20 ? summarize_event_timing_short(item.timing) : niceTiming 
-			let gridTimingTitle = niceTiming;
+
+			     // for timing     
+    		  let niceTiming = summarize_event_timing(item.timing, item.timezone, (inactiveTitle || isGrid) ? null : item.ticks)
+			  let gridTiming = niceTiming.length > 20 ? summarize_event_timing_short(item.timing) : niceTiming 
+			  let gridTimingTitle = niceTiming;
+
+			  if(parseInt(item.interval)) { // for interval
+				niceTiming = gridTiming = summarize_event_interval(parseInt(item.interval), isGrid)
+				let interval_start = 'epoch'
+				if(parseInt(item.interval_start)) {	
+					if(parseInt(item.interval) % (3600*24*7) === 0) { // weekly intervals
+						let ddd = moment.tz( parseInt(item.interval_start) * 1000, item.tz || app.tz).format(`ddd`)
+						niceTiming = `${gridTiming} (on ${ddd})`
+					}
+					interval_start = moment.tz( parseInt(item.interval_start) * 1000, item.tz || app.tz).format(`ddd lll z`);
+				} 
+				gridTimingTitle = niceTiming + `<br>Starting from ${interval_start}`
+			 }
+			
 
 			if (inactiveTitle) {
 				gridTiming = `<s>${gridTiming}</s>`
@@ -1794,7 +1812,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// timing
 		var timing = event.timing;
 		var tmode = '';
-		if (!timing) tmode = 'demand';
+
+		if(parseInt(event.interval)) tmode = 'interval'
+		else if (!timing) tmode = 'demand';		
 		else if (timing.years && timing.years.length) tmode = 'custom';
 		else if (timing.months && timing.months.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
 		else if (timing.days && timing.days.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
@@ -1806,13 +1826,14 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		else if (!num_keys(timing)) tmode = 'hourly';
 
 		var timing_items = [
-			['demand', 'On Demand'],
+			['demand', 'On Demand'],			
 			['custom', 'Custom'],
 			['yearly', 'Yearly'],
 			['monthly', 'Monthly'],
 			['weekly', 'Weekly'],
 			['daily', 'Daily'],
-			['hourly', 'Hourly']
+			['hourly', 'Hourly'],
+			['interval', 'Interval']		
 		];
 
 		html += get_form_table_row('Timing',
@@ -2150,7 +2171,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 				// redraw display
 				var tmode = '';
-				if (timing.years && timing.years.length) tmode = 'custom';
+				if(parseInt(self.event.interval)) tmode = 'interval';
+				else if (timing.years && timing.years.length) tmode = 'custom';
 				else if (timing.months && timing.months.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
 				else if (timing.days && timing.days.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
 				else if (timing.months && timing.months.length) tmode = 'yearly';
@@ -2243,11 +2265,12 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}, 1);
 	},
 
-	rc_get_short_date_time: function (epoch) {
+	rc_get_short_date_time: function (epoch, includeWeekDay) {
 		// get short date/time with tz abbrev using moment
 		var tz = this.event.timezone || app.tz;
 		// return moment.tz( epoch * 1000, tz).format("MMM D, YYYY h:mm A z");
-		return moment.tz(epoch * 1000, tz).format("lll z");
+		let ddd = includeWeekDay ? 'ddd ' : '';
+		return moment.tz(epoch * 1000, tz).format(`${ddd}lll z`);
 	},
 
 	rc_click: function () {
@@ -2269,6 +2292,27 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				}
 			});
 		}
+	},
+
+	set_interval_start: function () {
+		// click in 'reset cursor' text field, popup edit dialog
+		const self = this;
+		const event  = this.event;
+
+		// if ($('#fe_ee_rc_enabled').is(':checked')) {
+			var epoch = parseInt(event.interval_start || 0);
+
+			this.choose_date_time({
+				when: epoch,
+				title: "Set Interval Start",
+				timezone: this.event.timezone || app.tz,
+
+				callback: function (int_epoch) {
+					event.interval_start = int_epoch
+					$('#fe_ee_interval_start').data('epoch', int_epoch).val(self.rc_get_short_date_time(int_epoch));
+				}
+			});
+		// }
 	},
 
 	reset_rc_time_now: function () {
@@ -2363,12 +2407,21 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				event.timing = false;
 				break;
 
+			case 'interval':
+				timing = false;
+				event.timing = false;
+				break;
+
 			case 'custom':
 				if (!timing) timing = event.timing = {};
+				event.interval = false;
+				event.interval_start = false;
 				break;
 
 			case 'yearly':
 				if (!timing) timing = event.timing = {};
+				event.interval = false;
+				event.interval_start = false;
 				delete timing.years;
 				if (!timing.months) timing.months = [];
 				if (!timing.months.length) timing.months.push(dargs.mon);
@@ -2382,6 +2435,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			case 'weekly':
 				if (!timing) timing = event.timing = {};
+				event.interval = false;
+				event.interval_start = false;
 				delete timing.years;
 				delete timing.months;
 				delete timing.days;
@@ -2394,6 +2449,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			case 'monthly':
 				if (!timing) timing = event.timing = {};
+				event.interval = false;
+				event.interval_start = false;
 				delete timing.years;
 				delete timing.months;
 				delete timing.weekdays;
@@ -2406,6 +2463,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			case 'daily':
 				if (!timing) timing = event.timing = {};
+				event.interval = false;
+				event.interval_start = false;
 				delete timing.years;
 				delete timing.months;
 				delete timing.weekdays;
@@ -2416,6 +2475,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			case 'hourly':
 				if (!timing) timing = event.timing = {};
+				event.interval = false;
+				event.interval_start = false;
 				delete timing.years;
 				delete timing.months;
 				delete timing.weekdays;
@@ -2427,6 +2488,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		if (timing) {
 			if (!timing.minutes) timing.minutes = [];
 			if (!timing.minutes.length) timing.minutes.push(0);
+			event.interval = false;
+			event.interval_start = false;
 		}
 
 		$('#d_ee_timing_params').html(this.get_timing_params_html(tmode));
@@ -2449,6 +2512,19 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			var year = (new Date()).getFullYear();
 			html += '<div class="timing_details_content">' + this.get_timing_checkbox_set('year', [year, year + 1, year + 2, year + 3, year + 4, year + 5, year + 6, year + 7, year + 8, year + 9, year + 10], timing.years || [], true) + '</div>';
 		} // years
+
+		if (tmode == 'interval') { // xxint
+			// html += '<div class="timing_details_label">Interval</div>';
+			html += '<div class="timing_details_content">'
+			let intSelect = this.get_relative_time_combo_box('fe_ee_interval',  (parseInt(event.interval) || 60*10));
+			let intStart = event.interval_start ? $P().rc_get_short_date_time(event.interval_start , true) : '(unset)'
+			html += `<table cellspacing="0" cellpadding="0"><tr>
+			<td><label>Every: </label><td style="padding:12px"> ${intSelect} </td></td><td style="padding:12px"><label> Starting From: </label>&nbsp;</td>
+			<td><input type="text" id="fe_ee_interval_start" style="font-size:13px; width:200px;" value="${intStart}" onclick="$P().set_interval_start()"/></td>
+			<td></td>
+			</tr></table>
+			</div>`
+		} // interval
 
 		if (tmode.match(/(custom|yearly)/)) {
 			// show months
@@ -2509,13 +2585,15 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			html += '</div>';
 		}
 
-		// summary
-		html += '<div class="info_label">The event will run:</div>';
-		html += '<div class="info_value" id="d_ee_timing_summary">' + summarize_event_timing(timing, event.timezone).replace(/(every\s+minute)/i, '<span style="color:red">$1</span>');
-		// add event webhook info if "On demand" is selected
-		let apiUrl = '/api/app/run_event?id=' + (event.id || 'eventId') + '&post_data=1&api_key=API_KEY'
-		let webhookInfo = !timing ? '<br><span title="Use this Url to trigger event via webhook. API_KEY with [Run Events] privelege should be created by admin user. If using Gitlab webhook - api_key can be also set via SECRET parameter"> <br>[webhook] </span>' + window.location.origin + apiUrl : ' '
-		html += webhookInfo + '</div>';
+		// summary (for non-interval)
+		if (tmode !== 'interval') {
+			html += '<div class="info_label">The event will run:</div>';
+			html += '<div class="info_value" id="d_ee_timing_summary">' + summarize_event_timing(timing, event.timezone).replace(/(every\s+minute)/i, '<span style="color:red">$1</span>');
+			// add event webhook info if "On demand" is selected
+			let apiUrl = '/api/app/run_event?id=' + (event.id || 'eventId') + '&post_data=1&api_key=API_KEY'
+			let webhookInfo = !timing ? '<br><span title="Use this Url to trigger event via webhook. API_KEY with [Run Events] privelege should be created by admin user. If using Gitlab webhook - api_key can be also set via SECRET parameter"> <br>[webhook] </span>' + window.location.origin + apiUrl : ' '
+			html += webhookInfo + '</div>';
+		}
 
 		html += '</fieldset>';
 		html += '<div class="caption" style="margin-top:6px;">Choose when and how often the event should run.</div>';
@@ -2549,6 +2627,12 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		// if tmode is demand, wipe timing object
 		if ($('#fe_ee_timing').val() == 'demand') {
+			event.timing = false;
+			timing = false;
+		}
+
+		// if tmode is demand, wipe timing object
+		if ($('#fe_ee_timing').val() == 'interval') {
 			event.timing = false;
 			timing = false;
 		}
@@ -2999,6 +3083,17 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		event.timezone = $('#fe_ee_timezone').val();
 		event.start_time = new Date($('#event_starttime').val()).valueOf()
 		event.end_time = new Date($('#event_endtime').val()).valueOf()
+		let eventInterval = parseInt($('#fe_ee_interval').val())
+		if(eventInterval) {
+		event.interval = (parseInt($('#fe_ee_interval').val()) *  parseInt($('#fe_ee_interval_units').val()));
+		event.interval_start = parseInt(event.interval_start) || 0
+		event.timing = false
+		}
+		else {
+			event.interval = false
+			event.interval_start = false
+		}
+
 
 		// max children
 		event.max_children = parseInt($('#fe_ee_max_children').val());
