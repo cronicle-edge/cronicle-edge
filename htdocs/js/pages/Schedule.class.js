@@ -923,7 +923,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 						let ddd = moment.tz( parseInt(item.interval_start) * 1000, item.tz || app.tz).format(`ddd`)
 						niceTiming = `${gridTiming} (on ${ddd})`
 					}
-					interval_start = moment.tz( parseInt(item.interval_start) * 1000, item.tz || app.tz).format(`ddd lll z`);
+					let hhFormat = app.hh24 ? 'yyyy-MM-DD HH:mm' : 'lll'
+					interval_start = moment.tz( parseInt(item.interval_start) * 1000, item.tz || app.tz).format(`ddd ${hhFormat} z`);
 				} 
 				gridTimingTitle = niceTiming + `<br>Starting from ${interval_start}`
 			 }
@@ -2270,7 +2271,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		var tz = this.event.timezone || app.tz;
 		// return moment.tz( epoch * 1000, tz).format("MMM D, YYYY h:mm A z");
 		let ddd = includeWeekDay ? 'ddd ' : '';
-		return moment.tz(epoch * 1000, tz).format(`${ddd}lll z`);
+		let hhFormat = app.hh24 ? 'yyyy-MM-DD HH:mm' : 'lll'
+		return moment.tz(epoch * 1000, tz).format(`${ddd}${hhFormat} z`);
 	},
 
 	rc_click: function () {

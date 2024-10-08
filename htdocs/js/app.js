@@ -72,13 +72,18 @@ app.extend({
 			this.initReady = true;
 			return;
 		}
-		
+
 		if (!this.servers) this.servers = {};
 		this.server_groups = [];
 		
 		// timezone support
 		this.tz = this.config.tz || jstz.determine().name();
 		this.zones = moment.tz.names();
+
+		this.hh24 = (this.config.ui || {}).hh24
+		if(this.hh24) { // override hour labels
+			_hour_names = ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23']
+		}
 		
 		// preload a few essential images
 		for (var idx = 0, len = this.preload_images.length; idx < len; idx++) {
@@ -831,6 +836,18 @@ function summarize_event_interval(interval, short) {
 
 }
 
+// override get_nice_time from base class
+function get_nice_time(epoch, secs) {
+	let dargs = get_date_args(epoch);
+	if (dargs.min < 10) dargs.min = '0' + dargs.min;
+	if (dargs.sec < 10) dargs.sec = '0' + dargs.sec;
+	let output = (app.hh24 ? dargs.hour : dargs.hour12) + ':' + dargs.min;
+	let ampm = app.hh24 ? '' : dargs.ampm.toUpperCase()
+	if (secs) output += ':' + dargs.sec;
+	output += ' ' + ampm;
+	return output;
+}
+
 function summarize_event_timing_short(timing) {		
 	if(!timing) return "On Demand"
 	let type = 'Hourly'
@@ -885,7 +902,7 @@ function summarize_event_timing(timing, timezone, extra) {
 	var hour_str = '';
 	if (timing.hours && timing.hours.length) {
 		hour_str = get_pretty_int_list(timing.hours, true).replace(/(\d+)/g, function(m_all, m_g1) {
-			return _hour_names[ parseInt(m_g1) ];
+              return _hour_names[ parseInt(m_g1) ];
 		});
 	}
 	
@@ -924,10 +941,13 @@ function summarize_event_timing(timing, timezone, extra) {
 	
 	// compress single hour + single minute
 	if (timing.hours && timing.hours.length == 1 && timing.minutes && timing.minutes.length == 1) {
+		new_str = hour_str + min_str;
+		if(!app.hh24) {
 		hour_str.match(/^(\d+)(\w+)$/);
 		var hr = RegExp.$1;
 		var ampm = RegExp.$2;
 		var new_str = hr + min_str + ampm;
+		}
 		
 		if (mday_str || wday_str) groups.push( 'at ' + new_str );
 		else groups.push( 'daily at ' + new_str );

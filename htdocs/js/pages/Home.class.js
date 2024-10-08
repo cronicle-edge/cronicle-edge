@@ -286,8 +286,8 @@ Class.subclass( Page.Base, "Page.Home", {
 			var item = find_object( app.schedule, { id: stub.id } ) || {};
 			
 			if (viewType == "compact" || isGrid) { // one row per event, use badge for job count
-				
-			    var currSched = moment.tz(stub.epoch * 1000, item.timezone || app.tz).format("h:mm A z");
+				let hhFormat = app.hh24 ? 'H:mm z' : 'h:mm A z'
+			    var currSched = moment.tz(stub.epoch * 1000, item.timezone || app.tz).format(hhFormat);
 			    var currCD = get_text_from_seconds_round(Math.max(60, stub.epoch - now), false);
 
 				if (!stubCounter[stub.id]) {
