@@ -915,7 +915,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			  let gridTiming = niceTiming.length > 20 ? summarize_event_timing_short(item.timing) : niceTiming 
 			  let gridTimingTitle = niceTiming;
 
-			  if(parseInt(item.interval)) { // for interval
+			  if(parseInt(item.interval) > 0) { // for interval
 				niceTiming = gridTiming = summarize_event_interval(parseInt(item.interval), isGrid)
 				let interval_start = 'epoch'
 				if(parseInt(item.interval_start)) {	
@@ -1813,7 +1813,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		var timing = event.timing;
 		var tmode = '';
 
-		if(parseInt(event.interval)) tmode = 'interval'
+		if(parseInt(event.interval) > 0 )  tmode = 'interval'
 		else if (!timing) tmode = 'demand';		
 		else if (timing.years && timing.years.length) tmode = 'custom';
 		else if (timing.months && timing.months.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
@@ -1940,7 +1940,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			'<div class="caption">Run event as a detached background process that is never interrupted.</div>' +
 
 			'<div style="margin-top:10px"><input type="checkbox" id="fe_ee_queue" value="1" ' + (event.queue ? 'checked="checked"' : '') + ' onChange="$P().setGroupVisible(\'eq\',this.checked)"/><label for="fe_ee_queue">Allow Queued Jobs</label></div>' +
-			'<div class="caption">Jobs will be queued that cannot run immediately.</div>' +
+			'<div class="caption">Jobs that cannot run immediately will be queued.</div>' +
 
 			'<div style="margin-top:10px"><input type="checkbox" id="fe_ee_silent" value="1" ' + (event.silent ? 'checked="checked"' : '') + '/><label for="fe_ee_silent">Silent</label>' +
 			'<div class="caption">Hide job from common reporting (for maintenance/debug).</div>' +
@@ -2171,7 +2171,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 				// redraw display
 				var tmode = '';
-				if(parseInt(self.event.interval)) tmode = 'interval';
+				if(parseInt(self.event.interval) > 0) tmode = 'interval';
 				else if (timing.years && timing.years.length) tmode = 'custom';
 				else if (timing.months && timing.months.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
 				else if (timing.days && timing.days.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
@@ -2513,11 +2513,11 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			html += '<div class="timing_details_content">' + this.get_timing_checkbox_set('year', [year, year + 1, year + 2, year + 3, year + 4, year + 5, year + 6, year + 7, year + 8, year + 9, year + 10], timing.years || [], true) + '</div>';
 		} // years
 
-		if (tmode == 'interval') { // xxint
+		if (tmode == 'interval') {
 			// html += '<div class="timing_details_label">Interval</div>';
 			html += '<div class="timing_details_content">'
 			let intSelect = this.get_relative_time_combo_box('fe_ee_interval',  (parseInt(event.interval) || 60*10));
-			let intStart = event.interval_start ? $P().rc_get_short_date_time(event.interval_start , true) : '(unset)'
+			let intStart = event.interval_start ? $P().rc_get_short_date_time(event.interval_start , true) : 'epoch'
 			html += `<table cellspacing="0" cellpadding="0"><tr>
 			<td><label>Every: </label><td style="padding:12px"> ${intSelect} </td></td><td style="padding:12px"><label> Starting From: </label>&nbsp;</td>
 			<td><input type="text" id="fe_ee_interval_start" style="font-size:13px; width:200px;" value="${intStart}" onclick="$P().set_interval_start()"/></td>
@@ -3083,11 +3083,14 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		event.timezone = $('#fe_ee_timezone').val();
 		event.start_time = new Date($('#event_starttime').val()).valueOf()
 		event.end_time = new Date($('#event_endtime').val()).valueOf()
-		let eventInterval = parseInt($('#fe_ee_interval').val())
-		if(eventInterval) {
-		event.interval = (parseInt($('#fe_ee_interval').val()) *  parseInt($('#fe_ee_interval_units').val()));
-		event.interval_start = parseInt(event.interval_start) || 0
-		event.timing = false
+
+		let eventInterval = $('#fe_ee_interval').val()
+
+		if (eventInterval) {
+			if ((parseInt(eventInterval)|| 0) < 1) return app.badField('fe_ee_interval', "Invalid interval value (must be positive integer)");
+			event.interval = (parseInt($('#fe_ee_interval').val()) * parseInt($('#fe_ee_interval_units').val()));
+			event.interval_start = parseInt(event.interval_start) || 0
+			event.timing = false
 		}
 		else {
 			event.interval = false

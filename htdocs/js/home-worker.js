@@ -121,7 +121,7 @@ onmessage = function (e) {
 		// ------ INTERVALS -------
 
 		let interval = parseInt(item.interval) 
-		if(interval) {
+		if(interval > 0) {
 			let interval_start = parseInt(item.interval_start) || 0
 			let intervalsPassed = now > interval_start ? Math.ceil((now - interval_start)/interval) : 0
 			let nextRun = interval_start + intervalsPassed*interval
