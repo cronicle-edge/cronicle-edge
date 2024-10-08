@@ -289,17 +289,24 @@
 			"optional": true
 		}],
 		[ "listPush", "global/conf_keys", {
-			"id": "ad_domain", 
-			"title": "ad_domain",
-			"key": "corp.cronicle.com",
-			"description": "default AD domain for external auth. You can also prepend domain to the username (e.g. user@domain.com)",
+			"id": "ldap_url", 
+			"title": "ldap_url",
+			"key": "ldaps://ldap.jumpcloud.com",
+			"description": "The URL of the LDAP provider for external auth.",
 			"optional": true
 		}],
 		[ "listPush", "global/conf_keys", {
-			"id": "force_ldap", 
-			"title": "force_ldap",
-			"key": "false",
-			"description": "Specifies wether to login on an Active Directory server using simple AD or force LDAP.\nIf set to 'true' please create a configuration for an 'ldap' config key in JSON format with an 'ldapOpts' object as exemplified here: 'https://github.com/shaozi/ldap-authentication'.",
+			"id": "ldap_bind_dn", 
+			"title": "ldap_bind_dn",
+			"key": "ou=Users,o=1a2b3c4d5e6f7890,dc=jumpcloud,dc=com",
+			"description": "*(mandatory with ldap_url)* Specifies the name (DN) of the directory object that the client wishes to bind as or the SASL mechanism (PLAIN, EXTERNAL).",
+			"optional": true
+		}],
+		[ "listPush", "global/conf_keys", {
+			"id": "ldap_opts", 
+			"title": "ldap_opts",
+			"key": "",
+			"description": "Specifies TLS connect options (see: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).",
 			"optional": true
 		}],
 		[ "listPush", "global/conf_keys", {
