@@ -43,6 +43,15 @@ stream.on('json', function (job) {
 		})
 	}
 
+	if(job.chain_data) { // check for args in chain data
+		let chainArgs = job.chain_data.args
+		if(Array.isArray(chainArgs)) {
+			for(let i = 0; i < chainArgs.length; i++) {
+				process.env[`ARG${i+1}`] = chainArgs[i]
+			}
+		}
+	}
+
 	if (job.tty) process.env['TERM'] = 'xterm';
 	let child_exec = job.tty ? "/usr/bin/script" : script_file;
 	let child_args = job.tty ? ["-qec", script_file, "--flush", "/dev/null"] : [];
@@ -112,7 +121,7 @@ stream.on('json', function (job) {
 				progress: progress
 			});
 		}
-		else if(line.match(/^\s*\#(.{1,60})\#\s*$/)){
+		else if(line.match(/^\s*\#(.{1,140})\#\s*$/)){
 			let memoText = RegExp.$1
 			stream.write({
 				memo: memoText

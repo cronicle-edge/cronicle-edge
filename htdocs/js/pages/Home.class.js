@@ -286,8 +286,8 @@ Class.subclass( Page.Base, "Page.Home", {
 			var item = find_object( app.schedule, { id: stub.id } ) || {};
 			
 			if (viewType == "compact" || isGrid) { // one row per event, use badge for job count
-				
-			    var currSched = moment.tz(stub.epoch * 1000, item.timezone || app.tz).format("h:mm A z");
+				let hhFormat = app.hh24 ? 'H:mm z' : 'h:mm A z'
+			    var currSched = moment.tz(stub.epoch * 1000, item.timezone || app.tz).format(hhFormat);
 			    var currCD = get_text_from_seconds_round(Math.max(60, stub.epoch - now), false);
 
 				if (!stubCounter[stub.id]) {
@@ -412,7 +412,7 @@ Class.subclass( Page.Base, "Page.Home", {
 					if (stub.epoch - now <= 60) proximity = 'minute'
 
 					xhtml += `
-				<div id="${stub.id}" class="upcoming ${proximity} grid-item ${tds.className || ''}">
+				<div id="up_${stub.id}" class="upcoming ${proximity} grid-item ${tds.className || ''}">
 				 <div class="flex-container">
 				  <div style="text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">${tds[0]}</div>
 				 <div style="font-size:14px"><b>${nice_countdown}</b></div>
