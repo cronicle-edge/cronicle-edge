@@ -95,7 +95,7 @@
                 columns: [
                     { "title": "event", "data": "event_title" },
                     { "title": "category", "data": "category_title" },
-                    { "title": "job id", "data": "id", render: data => `<a href="/#JobDetails?id=${data}" target="_blank">${data}</a>` },
+                    { "title": "job id", "data": "id", render: data => `<a href="./#JobDetails?id=${data}" target="_blank">${data}</a>` },
                     { "title": "event", "data": "event_title", render: data => `<i class="fa fa-clock-o"> </i> <span> ${data}</span>` },
                     { "title": "hostname", "data": "hostname", render: data => `<i class="fa fa-server"> </i> <span> ${data}</span>` },
                     { "title": "plugin", "data": "plugin_title", render: data => `<i class="fa fa-plug"> </i> <span> ${data}</span>` },
@@ -141,7 +141,7 @@
     <div class="container">
         <div class="row">
             <h1>Event Dashboard</h1>
-            <div style="float:right; padding-right: 25px"><a href="/#History">
+            <div style="float:right; padding-right: 25px"><a href="./#History">
                 <i class="fa fa-arrow-circle-left"></i>
                 <b> Go Back </b></a>
             </div>

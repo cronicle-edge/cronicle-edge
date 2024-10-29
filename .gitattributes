@@ -1,0 +1,5 @@
+*.sh text eol=lf
+bin/cronicled.init text eol=lf
+bin/manager text eol=lf
+bin/worker text eol=lf
+bundle text eol=lf
