@@ -12,7 +12,7 @@ Class.add( Page.Admin, {
 		self.secretId = args.id		
 		if(self.observer) self.observer.disconnect() // kill old observer if set by editor
 
-		app.api.post('/api/app/get_secret', { id: args.id || 'globalenv' }, self.receive_secrets.bind(self));
+		app.api.post('app/get_secret', { id: args.id || 'globalenv' }, self.receive_secrets.bind(self));
 	},
 
 	setSecretEditor: function(id) {

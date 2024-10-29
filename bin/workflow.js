@@ -6,7 +6,6 @@ const request = new PixlRequest();
 const he = require('he');
 const {EOL} = require('os')
 const JSONStream = require('pixl-json-stream');
-const { profileEnd } = require('console');
 
 let bullet = '>' // '⬤'
 

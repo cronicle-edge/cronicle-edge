@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cronicle Console</title>
-    <script src="../js/external/ansi_up.js"></script>
+    <script src="./js/external/ansi_up.js"></script>
     
     <style>
         html,
@@ -43,7 +43,7 @@
         let qParams = new URLSearchParams(query)
 
         function refresh() {
-            fetch('/api/app/get_live_console' + query + '&session_id=' + localStorage.session_id)
+            fetch('./api/app/get_live_console' + query + '&session_id=' + localStorage.session_id)
                 .then(response => {
                     response.json().then(data => {
                         if (data.data) {
@@ -61,7 +61,7 @@
                         }
                         else {
                             // if no live log data check history and return
-                            fetch('/api/app/get_job_log' + query).then(
+                            fetch('./api/app/get_job_log' + query).then(
                                 //if( response.status == 200) { }
                                 response => response.text().then(data => {
                                     if (response.status == 200) {
