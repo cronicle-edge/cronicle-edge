@@ -100,11 +100,37 @@ stream.on('json', function (job) {
 
 	let wf_strict = parseInt(process.env['WF_STRICT']) || 0 // report error on any job failure (warning is default)
 
-	taskList = (job.workflow || []).map((e, i) => { 
+	let workflow = Array.isArray(job.workflow) ? job.workflow : []
+
+	let chainArgs = (job.chain_data || {}).args
+	if(Array.isArray(chainArgs)) {
+		let newWorkflow = []
+		workflow.forEach(e => {
+			if(!e.arg) {
+				chainArgs.forEach(arg => { // generate new task for each chain arg
+					if(typeof arg !== 'string') return
+					let newStep = Object.assign({}, e)
+					newStep.arg = arg
+					newWorkflow.push(newStep)
+				})
+			}
+			else {
+				newWorkflow.push(e)
+			}
+		})
+
+		workflow = newWorkflow
+
+	}
+
+
+
+	taskList = workflow.map((e, i) => { 
 		e.stepId = i + 1;
 		e.arg = e.arg || process.env['JOB_ARG'] || 0 ; // use WFs arg as the default for child's args
 		return e 
 	})
+
 
 	let opts = job.options || {}
 
