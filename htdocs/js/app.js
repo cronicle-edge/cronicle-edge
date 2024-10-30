@@ -25,7 +25,7 @@ app.extend({
 		// receive config from server
 		if (resp.code) {
 			app.showProgress( 1.0, "Waiting for manager server..." );
-			setTimeout( function() { load_script( '/api/app/config' ); }, 1000 );
+			setTimeout( function() { load_script( 'api/app/config' ); }, 1000 );
 			return;
 		}
 		delete resp.code;
@@ -89,7 +89,7 @@ app.extend({
 		for (var idx = 0, len = this.preload_images.length; idx < len; idx++) {
 			var filename = '' + this.preload_images[idx];
 			var img = new Image();
-			img.src = '/images/'+filename;
+			img.src = 'images/'+filename;
 		}
 		
 		// populate prefs for first time user
@@ -246,7 +246,7 @@ app.extend({
 	doExternalLogin: function() {
 		// login using external user management system
 		// Force API to hit current page hostname vs. manager server, so login redirect URL reflects it
-		app.api.post( '/api/user/external_login', { cookie: document.cookie }, function(resp) {
+		app.api.post( 'user/external_login', { cookie: document.cookie }, function(resp) {
 			if (resp.user) {
 				Debug.trace("User Session Resume: " + resp.username + ": " + resp.session_id);
 				app.hideProgress();
@@ -294,7 +294,10 @@ app.extend({
 	socketConnect: function() {
 		// init socket.io client
 		var self = this;
-		
+
+		let socket_io_path = "/socket.io"
+		if ((/^\/\w+$/i).test(config.base_path)) socket_io_path = config.base_path + "/socket.io"		
+
 		var url = this.proto + this.managerHostname + ':' + this.port;
 		if (!config.web_socket_use_hostnames && this.servers && this.servers[this.managerHostname] && this.servers[this.managerHostname].ip) {
 			// use ip instead of hostname if available
@@ -319,7 +322,8 @@ app.extend({
 			reconnectionDelay: 1000,
 			reconnectionDelayMax: 2000,
 			reconnectionAttempts: 9999,
-			timeout: 3000
+			timeout: 3000,
+			path: socket_io_path,
 		} );
 		
 		socket.on('connect', function() {

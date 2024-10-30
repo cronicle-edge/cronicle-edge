@@ -5,7 +5,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	onInit: function () {
 		// called once at page load
 		var html = '';
-		this.div.html(html);		
+		this.div.html(html);
 	},
 
 	onActivate: function (args) {
@@ -294,7 +294,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		   `
 
 			let wfe = wf_events[idx]
-			let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;"><a href="/#Schedule?sub=edit_event&id=${wfe.id}" target="_blank">${wfe.id}</a></span>`
+			let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;"><a href="#Schedule?sub=edit_event&id=${wfe.id}" target="_blank">${wfe.id}</a></span>`
 			let title = `${schedTitles[wfe.id] || '<span style="color:red">[Unknown]</span>'}`.substring(0, 40)
 			let arg = wfe.arg || ''
 			if (arg.length > 40) arg = arg.substring(0, 37) + '...'
@@ -455,7 +455,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		if ($('#fe_ee_token').is(':checked')) {
 			$('#fe_ee_token_label').text("")
 			if (!this.event.salt) this.event.salt = hex_md5(get_unique_id()).substring(0, 8)
-			let apiUrl = window.location.origin + '/api/app/run_event?id=' + (this.event.id || 'eventId') + '&post_data=1'
+			let base_path = (/^\/\w+$/i).test(config.base_path) ? config.base_path : ''
+			let apiUrl = window.location.origin + base_path + '/api/app/run_event?id=' + (this.event.id || 'eventId') + '&post_data=1'
 			app.api.post('app/get_event_token', this.event, resp => {
 				$('#fe_ee_token_val').text(resp.token ? ` ${apiUrl}&token=${resp.token}` : "(error)");
 			});
@@ -468,18 +469,18 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 	},
 
-	toggle_hightlight: function(element) {
+	toggle_hightlight: function (element) {
 
 		let high = app.getPref('shedule_highlight')
 		element.classList.toggle('mdi-lightbulb');
 		element.classList.toggle('mdi-lightbulb-outline');
-		if(high === 'disable') { // turn on
+		if (high === 'disable') { // turn on
 			app.setPref('shedule_highlight', 'default')
-			this.update_job_last_runs()			
+			this.update_job_last_runs()
 		}
 		else { // turn off
 			app.setPref('shedule_highlight', 'disable')
-			this.gosub_events(this.args);			
+			this.gosub_events(this.args);
 		}
 	},
 
@@ -635,7 +636,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	},
 
-	show_event_stats: function(id) {
+	show_event_stats: function (id) {
 		// let evt = find_object(app.schedule, {id: id})
 		// document.getElementById('fe_event_info').innerHTML = `${evt.title}: category: ${evt.category} , plugin: ${evt.plugin}`
 		// $('#ex_' + id).toggle()
@@ -808,7 +809,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			var group = item.target ? find_object(app.server_groups, { id: item.target }) : null;
 			var plugin = item.plugin ? find_object(app.plugins, { id: item.plugin }) : null;
 
-			if(item.enabled && cat.enabled) item.active = true
+			if (item.enabled && cat.enabled) item.active = true
 
 			item.category_title = cat ? cat.title : 'Uncategorized';
 			item.group_title = group ? group.title : item.target;
@@ -854,8 +855,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		let totalEvents = events.length
 
-		if(eventView === 'grid') {
-			totalEvents = `${events.filter(e=>e.active).length} active`
+		if (eventView === 'grid') {
+			totalEvents = `${events.filter(e => e.active).length} active`
 		}
 
 		var htmlTab = this.getBasicTable2(events, cols, 'event', function (item, idx) {
@@ -942,15 +943,15 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			if (inactiveTitle) {
 				gridTiming = `<s>${gridTiming}</s>`
-				gridTimingTitle = `${inactiveTitle}<br><s>${niceTiming}</s>`	
+				gridTimingTitle = `${inactiveTitle}<br><s>${niceTiming}</s>`
 				niceTiming = `<span title="${inactiveTitle}"><s>${niceTiming}</s>`
-				if (item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`	
-				
+				if (item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`
+
 
 			}
 
 			let now = Date.now() / 1000
-            
+
 			tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ', this)" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
 				`<div class="td_big"><span class="link" onMouseUp="$P().edit_event(` + idx + ')">' + evt_name + '</span></div>',
@@ -988,12 +989,12 @@ Class.subclass(Page.Base, "Page.Schedule", {
 					if (isGrid) {  // grid view
 						switch (group_by) {
 							case 'category': group_title = self.getNiceCategory(cat, 500, args.collapse); break;
-							case 'plugin':  group_title = self.getNicePlugin(plugin, 500, args.collapse); break;
-							case 'group':  group_title = self.getNiceGroup(group, item.target, 500, args.collapse); break;
+							case 'plugin': group_title = self.getNicePlugin(plugin, 500, args.collapse); break;
+							case 'group': group_title = self.getNiceGroup(group, item.target, 500, args.collapse); break;
 						}
-						
+
 						// for regular grid - do not show disabled category
-						if(eventView === 'grid' && group_by === 'category' && !cat.enabled) group_title = null;
+						if (eventView === 'grid' && group_by === 'category' && !cat.enabled) group_title = null;
 
 						if (group_title) xhtml += `<div class="section-divider"><div class="subtitle">${group_title}</div></div>`
 						// tds.insertAbove = group_title;
@@ -1014,20 +1015,20 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			} // group_by
 
 
-            // timing title in grid view
-			
-			if(item.ticks) {
-				gridTimingTitle += `<br><br>Extra ticks: ${item.ticks}`
-				gridTiming +=  "+"
-			} 
+			// timing title in grid view
 
-			if(app.chained_jobs[item.id]) {
+			if (item.ticks) {
+				gridTimingTitle += `<br><br>Extra ticks: ${item.ticks}`
+				gridTiming += "+"
+			}
+
+			if (app.chained_jobs[item.id]) {
 				gridTimingTitle += ('<br><br>' + app.chained_jobs[item.id])
 				gridTiming += "<";
 			}
 
 			let lastStatus = 'event-none'
-			let jobCodes = app.state.jobCodes || {} 
+			let jobCodes = app.state.jobCodes || {}
 			let xcode = jobCodes[item.id];
 			if (xcode === 0) {
 				lastStatus = 'event-success'
@@ -1035,7 +1036,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			if (xcode > 0) {
 				lastStatus = 'event-error'
 				bg = 'red'
-			} 
+			}
 			if (xcode === 255) {
 				lastStatus = 'event-warning'
 				bg = 'orange'
@@ -1043,11 +1044,11 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			// ${tds[0]}
 			//<div ><span style="font-size:0.8em" class="color_label green">✓</span></div>	
-			let itemVisibility =  eventView === 'grid' && (!item.active || args.collapse) ? 'none' : 'true'
+			let itemVisibility = eventView === 'grid' && (!item.active || args.collapse) ? 'none' : 'true'
 			// link item to it's group, avoid for disabled event on basic grid view
-			let itemClass =  ((eventView === 'grid' && !item.active) ? '' : (tds.className || ''))
-           
-            let statusIcon = `<span id="ss_${item.id}" onMouseUp="$P().jump_to_last_job(${idx})" style="cursor:pointer;font-size:1.1em;"><i class="fa fa-circle ${lastStatus}"></i></span>`
+			let itemClass = ((eventView === 'grid' && !item.active) ? '' : (tds.className || ''))
+
+			let statusIcon = `<span id="ss_${item.id}" onMouseUp="$P().jump_to_last_job(${idx})" style="cursor:pointer;font-size:1.1em;"><i class="fa fa-circle ${lastStatus}"></i></span>`
 
 			xhtml += `
 			<div id="sg_${item.id}" style="display:${itemVisibility}" class="upcoming schedule grid-item ${itemClass}" onclick="">
@@ -1115,62 +1116,51 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	update_job_last_runs: function () {
 		// update last run state for all jobs, called when state is updated
 		if (!app.state.jobCodes) return;
-		if ( app.getPref('shedule_highlight') === 'disable') return;
+		if (app.getPref('shedule_highlight') === 'disable') return;
 
 		let isGrid = app.getPref('event_view') === 'grid' || app.getPref('event_view') == 'gridall'
 
-		var event_counts = {};		
+		let event_counts = {};
 		for (var job_id in app.activeJobs) {
-			var job = app.activeJobs[job_id];
+			let job = app.activeJobs[job_id];
 			event_counts[job.event] = (event_counts[job.event] || 0) + 1;
 		}
 
-		for (var event_id in app.state.jobCodes) {
+		let allEvents = app.schedule || []
+
+		allEvents.forEach((evt) => {
+
+			let event_id = evt.id
 			let last_code = app.state.jobCodes[event_id];
-			let status_html;
-
-			isRunning = event_counts[event_id]
-
-			if (isGrid) {
+			let isRunning = event_counts[event_id]
+			let status_html = '';			
+			let bg;
 				
-				status_html = last_code ? 'event-error' : 'event-success'
-				if (last_code == 255) status_html = 'event-warning'
-				status_html = `<i class="fa fa-circle ${status_html}"></i>`
-
-				let bg = '';
-				if(last_code) bg = last_code == 255 ? 'orange' : 'red'
-				
-				if(isRunning) {					
-					bg = 'blue'
-					status_html = `<span class="running-event">Running (${isRunning})</span>`
-				} 			
-
-				let gridItem = document.getElementById('sg_' + event_id)
-
-				if(gridItem) {
-					gridItem.classList.remove('red')
-					gridItem.classList.remove('orange')
-					gridItem.classList.remove('blue')
-					if(bg) {
-						gridItem.classList.add(bg)
-					}
-
-				}
+			if (isRunning) {
+				status_html = isGrid ? `<span class="running-event">Running (${isRunning})</span>` : `<span class="color_label blue clicky">Running (${isRunning})</span>`
+				bg = 'blue'
 			}
-			else {
-				if (isRunning) {
-					status_html = '<span class="color_label blue clicky">Running (' + isRunning + ')</span>';
-				}
-				else {
-					status_html = last_code ? '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>';
-					if (last_code == 255) status_html = '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
-				}
+			else if (last_code === 0) {
+				status_html = isGrid ? '<i class="fa fa-circle event-success"></i>' : '<span class="color_label green clicky"><i class="fa fa-check">&nbsp;</i>Success</span>'
+			}
+			else if (last_code == 255) {
+				status_html = isGrid ? '<i class="fa fa-circle event-warning"></i>' : '<span class="color_label yellow clicky"><i class="fa fa-warning">&nbsp;</i>Warning</span>'
+				bg = 'orange'
+			}
+			else if (last_code > 0) {
+				status_html = isGrid ? '<i class="fa fa-circle event-error"></i>' : '<span class="color_label red clicky"><i class="fa fa-warning">&nbsp;</i>Error</span>'
+				bg = 'red'
 			}
 
+			let gridItem = isGrid ? document.getElementById('sg_' + event_id) : null
+
+			if (gridItem) {
+				gridItem.classList.remove('red', 'orange', 'blue')
+				if (bg) gridItem.classList.add(bg)
+			}
 			let statusIcon = document.getElementById('ss_' + event_id)
 			if (statusIcon) statusIcon.innerHTML = status_html
-
-		}
+		})
 	},
 
 	jump_to_last_job: function (idx) {
@@ -1178,18 +1168,18 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		var event = this.events[idx];
 
 		var event_counts = {};
-		
+
 		for (var job_id in app.activeJobs) {
 			var job = app.activeJobs[job_id];
 			event_counts[job.event] = (event_counts[job.event] || 0) + 1;
 		}
-		
+
 		if (event_counts[event.id] && app.getPref('shedule_highlight') !== 'disable') {
 			// if event has active jobs, change behavior of click (but only if schedule realtime status updates enabled)
 			// if exactly 1 job, link to it -- if more, do nothing
 			if (event_counts[event.id] == 1) {
-				var job = find_object( Object.values(app.activeJobs), { event: event.id } );
-				if (job) Nav.go( 'JobDetails?id=' + job.id );
+				var job = find_object(Object.values(app.activeJobs), { event: event.id });
+				if (job) Nav.go('JobDetails?id=' + job.id);
 				return;
 			}
 			else return;
@@ -1212,7 +1202,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		else this.alt_sort = 1
 		// change grop by setting and refresh schedule display
 		app.setPref('schedule_group_by', group_by);
-		this.gosub_events(this.args);	
+		this.gosub_events(this.args);
 	},
 
 	change_event_view: function (view_type) {
@@ -1512,14 +1502,15 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		setTimeout(function () {
 			app.showMessage('success', "Event '" + self.event.title + "' was created successfully.");
-			let el = document.getElementById(resp.id)
+			let el_id = app.getPref('event_view') == 'grid' || app.getPref('event_view') == 'gridall' ? 'sg_' + resp.id : resp.id
+			let el = document.getElementById(el_id)
 			if (el.scrollIntoViewIfNeeded) {
 				el.scrollIntoViewIfNeeded()
 			} else {
 				el.scrollIntoView({ block: 'center' })
 			}
 
-			$('#' + resp.id).addClass('focus')
+			$('#' + el_id).addClass('focus')
 
 		}, 150);
 	},
@@ -1889,8 +1880,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		var timing = event.timing;
 		var tmode = '';
 
-		if(parseInt(event.interval) > 0 )  tmode = 'interval'
-		else if (!timing) tmode = 'demand';		
+		if (parseInt(event.interval) > 0) tmode = 'interval'
+		else if (!timing) tmode = 'demand';
 		else if (timing.years && timing.years.length) tmode = 'custom';
 		else if (timing.months && timing.months.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
 		else if (timing.days && timing.days.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
@@ -1902,14 +1893,14 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		else if (!num_keys(timing)) tmode = 'hourly';
 
 		var timing_items = [
-			['demand', 'On Demand'],			
+			['demand', 'On Demand'],
 			['custom', 'Custom'],
 			['yearly', 'Yearly'],
 			['monthly', 'Monthly'],
 			['weekly', 'Weekly'],
 			['daily', 'Daily'],
 			['hourly', 'Hourly'],
-			['interval', 'Interval']		
+			['interval', 'Interval']
 		];
 
 		html += get_form_table_row('Timing',
@@ -2247,7 +2238,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 				// redraw display
 				var tmode = '';
-				if(parseInt(self.event.interval) > 0) tmode = 'interval';
+				if (parseInt(self.event.interval) > 0) tmode = 'interval';
 				else if (timing.years && timing.years.length) tmode = 'custom';
 				else if (timing.months && timing.months.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
 				else if (timing.days && timing.days.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
@@ -2374,21 +2365,21 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	set_interval_start: function () {
 		// click in 'reset cursor' text field, popup edit dialog
 		const self = this;
-		const event  = this.event;
+		const event = this.event;
 
 		// if ($('#fe_ee_rc_enabled').is(':checked')) {
-			var epoch = parseInt(event.interval_start || 0);
+		var epoch = parseInt(event.interval_start || 0);
 
-			this.choose_date_time({
-				when: epoch,
-				title: "Set Interval Start",
-				timezone: this.event.timezone || app.tz,
+		this.choose_date_time({
+			when: epoch,
+			title: "Set Interval Start",
+			timezone: this.event.timezone || app.tz,
 
-				callback: function (int_epoch) {
-					event.interval_start = int_epoch
-					$('#fe_ee_interval_start').data('epoch', int_epoch).val(self.rc_get_short_date_time(int_epoch));
-				}
-			});
+			callback: function (int_epoch) {
+				event.interval_start = int_epoch
+				$('#fe_ee_interval_start').data('epoch', int_epoch).val(self.rc_get_short_date_time(int_epoch));
+			}
+		});
 		// }
 	},
 
@@ -2593,8 +2584,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		if (tmode == 'interval') {
 			// html += '<div class="timing_details_label">Interval</div>';
 			html += '<div class="timing_details_content">'
-			let intSelect = this.get_relative_time_combo_box('fe_ee_interval',  (parseInt(event.interval) || 60*10));
-			let intStart = event.interval_start ? $P().rc_get_short_date_time(event.interval_start , true) : 'epoch'
+			let intSelect = this.get_relative_time_combo_box('fe_ee_interval', (parseInt(event.interval) || 60 * 10));
+			let intStart = event.interval_start ? $P().rc_get_short_date_time(event.interval_start, true) : 'epoch'
 			html += `<table cellspacing="0" cellpadding="0"><tr>
 			<td><label>Every: </label><td style="padding:12px"> ${intSelect} </td></td><td style="padding:12px"><label> Starting From: </label>&nbsp;</td>
 			<td><input type="text" id="fe_ee_interval_start" style="font-size:13px; width:200px;" value="${intStart}" onclick="$P().set_interval_start()"/></td>
@@ -2667,7 +2658,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			html += '<div class="info_label">The event will run:</div>';
 			html += '<div class="info_value" id="d_ee_timing_summary">' + summarize_event_timing(timing, event.timezone).replace(/(every\s+minute)/i, '<span style="color:red">$1</span>');
 			// add event webhook info if "On demand" is selected
-			let apiUrl = '/api/app/run_event?id=' + (event.id || 'eventId') + '&post_data=1&api_key=API_KEY'
+			let base_path = (/^\/\w+$/i).test(config.base_path) ? config.base_path : ''
+			let apiUrl = base_path + '/api/app/run_event?id=' + (event.id || 'eventId') + '&post_data=1&api_key=API_KEY'
 			let webhookInfo = !timing ? '<br><span title="Use this Url to trigger event via webhook. API_KEY with [Run Events] privelege should be created by admin user. If using Gitlab webhook - api_key can be also set via SECRET parameter"> <br>[webhook] </span>' + window.location.origin + apiUrl : ' '
 			html += webhookInfo + '</div>';
 		}
@@ -3164,7 +3156,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let eventInterval = $('#fe_ee_interval').val()
 
 		if (eventInterval) {
-			if ((parseInt(eventInterval)|| 0) < 1) return app.badField('fe_ee_interval', "Invalid interval value (must be positive integer)");
+			if ((parseInt(eventInterval) || 0) < 1) return app.badField('fe_ee_interval', "Invalid interval value (must be positive integer)");
 			event.interval = (parseInt($('#fe_ee_interval').val()) * parseInt($('#fe_ee_interval_units').val()));
 			event.interval_start = parseInt(event.interval_start) || 0
 			event.timing = false
