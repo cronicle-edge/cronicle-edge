@@ -246,7 +246,7 @@ app.extend({
 	doExternalLogin: function() {
 		// login using external user management system
 		// Force API to hit current page hostname vs. manager server, so login redirect URL reflects it
-		app.api.post( '/api/user/external_login', { cookie: document.cookie }, function(resp) {
+		app.api.post( 'user/external_login', { cookie: document.cookie }, function(resp) {
 			if (resp.user) {
 				Debug.trace("User Session Resume: " + resp.username + ": " + resp.session_id);
 				app.hideProgress();

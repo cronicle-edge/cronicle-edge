@@ -430,7 +430,7 @@ stream.on('json', function (job) {
 				
 				`<span style="${jobStatus[key].code % 255 ? 'color:red' : ''}"><b>${he.encode(jobStatus[key].title) || '[Unknown]'}</b></span>`,  //title
 				(jobStatus[key].arg ? he.encode(jobStatus[key].arg) : ''),  // arg			
-				key === jobStatus[key].event ? '' : `<a href="/#JobDetails?id=${key}" target="_blank">${key}</a>`,  // joblink
+				key === jobStatus[key].event ? '' : `<a href="#JobDetails?id=${key}" target="_blank">${key}</a>`,  // joblink
 				jobStatus[key].start,
 				niceInterval(jobStatus[key].elapsed),
 				getNiceStatus(jobStatus[key]), // status

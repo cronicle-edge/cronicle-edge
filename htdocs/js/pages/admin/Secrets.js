@@ -121,7 +121,7 @@ Class.add( Page.Admin, {
 		self.args = {id: secret.id}
 		app.showProgress(1.0, "Updating Secret Data...");
 
-		let apiUrl = secret.virtual ? '/api/app/create_secret' : '/api/app/update_secret'
+		let apiUrl = secret.virtual ? 'app/create_secret' : 'app/update_secret'
 		delete secret.virtual
 
 		app.api.post(apiUrl, secret, function (resp) {
