@@ -1,5 +1,3 @@
-const { config } = require("dotenv");
-
 Class.subclass(Page.Base, "Page.Schedule", {
 
 	default_sub: 'events',
