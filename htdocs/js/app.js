@@ -296,7 +296,7 @@ app.extend({
 		var self = this;
 
 		let socket_io_path = "/socket.io"
-		if (!(/^\/\w+$/i).test(config.base_path)) socket_io_path = config.base_path + "/socket.io"		
+		if ((/^\/\w+$/i).test(config.base_path)) socket_io_path = config.base_path + "/socket.io"		
 
 		var url = this.proto + this.managerHostname + ':' + this.port;
 		if (!config.web_socket_use_hostnames && this.servers && this.servers[this.managerHostname] && this.servers[this.managerHostname].ip) {
