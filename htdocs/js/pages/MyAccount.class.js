@@ -33,9 +33,11 @@ Class.subclass( Page.Base, "Page.MyAccount", {
 			html += '<td valign="top" style="vertical-align:top">';
 			
 		html += '<table style="margin:0;">';
+
+		let isExternal = user.ext_auth ? ' [External]' : ''
 		
 		// user id
-		html += get_form_table_row( 'Username', '<div style="font-size: 14px;"><b>' + app.username + '</b></div>' );
+		html += get_form_table_row( 'Username', '<div style="font-size: 14px;"><b>' + app.username + `${isExternal}</b></div>` );
 		html += get_form_table_caption( "Your username cannot be changed." );
 		html += get_form_table_spacer();
 		
@@ -51,6 +53,8 @@ Class.subclass( Page.Base, "Page.MyAccount", {
 		
 		var disableIfExternal = user.ext_auth ? "disabled" : " ";
 
+		if(!user.ext_auth) {
+
 		// current password
 		html += get_form_table_row('Current Password', `<input type="${app.get_password_type()}" id="fe_ma_old_password" size="30" value="" spellcheck="false" ${disableIfExternal}/>` + app.get_password_toggle_html());
 		html += get_form_table_caption( "Enter your current account password to make changes." );
@@ -60,6 +64,8 @@ Class.subclass( Page.Base, "Page.MyAccount", {
 		html += get_form_table_row('New Password', `<input type="${app.get_password_type()}" id="fe_ma_new_password" size="30" value="" spellcheck="false" ${disableIfExternal}/>` + app.get_password_toggle_html());
 		html += get_form_table_caption( "If you need to change your password, enter the new one here." );
 		html += get_form_table_spacer();
+
+		}
 		
 		html += '<tr><td colspan="2" align="center">';
 			html += '<div style="height:30px;"></div>';
@@ -112,8 +118,9 @@ Class.subclass( Page.Base, "Page.MyAccount", {
 	
 	save_changes: function(force) {
 		// save changes to user info
+		let user = app.user || {}
 		app.clearError();
-		if (app.config.external_users) {
+		if (app.config.external_users || user.ext_auth) {
 			return app.doError("Users are managed by an external system, so you cannot make changes here.");
 		}
 		if (!$('#fe_ma_old_password').val()) return app.badField('#fe_ma_old_password', "Please enter your current account password to make changes.");
