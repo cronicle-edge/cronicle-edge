@@ -137,7 +137,7 @@ app.extend({
 		<div id="d_theme_ctrl" class="header_option right" onmouseup="app.toggleTheme()"></div>
 		<div id="d_header_divider" class="right"></div>   
 		`
-		html += '<div id="d_header_user_bar" class="right" style="background-image:url(' + this.getUserAvatarURL( this.retina ? 64 : 32 ) + ')" onMouseUp="app.doMyAccount()">' + (this.user.full_name || app.username).replace(/\s+.+$/, '') + '</div>';
+		html += '<div id="d_header_user_bar" class="right" style="background-image:url(' + (app.avatar_url || this.getUserAvatarURL( this.retina ? 64 : 32 )) + ')" onMouseUp="app.doMyAccount()">' + (this.user.full_name || app.username).replace(/\s+.+$/, '') + '</div>';
 		$('#d_header_user_container').html( html );
 		this.initTheme();
 	},
@@ -711,10 +711,14 @@ app.extend({
 	
 	password_strengthify: function(sel) {
 		// add password strength meter (text field should be wrapped by div)
+
+		let user = app.user || {}
+		if(user.ext_auth) return // no password strength for external auth
+
 		var $field = $(sel);
 		var $div = $field.parent();
 		
-		var $cont = $('<div class="psi_container" title="Password strength indicator" onClick="window.open(\'https://tech.dropbox.com/2012/04/zxcvbn-realistic-password-strength-estimation/\')"></div>');
+		var $cont = $('<div class="psi_container" title="Password strength indicator" onClick=""></div>');
 		$cont.css('width', $field[0].offsetWidth );
 		$cont.html( '<div class="psi_bar"></div>' );
 		$div.append( $cont );
@@ -729,11 +733,13 @@ app.extend({
 	},
 	
 	update_password_strength: function ($field, $cont) {
+
 		// update password strength indicator after keypress
+
 		let score = 0
 		let crack_time = 'instant'
 		let password = $field.val()
-
+		if(password.length > 20) score = 3
 
 		if (window.zxcvbn) {
 			var result = zxcvbn(password);

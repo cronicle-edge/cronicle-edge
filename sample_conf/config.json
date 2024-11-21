@@ -71,6 +71,19 @@
 		}
 	},
 
+	"oauth": {
+		"enabled": false,
+		"insecure": false,
+		"client_id": "XXXXXXXXXX",
+		"client_secret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+		"redirect_uri": "http://localhost:3012",
+		"authorize_url": "http://localhost:9000/application/o/authorize/",
+		"token_url": "http://localhost:9000/application/o/token/",
+		"user_url": "http://localhost:9000/application/o/userinfo/",
+		"user_attribute": "email",
+		"scope": "email openid profile"
+	},
+
 	"git": {
 		"enabled": false,
 		"auto": false,
