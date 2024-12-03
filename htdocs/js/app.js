@@ -137,7 +137,14 @@ app.extend({
 		<div id="d_theme_ctrl" class="header_option right" onmouseup="app.toggleTheme()"></div>
 		<div id="d_header_divider" class="right"></div>   
 		`
-		html += '<div id="d_header_user_bar" class="right" style="background-image:url(' + (app.avatar_url || this.getUserAvatarURL( this.retina ? 64 : 32 )) + ')" onMouseUp="app.doMyAccount()">' + (this.user.full_name || app.username).replace(/\s+.+$/, '') + '</div>';
+
+		let avatarUrl = this.getUserAvatarURL( this.retina ? 64 : 32 )
+		if(this.user.avatar_url) { // check for custom avatar url, encode url properly for security
+			try {  avatarUrl = new URL(this.user.avatar_url).toString() }
+			catch {}
+		}
+
+		html += '<div id="d_header_user_bar" class="right" style="background-image:url(' + avatarUrl + ')" onMouseUp="app.doMyAccount()">' + (this.user.full_name || app.username).replace(/\s+.+$/, '') + '</div>';
 		$('#d_header_user_container').html( html );
 		this.initTheme();
 	},
@@ -224,7 +231,10 @@ app.extend({
 			
 			setTimeout( function() {
 				if (!app.config.external_users) {
-					if (bad_cookie) self.showMessage('error', "Your session has expired.  Please log in again.");
+					if (bad_cookie) {
+						self.showMessage('error', "Your session has expired.  Please log in again.");
+						console.log('bad cookieee', bad_cookie)
+					}
 					else self.showMessage('success', "You were logged out successfully.");
 				}
 				

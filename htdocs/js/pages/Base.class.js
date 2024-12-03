@@ -14,8 +14,10 @@ Class.subclass(Page, "Page.Base", {
 			this.div.hide();
 
 			var session_id = app.getPref('session_id') || '';
-			if (session_id) {
+
+			if (session_id) { // assumes session is managed by localStorage
 				Debug.trace("User has cookie, recovering session: " + session_id);
+				console.log('login from session')
 
 				app.api.post('user/resume_session', {
 					session_id: session_id
@@ -28,7 +30,7 @@ Class.subclass(Page, "Page.Base", {
 							Nav.refresh();
 						}
 						else {
-							Debug.trace("User cookie is invalid, redirecting to login page");
+							Debug.trace("User localStorage.session_d is invalid, redirecting to login page");
 							// Nav.go('Login');
 							self.setPref('session_id', '');
 							self.requireLogin(args);
@@ -40,8 +42,20 @@ Class.subclass(Page, "Page.Base", {
 				app.doExternalLogin();
 			}
 			else {
-				Debug.trace("User is not logged in, redirecting to login page (will return to " + this.ID + ")");
-				setTimeout(function () { Nav.go('Login'); }, 1);
+				// try resume session using session_id cookie (e.g. if oauth is used)
+				app.api.post('user/resume_session', {}, function (resp) {
+					if (resp.user) {
+						Debug.trace("User Session Resume: " + resp.username + ": " + resp.session_id);
+						app.hideProgress();
+						app.doUserLogin(resp);
+						Nav.refresh();
+					}
+					else {
+						Debug.trace("User is not logged in, redirecting to login page (will return to " + this.ID + ")");
+						setTimeout(function () { Nav.go('Login'); }, 1);
+					}
+				});
+
 			}
 			return false;
 		}
