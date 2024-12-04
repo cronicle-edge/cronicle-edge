@@ -80,36 +80,17 @@ Class.subclass( Page.Base, "Page.Login", {
 			
 		}, 1 );
 
-		// handle oauth callback 
-		// const urlParams = new URLSearchParams(window.location.search);
-		// const code = urlParams.get('code');
-		// const state = urlParams.get('state');
-		// let orig_location = (state || '').split('.')[1]
-		// urlParams.delete('code');
-		// urlParams.delete('state');
-		// window.history.pushState({}, document.title, window.location.pathname);
-		// if (code && config.oauth) {
-		// 	app.showProgress(1.0, "Logging in with OAuth...");
-		// 	app.api.post('user/callback', {
-		// 		code: code,
-		// 		state: state,
-		// 	},
-		// 		function (resp, tx) {
-		// 			app.hideProgress();
-		// 			app.doUserLogin(resp);
-		// 			Nav.go(orig_location || config.DefaultPage);
-		// 		}); // post
-		// }	
-		
 		return true;
 	},
 
 	doOauth: function() {
-		if(localStorage.session_id) { // user might be logged aleready in differnt tab, then just refresh the page
-			window.location.reload();
+
+		if(localStorage.session_id) { 
+			// user might be logged aleready in differnt tab, then just refresh the page
+			Nav.go(app.navAfterLogin || config.DefaultPage)
 		}
 		else {
-			// redirect to login page
+			// redirect to oauth login page
 			let orig_location = encodeURIComponent(app.navAfterLogin || config.DefaultPage);
 			window.location.href = `/api/user/oauth?orig_location=${orig_location}`;		
 		}
