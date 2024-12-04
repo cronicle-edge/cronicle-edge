@@ -9,6 +9,7 @@ usage() {
 }
 
 color=0
+debug=0
 
 while (( "$#" )); do
     case $1 in
@@ -19,6 +20,7 @@ while (( "$#" )); do
         --sqlite ) shift; sqlite=$1 ;;
         --reset ) shift; reset=1 ;;
         --cluster ) shift; cluster=$1 ;;
+        --debug ) shift; debug=1 ;;
         --help ) usage ;;
         -*) echo "invalid parameter: $1"; usage ;;
     esac
@@ -92,7 +94,7 @@ if [ -f "$HOMEDIR/bin/cronicle.js" ]; then
 fi
 
 #$HOMEDIR/bin/control.sh start
-exec $BINARY --echo --foreground --manager --color $color
+exec $BINARY --echo --foreground --manager --color $color --debug $debug
 
 
 

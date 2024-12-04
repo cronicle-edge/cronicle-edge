@@ -83,13 +83,15 @@ Class.subclass( Page.Base, "Page.MyAccount", {
 		
 		html += '</td>';
 			html += '<td valign="top" align="left" style="vertical-align:top; text-align:left;">';
+
 				// gravar profile image and edit button
 				html += '<fieldset style="width:150px; margin-left:40px; border:1px solid #ddd; box-shadow:none;"><legend>Profile Picture</legend>';
+
 				if (app.config.external_users) {
-					html += '<div id="d_ma_image" style="width:128px; height:128px; margin:5px auto 0 auto; background-image:url('+app.getUserAvatarURL(128)+'); cursor:default;"></div>';
+					html += '<div id="d_ma_image" style="width:128px; height:128px; margin:5px auto 0 auto;background-size:cover; background-image:url(\'' + app.getUserAvatarURL(128) + '\'); cursor:default;"></div>';
 				}
 				else {
-					html += '<div id="d_ma_image" style="width:128px; height:128px; margin:5px auto 0 auto; background-image:url('+app.getUserAvatarURL(128)+'); cursor:pointer;" onMouseUp="$P().edit_gravatar()"></div>';
+					html += '<div id="d_ma_image" style="width:128px; height:128px; margin:5px auto 0 auto; background-size:cover; background-image:url(\'' + app.getUserAvatarURL(128) + '\'); cursor:pointer;" onMouseUp="$P().edit_gravatar()"></div>';
 					html += '<div class="button mini" style="margin:10px auto 5px auto;" onMouseUp="$P().edit_gravatar()">Edit Image...</div>';
 					html += '<div style="font-size:11px; color:#888; text-align:center; margin-bottom:5px;">Image services provided by <a href="https://en.gravatar.com/connect/" target="_blank">Gravatar.com</a>.</div>';
 				}
@@ -152,7 +154,7 @@ Class.subclass( Page.Base, "Page.MyAccount", {
 			app.user = resp.user;
 			app.updateHeaderInfo();
 			
-			$('#d_ma_image').css( 'background-image', 'url('+app.getUserAvatarURL(128)+')' );
+			$('#d_ma_image').css( 'background-image', 'url(' + app.getUserAvatarURL(128) + ')' );
 		} );
 	},
 	

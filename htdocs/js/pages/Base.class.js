@@ -14,35 +14,27 @@ Class.subclass(Page, "Page.Base", {
 			this.div.hide();
 
 			var session_id = app.getPref('session_id') || '';
-			if (session_id) {
-				Debug.trace("User has cookie, recovering session: " + session_id);
+			Debug.trace("Recovering session using session_id or cookie");
 
-				app.api.post('user/resume_session', {
-					session_id: session_id
-				},
-					function (resp) {
-						if (resp.user) {
-							Debug.trace("User Session Resume: " + resp.username + ": " + resp.session_id);
-							app.hideProgress();
-							app.doUserLogin(resp);
-							Nav.refresh();
-						}
-						else {
-							Debug.trace("User cookie is invalid, redirecting to login page");
-							// Nav.go('Login');
-							self.setPref('session_id', '');
-							self.requireLogin(args);
-						}
-					});
-			}
-			else if (app.config.external_users) {
-				Debug.trace("User is not logged in, querying external user API");
-				app.doExternalLogin();
-			}
-			else {
-				Debug.trace("User is not logged in, redirecting to login page (will return to " + this.ID + ")");
-				setTimeout(function () { Nav.go('Login'); }, 1);
-			}
+            // check for session_id on the backend  (vs localStorage), it might be stored in cookie now (during oauth)
+			app.api.post('user/resume_session', {session_id: session_id}, function (resp) {
+					if (resp.user) {
+						Debug.trace("User Session Resume: " + resp.username + ": " + resp.session_id);
+						app.hideProgress();
+						app.doUserLogin(resp);
+						Nav.refresh();
+					}
+					else if (app.config.external_users) {
+						Debug.trace("User is not logged in, querying external user API");
+						app.doExternalLogin();
+					}
+					else {
+						Debug.trace("User session/cookie is invalid or missing, redirecting to login page");
+						if (session_id) self.setPref('session_id', '');
+						setTimeout(function () { Nav.go('Login'); }, 1);
+					}
+				});
+
 			return false;
 		}
 		return true;

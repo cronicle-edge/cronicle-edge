@@ -55,6 +55,9 @@ if /I "%1"=="--port" (
 ) else if /I "%1"=="--reset" (
   set CRONICLE_RESET=1
   shift
+) else if /I "%1"=="--debug" (
+  set CRONICLE_debug=1
+  shift
 ) else if /I "%1"=="--help" (
     echo Usage:  .\manager [--port  port] [ --storage /path/to/storage.json] 
     echo         [ --reset ]  # make current host the manager

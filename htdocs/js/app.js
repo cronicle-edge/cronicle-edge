@@ -130,16 +130,45 @@ app.extend({
 	
 	updateHeaderInfo: function() {
 		// update top-right display
+		let userName = (this.user.full_name || app.username).replace(/\s+.+$/, '') 
+		let avatarUrl = this.getUserAvatarURL( this.retina ? 64 : 32 )
 		let html = `
 		<div id="d_header_divider" class="right" style="margin-right:0;"></div>
 		<div class="header_option logout right" onMouseUp="app.doUserLogout()"><i class="fa fa-power-off fa-lg">&nbsp;&nbsp;</i>Logout</div>
 		<div id="d_header_divider" class="right"></div>
 		<div id="d_theme_ctrl" class="header_option right" onmouseup="app.toggleTheme()"></div>
 		<div id="d_header_divider" class="right"></div>   
+		<div id="d_header_user_bar" class="right" style="background-image:url(${avatarUrl})" onMouseUp="app.doMyAccount()">${userName}</div>
 		`
-		html += '<div id="d_header_user_bar" class="right" style="background-image:url(' + (app.avatar_url || this.getUserAvatarURL( this.retina ? 64 : 32 )) + ')" onMouseUp="app.doMyAccount()">' + (this.user.full_name || app.username).replace(/\s+.+$/, '') + '</div>';
 		$('#d_header_user_container').html( html );
 		this.initTheme();
+	},
+
+	// overwriting getUserAvatarURL to handle custom avatar url from external auth provider
+	getUserAvatarURL: function() {
+		// user may have custom avatar
+		if (this.user && this.user.avatar_url) {			
+			try { // try parse URL in order to encode any special characters in URL / prevent html injection
+				return new URL(app.user.avatar_url).toString() 
+			}
+			catch { 
+				// on any error proceed with gravatar
+			}
+		}
+
+		// get URL to user's avatar using Gravatar.com service
+		let size = 0;
+		let email = '';
+		if (arguments.length == 2) {
+			email = arguments[0];
+			size = arguments[1];
+		}
+		else if (arguments.length == 1) {
+			email = this.user.email;
+			size = arguments[0];
+		}
+		
+		return '//en.gravatar.com/avatar/' + hex_md5( email.toLowerCase() ) + '.jpg?s=' + size + '&d=mm';
 	},
 	
 	doUserLogin: function(resp) {
@@ -224,7 +253,10 @@ app.extend({
 			
 			setTimeout( function() {
 				if (!app.config.external_users) {
-					if (bad_cookie) self.showMessage('error', "Your session has expired.  Please log in again.");
+					if (bad_cookie) {
+						self.showMessage('error', "Your session has expired.  Please log in again.");
+						console.log('bad cookieee', bad_cookie)
+					}
 					else self.showMessage('success', "You were logged out successfully.");
 				}
 				
