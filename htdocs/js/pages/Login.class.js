@@ -92,7 +92,7 @@ Class.subclass( Page.Base, "Page.Login", {
 		else {
 			// redirect to oauth login page
 			let orig_location = encodeURIComponent(app.navAfterLogin || config.DefaultPage);
-			window.location.href = `/api/user/oauth?orig_location=${orig_location}`;		
+			window.location.href = app.config.base_api_uri + `/user/oauth?orig_location=${orig_location}`;	
 		}
 
 	},

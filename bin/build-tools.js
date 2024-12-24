@@ -15,7 +15,7 @@ var cp = require('child_process');
 var Tools = require('pixl-tools');
 var mkdirp = Tools.mkdirp;
 var async = require('async');
-var glob = require('glob');
+var glob = Tools.glob;
 var UglifyJS = require("uglify-js");
 
 var fileStatSync = function(file) {
