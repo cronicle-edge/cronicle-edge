@@ -75,6 +75,17 @@ You can import some demo jobs from **sample_conf/backup** file. This can be done
 ### S3 Storage in the box
 Refer to [1.5.14 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.5.14) for more details.
 
+### SSO login via oauth2
+Can verify user via common oauth providers (github, google, authentik, microsof, keyclock, etc)
+Refer to [1.11.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.11.1) for more details.
+
+### Serve cronicle on custom base path
+Ever wanted to serve cronicle on ```https://myserver/cron``` ? Just set ```base_path = /cron``` in config.json or set ```CRONICLE_base_path=/cron``` variable 
+Refer to [1.10.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.10.1) for more details.
+
+### Can display timestamps in HH24 vs AM/PM
+Just set ui.hh24 = true configuration or via variable CRONICLE_ui__hh24 = 1 
+
 ### Config tab
 You can now set any config right from GUI and without restarting cronicle. You can set custom configuration keys that would override values you have set in `config.json`. You can set nested keys via dot notation  (e.g. `params.sql.query`). You can also use multi-line values as config value. Please note - that does not apply to storage and webserver config. You also cannot get or set secret key.
 
