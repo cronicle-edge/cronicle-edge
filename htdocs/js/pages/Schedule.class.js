@@ -1223,7 +1223,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// toggle event on / off
 		var event = this.events[idx];
 
-		if (this.isAdmin()) { // for admins - toggle state right away (old way)
+	        if (this.isAdmin()) { // for admins - toggle state right away (old way)
 			event.enabled = event.enabled ? 0 : 1;
 			var stub = {
 				id: event.id,
@@ -1232,12 +1232,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				catch_up: event.catch_up || false
 			};
 
-			app.api.post('app/update_event', stub, function (resp) {
+			app.api.post('app/toggle_event', stub, function (resp) {
 				$('#' + event.id).toggleClass('disabled')
 				app.showMessage('success', "Event '" + event.title + "' has been " + (event.enabled ? 'enabled' : 'disabled') + ".");
 			});
 
 		}
+
 		else { // for non-admin ask to confirm first
 			let action = event.enabled ? 'Disable' : 'Enable'
 			let msg = `Are you sure you want to ${action} <b>${event.title}</b> event?`
@@ -1256,7 +1257,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 					app.showProgress(1.0, "Updating Event...");
 
-					app.api.post('app/update_event', stub, function (resp) {
+					app.api.post('app/toggle_event', stub, function (resp) {
 						app.hideProgress();
 						app.showMessage('success', "Event '" + event.title + "' has been " + action + "d.");
 						$('#' + event.id).toggleClass('disabled');
