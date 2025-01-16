@@ -1229,7 +1229,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				id: event.id,
 				title: event.title,
 				enabled: event.enabled,
-				catch_up: event.catch_up || false
+				catch_up: event.catch_up || 0
 			};
 
 			app.api.post('app/toggle_event', stub, function (resp) {
@@ -1252,7 +1252,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 						id: event.id,
 						title: event.title,
 						enabled: event.enabled,
-						catch_up: event.catch_up || false
+						catch_up: event.catch_up || 0
 					};
 
 					app.showProgress(1.0, "Updating Event...");
