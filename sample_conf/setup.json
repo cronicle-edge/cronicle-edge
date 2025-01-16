@@ -190,6 +190,7 @@
 					"value": "(None)"
 				},
 				{ "type":"checkbox", "id":"wf_strict", "title":"Report error on any job failure", "value":0 },
+				{ "type":"checkbox", "id":"wf_ignore_ssl", "title":"Skip SSL check", "value":0 },
 				{ "type": "eventlist", "id": "wf_events", "title": "Workflow Events"}
 			],
 			"enabled": 1,
