@@ -46,6 +46,9 @@ PIDFILE=${CRONICLE_pid_file:-$(node -e "console.log(JSON.parse(fs.readFileSync('
 # --------------------                              --------------------
 # ||||||||||||||||||||   END CONFIGURATION SECTION  ||||||||||||||||||||
 
+# Support for nvm and it's bizarre path system
+[ ! -x "$(which node)" ] && [ -s ~/.nvm/nvm.sh ] && \. ~/.nvm/nvm.sh
+
 ERROR=0
 ARGV="$@"
 if [ "x$ARGV" = "x" ] ; then 
