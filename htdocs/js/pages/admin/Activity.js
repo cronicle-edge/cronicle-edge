@@ -173,6 +173,14 @@ Class.add( Page.Admin, {
 					desc = 'Event updated: <b>' + item.event.title + '</b>';
 					actions.push( '<a href="#Schedule?sub=edit_event&id='+item.event.id+'">Edit Event</a>' );
 				break;
+				case 'event_enabled':
+					desc = 'Event enabled: <b>' + item.event.title + '</b>';
+					actions.push( '<a href="#Schedule?sub=edit_event&id='+item.event.id+'">Edit Event</a>' );
+				break;
+				case 'event_disabled':
+					desc = 'Event disabled: <b>' + item.event.title + '</b>';
+					actions.push( '<a href="#Schedule?sub=edit_event&id='+item.event.id+'">Edit Event</a>' );
+				break;
 				case 'event_delete':
 					desc = 'Event deleted: <b>' + item.event.title + '</b>';
 				break;
