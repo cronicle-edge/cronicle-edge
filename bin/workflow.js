@@ -40,9 +40,13 @@ function niceInterval(s, asLocatTime) {
 	return date.toISOString().substr(11, 8);
 }
 
+const HTTP_OPTS = {
+	rejectUnauthorized: !(parseInt(process.env['WF_IGNORE_SSL']) || 0)
+}
+
 function getJson(url, data) {
 	return new Promise((resolve, reject) => {
-		request.json(url, data, function (err, resp, data) {
+		request.json(url, data, HTTP_OPTS, function (err, resp, data) {
 			if (err) return reject(err);
 			if (data.description) return reject(new Error(data.description))
 			resolve({ resp: resp, data: data })
@@ -121,8 +125,6 @@ stream.on('json', function (job) {
 		workflow = newWorkflow
 
 	}
-
-
 
 	taskList = workflow.map((e, i) => { 
 		e.stepId = i + 1;

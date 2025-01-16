@@ -187,7 +187,7 @@ const dockerRun = async () => {
         let exit = await container.wait()
 
         // normal shutdown    
-        printJSONMessage(1, exit.StatusCode, exit.StatusCode ? `code: ${exit.StatusCode}; ${stderr_msg} ` : null)
+        printJSONMessage(1, exit.StatusCode, exit.StatusCode ? `code: ${exit.StatusCode}; ${stderr_msg || '(unknown error)'} ` : null)
         process.exit(exit.StatusCode)
     }
     catch (e) {
