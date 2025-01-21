@@ -67,6 +67,7 @@ let network = process.env['NETWORK']
 let script = process.env['SCRIPT'] ?? "#!/bin/sh\necho 'No script specified'"
 const autoPull = !!parseInt(process.env['PULL_IMAGE'])
 const autoRemove = !parseInt(process.env['KEEP_CONTAINER'])
+const autoRemoveNamedVolumes = !parseInt(process.env['KEEP_NAMED_VOLUMES'])
 const keepEntrypoint = !!parseInt(process.env['KEEP_ENTRYPOINT'])
 const json = !!parseInt(process.env['JSON'])
 let stderr_msg
@@ -184,14 +185,27 @@ const dockerRun = async () => {
         // copy entrypoint file to root directory
         container.putArchive(arch, { path: path.dirname(ENTRYPOINT_PATH) })
         if(docker.modem.host) printInfo('docker host: ' + docker.modem.protocol + '://' + docker.modem.host)
-        printInfo(`Container ready: name: [${createOptions.name}], image: [${imageName}], keep: ${!autoRemove}`)
+        printInfo(`Container ready: name: [${createOptions.name}], image: [${imageName}], keep: ${!autoRemove}, keep named volumes: ${autoRemoveNamedVolumes}`)
 
         let stream = await container.attach({ stream: true, stdout: true, stderr: true })
         container.modem.demuxStream(stream, stdout, stderr);
 
+	const data = await container.inspect()
+        volumes = data.Mounts
+	    
         await container.start()
         let exit = await container.wait()
 
+        if (!autoRemoveNamedVolumes && volumes.length > 0){
+              for (const e of volumes) {
+                if (e.Type == "volume"){
+                    const volume = docker.getVolume(e.Name);
+                    await volume.remove();
+                    printInfo(`Volume ${e.Name} removed successfully.`);
+                };
+            }
+        };
+	    
         // normal shutdown    
         printJSONMessage(1, exit.StatusCode, exit.StatusCode ? `code: ${exit.StatusCode}; ${stderr_msg || '(unknown error)'} ` : null)
         process.exit(exit.StatusCode)
