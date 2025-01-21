@@ -67,7 +67,7 @@ let network = process.env['NETWORK']
 let script = process.env['SCRIPT'] ?? "#!/bin/sh\necho 'No script specified'"
 const autoPull = !!parseInt(process.env['PULL_IMAGE'])
 const autoRemove = !parseInt(process.env['KEEP_CONTAINER'])
-const autoRemoveNamedVolumes = !parseInt(process.env['KEEP_NAMED_VOLUMES'])
+const autoRemoveNamedVolumes = !!parseInt(process.env['KEEP_NAMED_VOLUMES'])
 const keepEntrypoint = !!parseInt(process.env['KEEP_ENTRYPOINT'])
 const json = !!parseInt(process.env['JSON'])
 let stderr_msg
@@ -196,7 +196,7 @@ const dockerRun = async () => {
         await container.start()
         let exit = await container.wait()
 
-        if (!autoRemoveNamedVolumes && volumes.length > 0){
+        if (autoRemoveNamedVolumes === false && volumes.length > 0){
               for (const e of volumes) {
                 if (e.Type == "volume"){
                     const volume = docker.getVolume(e.Name);
