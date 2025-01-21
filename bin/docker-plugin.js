@@ -145,6 +145,11 @@ if (!keepEntrypoint) {
 
 if(network) createOptions.HostConfig['NetworkMode'] = network
 
+if(volumes){
+  volumes = volumes.replace(/"/g, '').split("\n");
+
+  createOptions.HostConfig['Binds'] = volumes
+}
 
 // ----------------RUNNING CONTAINER -------- //
 
