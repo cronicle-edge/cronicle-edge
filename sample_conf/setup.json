@@ -117,6 +117,7 @@
 				{ "id":"keep_entrypoint", "type":"checkbox", "title":"Keep Original Entrypoint", "value": 0 },
 				{ "id":"pull_image", "type":"checkbox", "title":"Pull Image", "value": 1 },
 				{ "id":"keep_container", "type":"checkbox", "title":"Keep Container", "value": 0 },
+				{ "id":"keep_named_volumes", "type":"checkbox", "title":"Keep Named Volumes", "value": 1 },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{ "id":"trunc_var", "type":"checkbox", "title":"Truncate Environment Variable Prefix", "value": 0 },
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
