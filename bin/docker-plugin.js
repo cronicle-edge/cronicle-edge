@@ -148,7 +148,7 @@ if (!keepEntrypoint) {
 if(network) createOptions.HostConfig['NetworkMode'] = network
 
 if(volumes){
-  volumes = volumes.replace(/"/g, '').split("\n");
+  volumes = volumes.split(",");
 
   createOptions.HostConfig['Binds'] = volumes
 }
