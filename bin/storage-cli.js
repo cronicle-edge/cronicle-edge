@@ -46,6 +46,26 @@ if(process.env['CRONICLE_sqlite']) {
 	}
 }
 
+// overwrite storage if postgres option is specified
+if(process.env['CRONICLE_postgres_host']) {
+	config.Storage = {
+		"engine": "SQL",
+		"list_page_size": 50,
+		"concurrency": 4,
+		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
+		"SQL": {
+			"client": "pg",
+			"table": "cronicle",
+			"connection": {
+                "host": process.env['CRONICLE_postgres_host'],
+				"user": process.env['CRONICLE_postgres_user'],
+				"password": process.env['CRONICLE_postgres_password'],
+				"database": process.env['CRONICLE_postgres_database']
+			}
+		}
+	}
+}
+
 // shift commands off beginning of arg array
 var argv = JSON.parse(JSON.stringify(process.argv.slice(2)));
 var commands = [];
