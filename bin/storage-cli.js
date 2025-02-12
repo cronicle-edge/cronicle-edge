@@ -57,7 +57,8 @@ if(process.env['CRONICLE_postgres_host']) {
 			"client": "pg",
 			"table": "cronicle",
 			"connection": {
-                "host": process.env['CRONICLE_postgres_host'],
+                		"host": process.env['CRONICLE_postgres_host'],
+                		"port": process.env['CRONICLE_postgres_port'],
 				"user": process.env['CRONICLE_postgres_username'],
 				"password": process.env['CRONICLE_postgres_password'],
 				"database": process.env['CRONICLE_postgres_database']
