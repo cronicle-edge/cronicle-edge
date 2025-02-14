@@ -71,7 +71,7 @@ if(process.env['CRONICLE_sql_connection_string']) {
                 "host": cs['hostname'],
                 "port": cs['port'],
 				"user": cs['username'],
-				"password": cs['password'],
+				"password": decodeURI(cs['password']),
 				"database": cs['pathname'].slice(1)
 			}
 		}
