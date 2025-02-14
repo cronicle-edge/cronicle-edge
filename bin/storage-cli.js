@@ -46,6 +46,30 @@ if(process.env['CRONICLE_sqlite']) {
 	}
 }
 
+// overwrite storage if connection string option is specified
+if(process.env['CRONICLE_sql_connection_string']) {
+{
+	cs = new URL(process.env['CRONICLE_sql_connection_string'])
+	
+	config.Storage = {
+		"engine": "SQL",
+		"list_page_size": 50,
+		"concurrency": 4,
+		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
+		"SQL": {
+			"client": cs['protocol'].slice(0, -1),
+			"table": "cronicle",
+			"connection": {
+                "host": cs['hostname'],
+                "port": cs['port'],
+				"user": cs['username'],
+				"password": cs['password'],
+				"database": cs['pathname'].slice(1)
+			}
+		}
+	}
+}
+
 // overwrite storage if postgres option is specified
 if(process.env['CRONICLE_postgres_host']) {
 	config.Storage = {
@@ -57,8 +81,8 @@ if(process.env['CRONICLE_postgres_host']) {
 			"client": "pg",
 			"table": "cronicle",
 			"connection": {
-                		"host": process.env['CRONICLE_postgres_host'],
-                		"port": process.env['CRONICLE_postgres_port'],
+                "host": process.env['CRONICLE_postgres_hostname'],
+                "port": process.env['CRONICLE_postgres_port'],
 				"user": process.env['CRONICLE_postgres_username'],
 				"password": process.env['CRONICLE_postgres_password'],
 				"database": process.env['CRONICLE_postgres_database']
