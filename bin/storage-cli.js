@@ -50,6 +50,14 @@ if(process.env['CRONICLE_sqlite']) {
 if(process.env['CRONICLE_sql_connection_string']) {
 {
 	cs = new URL(process.env['CRONICLE_sql_connection_string'])
+
+	if (cs['searchParams'].get('table') == null){
+		tb = 'cronicle'
+	}
+	else
+	{
+		tb = cs['searchParams'].get('table')
+	}
 	
 	config.Storage = {
 		"engine": "SQL",
@@ -58,7 +66,7 @@ if(process.env['CRONICLE_sql_connection_string']) {
 		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
 		"SQL": {
 			"client": cs['protocol'].slice(0, -1),
-			"table": "cronicle",
+			"table": tb,
 			"connection": {
                 "host": cs['hostname'],
                 "port": cs['port'],
