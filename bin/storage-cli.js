@@ -48,8 +48,15 @@ if(process.env['CRONICLE_sqlite']) {
 
 // overwrite storage if connection string option is specified
 if(process.env['CRONICLE_sql_connection_string']) {
-{
 	cs = new URL(process.env['CRONICLE_sql_connection_string'])
+
+	protocol = cs['protocol'].slice(0, -1)
+
+	// check if the protocol is one of those accepted
+	if (['mysql2', 'pg', 'mssql', 'oracledb'].indexOf(protocol) < 0) {
+		console.error(`\nERROR: The database client in 'CRONICLE_sql_connection_string' is ${protocol}. The only accepted values are 'mysql2', 'pg', 'mssql', 'oracledb'.`)
+		process.exit(1)
+	}
 
 	if (cs['searchParams'].get('table') == null){
 		tb = 'cronicle'
@@ -65,7 +72,7 @@ if(process.env['CRONICLE_sql_connection_string']) {
 		"concurrency": 4,
 		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
 		"SQL": {
-			"client": cs['protocol'].slice(0, -1),
+			"client": protocol,
 			"table": tb,
 			"connection": {
                 "host": cs['hostname'],
