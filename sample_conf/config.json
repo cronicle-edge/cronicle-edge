@@ -45,7 +45,7 @@
 		"job_warning": "⚠️ *[event_title]* completed with warning on [hostname]:\nWarning: _*[description]*_\n <[job_details_url] | More details>",
 		"job_failure": "❌ *[event_title]* failed on [hostname]:\nError: _*[description]*_\n <[job_details_url] | More details>",
 		"job_launch_failure": "💥 Failed to launch *[event_title]*:\n*[description]*\n<[edit_event_url] | More details>"
-	  },
+	},
 	
 	"client": {
 		"name": "Cronicle",
@@ -83,6 +83,12 @@
 		"user_url": "http://localhost:9000/application/o/userinfo/",
 		"user_attribute": "email",
 		"scope": "email openid profile"
+	},
+
+	"safe_job_log": {
+		"exclude_keys": ["table", "secret", "env", "cat_secret", "plug_secret", "globalenv"],
+		"stringify_keys": ["params", "workflow", "perf"],
+		"exclude_stringify_keys": ["headers"]
 	},
 
 	"git": {
