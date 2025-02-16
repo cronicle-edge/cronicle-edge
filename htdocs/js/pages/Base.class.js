@@ -73,7 +73,7 @@ Class.subclass(Page, "Page.Base", {
 		let icon =  `<i title="${tooltip}" class="${icon_class}">&nbsp;</i>`
 
 		if (extraTooltip) {
-			if (plug.toUpperCase().startsWith("DOCKER")) icon = `<span title="${tooltip}" class="mdi mdi-docker"></span>`
+			if (plug.toUpperCase().startsWith("DOCKER") || plug.toUpperCase().startsWith("KUBE")) icon = `<span title="${tooltip}" class="mdi mdi-docker"></span>`
 			// if (title.plugin == 'shellplug') icon = `<span title="${tooltip}" class="mdi mdi-script"></span>`
 			if (plug.toUpperCase().startsWith("SSH")) icon = `<span title="${tooltip}" class="mdi mdi-console"></span>`
 			if (plug.toUpperCase().startsWith("HTTP")) icon = `<span title="${tooltip}" class="mdi mdi-web"></span>`

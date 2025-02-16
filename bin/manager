@@ -5,6 +5,7 @@ usage() {
   echo "USAGE: ./manager [ --port 3012 ] [ --storage /path/to/storage.json ] [ --key secreKey ] [ --color ] "
   echo "                 [ --reset ]  # set current host as manager"
   echo "                 [ --cluster "server1,server2" ]  # add extra workers on setup"
+  echo "                 [ --debug ]  # enable debug mode"
   exit 1
 }
 

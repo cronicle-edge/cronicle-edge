@@ -2,6 +2,7 @@
 @echo off
 
 set SCRIPT_LOC=%~dp0
+set DEBUG=0
 
 :parseArgs
 
@@ -56,12 +57,13 @@ if /I "%1"=="--port" (
   set CRONICLE_RESET=1
   shift
 ) else if /I "%1"=="--debug" (
-  set CRONICLE_debug=1
+  set DEBUG=1
   shift
 ) else if /I "%1"=="--help" (
     echo Usage:  .\manager [--port  port] [ --storage /path/to/storage.json] 
     echo         [ --reset ]  # make current host the manager
     echo         [ --cluster "server1,server2"]  # add extra workers on setup
+    echo         [ --debug ] # enable debug mode
     shift
     exit    
 ) else (exit)
@@ -85,4 +87,4 @@ if "%CRONICLE_RESET%"=="1" (
   node .\storage-cli.js setup
 )
 
-node .\cronicle.js --manager --echo --foreground --color
+node .\cronicle.js --manager --echo --foreground --color --debug %DEBUG%
