@@ -308,6 +308,7 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/workflow.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/run-detached.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:ssh2 bin/docker-plugin.js
+esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/kube-plugin.mjs
 
 
 # ------------ Bundle Storage Engines ------------------------------ #
