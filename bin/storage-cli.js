@@ -57,14 +57,6 @@ if(process.env['CRONICLE_SQLSTRING']) {
 		console.error(`\nERROR: The database client in 'CRONICLE_SQLSTRING' is ${protocol}. The only accepted values are 'mysql2', 'pg', 'mssql', 'oracledb'.`)
 		process.exit(1)
 	}
-
-	if (cs['searchParams'].get('table') == null){
-		tb = 'cronicle'
-	}
-	else
-	{
-		tb = cs['searchParams'].get('table')
-	}
 	
 	config.Storage = {
 		"engine": "SQL",
@@ -73,7 +65,7 @@ if(process.env['CRONICLE_SQLSTRING']) {
 		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
 		"SQL": {
 			"client": protocol,
-			"table": tb,
+			"table": cs['searchParams'].get('table') || 'cronicle',
 			"connection": {
                 "host": cs['hostname'],
                 "port": cs['port'],
