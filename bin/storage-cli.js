@@ -63,7 +63,7 @@ else if(process.env['CRONICLE_SQLSTRING']) {
 			"table": cs['searchParams'].get('table') || 'cronicle',
 			"connection": {
                 "host": cs['hostname'],
-                "port": cs['port'],
+                "port": parseInt(cs['port']),
 				"user": cs['username'],
 				"password": decodeUriComponent(cs['password']),
 				"database": cs['pathname'].slice(1)
@@ -83,7 +83,7 @@ else if(process.env['CRONICLE_postgres_host']) {
 			"table": "cronicle",
 			"connection": {
                 "host": process.env['CRONICLE_postgres_hostname'],
-                "port": process.env['CRONICLE_postgres_port'],
+                "port": parseInt(process.env['CRONICLE_postgres_port']),
 				"user": process.env['CRONICLE_postgres_username'],
 				"password": process.env['CRONICLE_postgres_password'],
 				"database": process.env['CRONICLE_postgres_database']
