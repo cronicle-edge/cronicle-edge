@@ -48,8 +48,8 @@ if /I "%1"=="--port" (
       echo Connection string is not specified
       exit
     )    
-    set CRONICLE_SQLSTRING=%~f2
-    echo Using custom db as storage: %~f2
+    set CRONICLE_SQLSTRING=%~2
+    echo Using custom db as storage
     shift
     shift
 ) else if /I "%1"=="--cluster" (

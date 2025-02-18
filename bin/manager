@@ -39,8 +39,8 @@ if [[ $sqlite ]]; then
 fi
 
 if [[ $sqlstring ]]; then
-  export CRONICLE_SQLSTRING="$(realpath $sqlstring)"
-  echo "Using custom db as storage: $sqlstring"
+  export CRONICLE_SQLSTRING="$($sqlstring)"
+  echo "Using custom db as storage"
 fi
 
 if [[ $storage ]]; then
