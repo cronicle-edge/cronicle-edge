@@ -65,7 +65,7 @@ else if(process.env['CRONICLE_SQLSTRING']) {
                 "host": cs['hostname'],
                 "port": parseInt(cs['port']),
 				"user": cs['username'],
-				"password": decodeUriComponent(cs['password']),
+				"password": decodeURIComponent(cs['password']),
 				"database": cs['pathname'].slice(1)
 			}
 		}
