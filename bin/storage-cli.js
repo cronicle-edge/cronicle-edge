@@ -45,26 +45,21 @@ if(process.env['CRONICLE_sqlite']) {
 		}
 	}
 }
-
 // overwrite storage if connection string option is specified
-if(process.env['CRONICLE_SQLSTRING']) {
+else if(process.env['CRONICLE_SQLSTRING']) {
 	cs = new URL(process.env['CRONICLE_SQLSTRING'])
-
-	protocol = cs['protocol'].slice(0, -1)
+	let map = {'pg:':'pg', 'pgsql:':'pg', 'mysql:':'mysql2', 'mysql2:':'mysql2','oracle:':'oracledb', 'mssql:':'mssql'}
 
 	// check if the protocol is one of those accepted
-	if (['mysql2', 'pg', 'mssql', 'oracledb'].indexOf(protocol) < 0) {
-		console.error(`\nERROR: The database client in 'CRONICLE_SQLSTRING' is ${protocol}. The only accepted values are 'mysql2', 'pg', 'mssql', 'oracledb'.`)
-		process.exit(1)
-	}
-	
+	if(!map[cs['protocol']]) throw new Error(`Invalid Driver, use on of the following ${Object.keys(map).map(e=>e.slice(0,-1))}`)
+
 	config.Storage = {
 		"engine": "SQL",
 		"list_page_size": 50,
 		"concurrency": 4,
 		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
 		"SQL": {
-			"client": protocol,
+			"client": map[cs['protocol']],
 			"table": cs['searchParams'].get('table') || 'cronicle',
 			"connection": {
                 "host": cs['hostname'],
@@ -76,9 +71,8 @@ if(process.env['CRONICLE_SQLSTRING']) {
 		}
 	}
 }
-
 // overwrite storage if postgres option is specified
-if(process.env['CRONICLE_postgres_host']) {
+else if(process.env['CRONICLE_postgres_host']) {
 	config.Storage = {
 		"engine": "SQL",
 		"list_page_size": 50,
