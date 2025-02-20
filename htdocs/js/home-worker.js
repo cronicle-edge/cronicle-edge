@@ -1,6 +1,6 @@
 // Cronicle App
 // Author: Joseph Huckaby
-// Copyright (c) 2015 - 2022 Joseph Huckaby and PixlCore.com
+// Copyright (c) 2015 - 2025 Joseph Huckaby and PixlCore.com
 // MIT License
 
 // Worker thread for the Home tab
