@@ -15,11 +15,16 @@ param(
     [Int32]$Offset = 0,
     [switch]$Full,
 
+    [switch]$Version,
     [switch]$Help
 )
 
 $ErrorActionPreference = "stop"
 
+$CURRENT_VERSION = "1.12.1"
+
+if($Version -OR $Command -eq "version") {  Write-Host $CURRENT_VERSION; exit 0 }
+ 
 # if this commanfd crashes - there shu;d be something wrong with config file
 $conf = Get-Content "$PSScriptRoot\..\conf\config.json" | ConvertFrom-Json -Depth 10 
 
@@ -165,7 +170,7 @@ Pop-Location
 
 $proc = $null
 $state = "Stopped"
-if (Test-Path $pidFile) {
+if ($pidFile -AND (Test-Path $pidFile)) {
     $p = Get-Content -Raw $pidFile
     $proc = Get-Process -Id $p  -ErrorAction SilentlyContinue
     $state = "Stopped [ Crashed ]"
