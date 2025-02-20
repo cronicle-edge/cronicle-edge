@@ -1,5 +1,7 @@
 // Cronicle JobDetails Page
 
+
+
 Class.subclass(Page.Base, "Page.JobDetails", {
 
 	pie_colors: {
@@ -766,6 +768,20 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		});
 	},
 
+	toggle_autoscroll: function (element) {
+
+		if(app.getPref('autoscroll') === 'N') {
+			app.setPref('autoscroll', 'Y')
+			element.innerHTML = '<b>autoscroll: on</b>'
+		}
+		else {
+			app.setPref('autoscroll', 'N')
+			element.innerHTML = '<b>autoscroll: off</b>'
+		}
+
+     	console.log('autoscropp is set to', app.getPref('autoscroll'))
+	},
+
 	gosub_live: function (args) {
 		// show live job status
 		Debug.trace("Showing live job: " + args.id);
@@ -876,12 +892,14 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		html += `Live Job Event Log `;
 		//html += '<div class="subtitle_widget" style="margin-left:2px;"><a href="' + remote_api_url + '/app/get_live_job_log?id=' + job.id + '" target="_blank"><i class="fa fa-external-link">&nbsp;</i><b>View Full Log</b></a></div>';
 		html += `<div class="subtitle_widget"><a target="_blank" href="./console?id=${job.id}&download=1"><i class="fa fa-download">&nbsp;</i><b>View Full Log</b></a></div>`;
+		let autoScroll = app.getPref('autoscroll') === 'N' ? 'autoscroll: off' :  'autoscroll: on'
+		html += `<div class="subtitle_widget"><a id="autoscroll_url" style="cursor:pointer" onMouseUp="$P().toggle_autoscroll(this)"><b>${autoScroll}</b></a></div>`;
 		html += '<div class="clear"></div>';
 		html += '</div>';
 
 		var size = get_inner_window_size();
 		var iheight = size.height - 100;
-		html += '<div id="d_live_job_log" style="width:100%; height:' + iheight + 'px; overflow-y:scroll; position:relative;"></div>';
+		html += '<div id="d_live_job_log" style="width:100%; height:' + iheight + '; overflow-y:scroll; position:relative;"></div>';
 
 		this.div.html(html);
 
@@ -1034,6 +1052,12 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		this.update_live_progress(job);
 	},
 
+	scrollToBottom: function() {
+	if(app.getPref('autoscroll') === 'N') return
+	var container = document.getElementById('d_live_job_log');
+	container.scrollTop = container.scrollHeight;
+    },
+
 	start_live_log_watcher: function(job) {
 
 		if(app.config.ui.live_log_ws) { 
@@ -1063,6 +1087,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 					webConsole.innerHTML = `<pre>${ansi_up.ansi_to_html(data.data.replace(/\u001B=/g, ''))} </pre>`;
 					pollInterval = parseInt(app.config.ui.live_log)
 					if(!pollInterval || pollInterval < 1000) pollInterval = 1000;
+					self.scrollToBottom()
 					setTimeout(refresh,  1000);
 				}
 				// stop polling on error, report unexpected errors
@@ -1104,10 +1129,13 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 					  	`<pre class="log_chunk" style="color:#888">${ansi_up.ansi_to_html(newChunk.replace(/\u001B=/g, ''))}</pre>`
 					  );
 
+					  self.scrollToBottom()
+
 					  if(oldChunk.length > maxLogSize) {
 						$('#d_live_job_log').append(
 							'<pre class="log_chunk" style="color:red">Log size reached max size. Refresh page to continue...</pre>'
 						)
+						
 						return
 					  }
 					  
