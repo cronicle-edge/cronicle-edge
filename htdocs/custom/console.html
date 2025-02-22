@@ -56,12 +56,13 @@
                             </span>`
                         } 
                         else if(data.code == 'api' || data.code == 'session') {
-                            webConsole.innerHTML = '<span style="color:red">Unauthorized</span>';
+                            webConsole.innerHTML = '<span style="color:red">Unauthorized, you will be redirected to login page shortly</span>';
+                            setTimeout(()=>{window.location.href = '/'}, 1000)
                             return;
                         }
                         else {
                             // if no live log data check history and return
-                            fetch('./api/app/get_job_log' + query).then(
+                            fetch('./api/app/get_job_log' + query + '&session_id=' + localStorage.session_id).then(
                                 //if( response.status == 200) { }
                                 response => response.text().then(data => {
                                     if (response.status == 200) {

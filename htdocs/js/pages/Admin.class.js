@@ -12,6 +12,10 @@ Class.subclass( Page.Base, "Page.Admin", {
 	onActivate: function(args) {
 		// page activation
 		if (!this.requireLogin(args)) return true;
+		if (!app.isAdmin()) { // admin only can be here
+			setTimeout( function() { Nav.go('Home'); }, 1 );
+			return true;
+		}
 		
 		if (!args) args = {};
 		if (!args.sub) args.sub = this.default_sub;

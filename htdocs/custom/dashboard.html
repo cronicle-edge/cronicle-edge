@@ -16,7 +16,7 @@
     <script
         src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.js"></script>
 
-<!-- 
+    <!-- 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"> -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
@@ -38,8 +38,16 @@
 <body>
     <script>
 
-        $(document).ready(function () {
+        let render = true
 
+        if (!localStorage.session_id) {
+            document.body.innerHTML = '<span style="color:red">Unauthorized, you will be redirected to login page shortly</span>';
+            render = false
+            setTimeout(() => { window.location.href = '/' }, 2000)            
+        }
+
+        $(document).ready(function () {
+            if(!render) return 
             $('#event_history').DataTable({
 
                 initComplete: function () {
@@ -70,11 +78,11 @@
 
                 },
 
-                "drawCallback": function(settings) {
+                "drawCallback": function (settings) {
                     $(function () {
                         $(".btn-danger, .btn-warning").tooltip({ show: null });
                     });
-                }, 
+                },
                 ajax: {  //api_key=f588e568b79826bd0e5577beef321dd5
                     "url": "api/app/get_history?limit=1000&session_id=" + localStorage.session_id,
                     "dataSrc": "rows"
@@ -103,7 +111,7 @@
                     { "title": "category", "data": "category_title", render: data => `<i class="fa fa-folder-open-o"> </i> <span> ${data}</span>` },
                     {
                         "data": "code", "title": "status", "render": function (data, type, row) {
-                            let errorTitle = row.description ? row.description.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "") : " " 
+                            let errorTitle = row.description ? row.description.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "") : " "
                             if (row.action == "job_complete_debug") { return `<span class="btn-sm btn-info"><b>Debug</b></span>` }
                             if (row.code == 255) { return `<span class="btn-sm btn-warning" title="${errorTitle}"><b>Warning</b></span>` }
                             if (row.code == 130) { return `<span class="btn-sm btn-danger" title="${errorTitle}"><b>Aborted</b></span>` }
@@ -142,11 +150,11 @@
         <div class="row">
             <h1>Event Dashboard</h1>
             <div style="float:right; padding-right: 25px"><a href="./#History">
-                <i class="fa fa-arrow-circle-left"></i>
-                <b> Go Back </b></a>
+                    <i class="fa fa-arrow-circle-left"></i>
+                    <b> Go Back </b></a>
             </div>
         </div>
-        <div class="row" >
+        <div class="row">
             <div id="filter0" class="col-sm-3"><span>Filter Event </span></div>
             <div id="filter1" class="col-sm-3"><span>Filter Category </span></div>
         </div>

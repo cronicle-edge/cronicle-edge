@@ -20,6 +20,8 @@
 # 
 # the name of your binary
 NAME="Cronicle Server"
+CURRENT_VERSION="1.12.1"
+
 #
 # home directory
 #HOMEDIR="$(dirname "$(cd -- "$(dirname "$0")" && (pwd -P 2>/dev/null || pwd))")"
@@ -151,8 +153,9 @@ do
 		exit
 	;;
 	version)
-		PACKAGE_VERSION=$(node -p -e "require('./package.json').version")
-		echo "$PACKAGE_VERSION"
+		# PACKAGE_VERSION=$(node -p -e "require('./package.json').version")
+		# echo "$PACKAGE_VERSION"
+		echo "$CURRENT_VERSION"
 		exit
 	;;
     *)

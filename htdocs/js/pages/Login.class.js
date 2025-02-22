@@ -115,8 +115,8 @@ Class.subclass( Page.Base, "Page.Login", {
 				
 				app.hideProgress();
 				app.doUserLogin( resp );
-				
-				Nav.go( app.navAfterLogin || config.DefaultPage );
+				if(document.referrer ) window.location.href = document.referrer
+				else Nav.go( app.navAfterLogin || config.DefaultPage );
 			} ); // post
 		}
 	}, 
