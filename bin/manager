@@ -19,6 +19,7 @@ while (( "$#" )); do
         --key ) shift; key=$1 ;;
         --storage ) shift; storage=$1 ;;
         --sqlite ) shift; sqlite=$1 ;;
+        --sqlstring ) shift; sqlstring=$1 ;;
         --reset ) shift; reset=1 ;;
         --cluster ) shift; cluster=$1 ;;
         --debug ) shift; debug=1 ;;
@@ -36,6 +37,11 @@ fi
 if [[ $sqlite ]]; then
   export CRONICLE_sqlite="$(realpath $sqlite)"
   echo "Using custom sqlite db as storage: $sqlite"
+fi
+
+if [[ $sqlstring ]]; then
+  export CRONICLE_SQLSTRING="$($sqlstring)"
+  echo "Using custom db as storage"
 fi
 
 if [[ $storage ]]; then

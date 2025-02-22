@@ -44,6 +44,15 @@ if /I "%1"=="--port" (
     echo Using sqlite as storage: %~f2
     shift
     shift
+) else if /I "%1"=="--sqlstring" (
+    if "%2"=="" (
+      echo Connection string is not specified
+      exit
+    )    
+    set CRONICLE_SQLSTRING=%~2
+    echo Using custom db as storage
+    shift
+    shift
 ) else if /I "%1"=="--cluster" (
     if "%2"=="" (
       echo Missing cluster value. Specify comma-separatd hostnames

@@ -45,6 +45,52 @@ if(process.env['CRONICLE_sqlite']) {
 		}
 	}
 }
+// overwrite storage if connection string option is specified
+else if(process.env['CRONICLE_SQLSTRING']) {
+	cs = new URL(process.env['CRONICLE_SQLSTRING'])
+	let map = {'pg:':'pg', 'pgsql:':'pg', 'mysql:':'mysql2', 'mysql2:':'mysql2','oracle:':'oracledb', 'mssql:':'mssql'}
+
+	// check if the protocol is one of those accepted
+	if(!map[cs['protocol']]) throw new Error(`Invalid Driver, use on of the following ${Object.keys(map).map(e=>e.slice(0,-1))}`)
+
+	config.Storage = {
+		"engine": "SQL",
+		"list_page_size": 50,
+		"concurrency": 4,
+		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
+		"SQL": {
+			"client": map[cs['protocol']],
+			"table": cs['searchParams'].get('table') || 'cronicle',
+			"connection": {
+                "host": cs['hostname'],
+                "port": parseInt(cs['port']),
+				"user": cs['username'],
+				"password": decodeURIComponent(cs['password']),
+				"database": cs['pathname'].slice(1)
+			}
+		}
+	}
+}
+// overwrite storage if postgres option is specified
+else if(process.env['CRONICLE_postgres_host']) {
+	config.Storage = {
+		"engine": "SQL",
+		"list_page_size": 50,
+		"concurrency": 4,
+		"log_event_types": { "get": 1, "put": 1, "head": 1,	"delete": 1, "expire_set": 1 },
+		"SQL": {
+			"client": "pg",
+			"table": "cronicle",
+			"connection": {
+                "host": process.env['CRONICLE_postgres_hostname'],
+                "port": parseInt(process.env['CRONICLE_postgres_port']),
+				"user": process.env['CRONICLE_postgres_username'],
+				"password": process.env['CRONICLE_postgres_password'],
+				"database": process.env['CRONICLE_postgres_database']
+			}
+		}
+	}
+}
 
 // shift commands off beginning of arg array
 var argv = JSON.parse(JSON.stringify(process.argv.slice(2)));
