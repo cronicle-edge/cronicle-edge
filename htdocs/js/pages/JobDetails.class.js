@@ -899,7 +899,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 
 		var size = get_inner_window_size();
 		var iheight = size.height - 100;
-		html += '<div id="d_live_job_log" style="width:100%; height:' + iheight + '; overflow-y:scroll; position:relative;"></div>';
+		html += '<div id="d_live_job_log" style="width:100%; height:' + iheight + 'px; overflow-y:scroll; position:relative;"></div>';
 
 		this.div.html(html);
 
