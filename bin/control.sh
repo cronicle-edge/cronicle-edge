@@ -153,9 +153,8 @@ do
 		exit
 	;;
 	version)
-		# PACKAGE_VERSION=$(node -p -e "require('./package.json').version")
-		# echo "$PACKAGE_VERSION"
-		echo "$CURRENT_VERSION"
+		PACKAGE_VERSION=$(node -p -e "require('./package.json').version")
+		echo "$PACKAGE_VERSION"
 		exit
 	;;
     *)

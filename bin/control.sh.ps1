@@ -21,9 +21,10 @@ param(
 
 $ErrorActionPreference = "stop"
 
-$CURRENT_VERSION = "1.12.1"
-
-if($Version -OR $Command -eq "version") {  Write-Host $CURRENT_VERSION; exit 0 }
+if($Version -OR $Command -eq "version") {  
+    Write-Host $(node -p -e "require('./package.json').version")
+    exit 0 
+}
  
 # if this commanfd crashes - there shu;d be something wrong with config file
 $conf = Get-Content "$PSScriptRoot\..\conf\config.json" | ConvertFrom-Json -Depth 10 

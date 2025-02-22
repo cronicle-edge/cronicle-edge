@@ -75,6 +75,8 @@ if($Help) {
 
 $ErrorActionPreference = 'Stop'
 
+$CURR_VERSION = node -p -e "require('./package.json').version"
+
 function Write-Bold { param($Text, [switch]$U)
    $b = "[1m"; if($U) {$b = "[1;4m" }; Write-Output "$( [char]27 )$b$Text$( [char]27 )[0m" 
 }
@@ -421,6 +423,7 @@ if(!(Test-Path "package.json")) {
   npm pkg set name="croniclex"
   npm pkg set bin="bin/control.ps1"
   npm pkg set main="bin/cronicle.js"
+  npm pkg set version=$CURR_VERSION
   npm pkg set scripts.start="node bin/cronicle.js --foreground --echo --manager --color"
 }
 if($Lmdb) { npm i "lmdb@2.9.4" --loglevel silent}
