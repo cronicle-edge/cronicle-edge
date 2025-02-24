@@ -49,8 +49,8 @@ if /I "%1"=="--port" (
       echo Connection string is not specified
       exit
     )    
-    set CRONICLE_SQLSTRING=%~2
-    echo Using custom db as storage
+    set CRONICLE_sqlstring=%2
+    echo Using custom SQL db as storage    
     shift
     shift
 ) else if /I "%1"=="--cluster" (
@@ -73,6 +73,8 @@ if /I "%1"=="--port" (
     echo         [ --reset ]  # make current host the manager
     echo         [ --cluster "server1,server2"]  # add extra workers on setup
     echo         [ --debug ] # enable debug mode
+    echo         [ --sqlite C:/path/to/sqlite.db ] # use sqlite as engine
+    echo         [ --sqlstring 'driver://user:password@host:port/db' ] # use sql engine [pg/mysql2/mssql/oracledb]
     shift
     exit    
 ) else (exit)

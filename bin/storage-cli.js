@@ -46,12 +46,18 @@ if(process.env['CRONICLE_sqlite']) {
 	}
 }
 // overwrite storage if connection string option is specified
-else if(process.env['CRONICLE_SQLSTRING']) {
-	cs = new URL(process.env['CRONICLE_SQLSTRING'])
-	let map = {'pg:':'pg', 'pgsql:':'pg', 'mysql:':'mysql2', 'mysql2:':'mysql2','oracle:':'oracledb', 'mssql:':'mssql'}
+else if(process.env['CRONICLE_sqlstring']) {
+	let cs = new URL(process.env['CRONICLE_sqlstring'])
+	let map = {
+		  'pg:':'pg', 'postgres:':'pg', 'pgsql:':'pg'
+		, 'mysql:':'mysql2', 'mysql2:':'mysql2'
+		, 'oracle:':'oracledb', 'oracledb:':'oracledb'
+		, 'mssql:':'mssql'
+	}
 
 	// check if the protocol is one of those accepted
-	if(!map[cs['protocol']]) throw new Error(`Invalid Driver, use on of the following ${Object.keys(map).map(e=>e.slice(0,-1))}`)
+	let driver = map[cs['protocol']]
+	if(!driver) throw new Error(`Invalid Driver, use on of the following ${Object.keys(map).map(e=>e.slice(0,-1))}`)
 
 	config.Storage = {
 		"engine": "SQL",
@@ -65,7 +71,7 @@ else if(process.env['CRONICLE_SQLSTRING']) {
                 "host": cs['hostname'],
                 "port": parseInt(cs['port']),
 				"user": cs['username'],
-				"password": decodeURIComponent(cs['password']),
+				"password": process.env['CRONICLE_sqlpassword'] || decodeURIComponent(cs['password']),
 				"database": cs['pathname'].slice(1)
 			}
 		}

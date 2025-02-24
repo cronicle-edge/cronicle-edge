@@ -5,6 +5,8 @@ usage() {
   echo "USAGE: ./manager [ --port 3012 ] [ --storage /path/to/storage.json ] [ --key secreKey ] [ --color ] "
   echo "                 [ --reset ]  # set current host as manager"
   echo "                 [ --cluster "server1,server2" ]  # add extra workers on setup"
+  echo "                 [ --sqlite /path/to/sqlite.db ]  # use sqlite storage engine (need to bundle with --sqlite flag)"
+  echo "                 [ --sqlstring 'driver://user:password@host:port/db?table=cronicle' ]  # use one of the sql engines (pg/mysql2/mssql/oracledb)"
   echo "                 [ --debug ]  # enable debug mode"
   exit 1
 }
@@ -40,8 +42,8 @@ if [[ $sqlite ]]; then
 fi
 
 if [[ $sqlstring ]]; then
-  export CRONICLE_SQLSTRING="$($sqlstring)"
-  echo "Using custom db as storage"
+  export CRONICLE_sqlstring="$sqlstring"
+  echo "Using custom SQL db as storage"
 fi
 
 if [[ $storage ]]; then
