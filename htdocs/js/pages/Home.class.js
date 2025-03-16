@@ -596,29 +596,59 @@ Class.subclass( Page.Base, "Page.Home", {
 			// return (a.time_start > b.time_start) ? 1 : -1;
 		} );
 		
-		var cols = this.jobs.length > 0 ? ['Job ID', 'Event Name', 'Argument', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Performance', 'Memo', 'Actions'] : [];
+		let cols = this.jobs.length > 0 ? ['Job ID', 'Event Name', 'Argument', 'Category', 'Hostname', 'Elapsed', 'Progress', 'Remaining', 'Performance', 'Memo', 'Status', 'Actions'] : [];
 		
 		// render table
-		var self = this;
+		const self = this;
+
+		function getJobStateInfo(code) {
+			let color = 'green'
+			let stateInfo = 'Success'
+			let title = ''
+			if( parseInt(code) % 255) {
+				color = 'red'
+				stateInfo = `Error: ${code}`
+			}
+			else if (code == 255) {
+				color = 'yellow'
+				stateInfo = 'Warning'
+			}
+			
+			return `<span class="color_label ${color}">⬤ &nbsp;&nbsp;${stateInfo} &nbsp;&nbsp;</span>`
+		}
 
 		html += this.getBasicTable( this.jobs, cols, 'active job', function(job, idx) {
-			var actions = [
+			let actions = [
 				// '<span class="link" onMouseUp="$P().go_job_details('+idx+')"><b>Details</b></span>',
 				'<span class="link" onMouseUp="$P().abort_job('+idx+')"><b>Abort Job</b></span>'
 			];
 			
-			var cat = job.category ? find_object( app.categories || [], { id: job.category } ) : { title: 'n/a' };
+			let cat = job.category ? find_object( app.categories || [], { id: job.category } ) : { title: 'n/a' };
 			// var group = item.target ? find_object( app.server_groups || [], { id: item.target } ) : null;
-			var plugin = job.plugin ? find_object( app.plugins || [], { id: job.plugin } ) : { title: 'n/a' };
-			var tds = null;
+			let plugin = job.plugin ? find_object( app.plugins || [], { id: job.plugin } ) : { title: 'n/a' };
+			let tds = null;
 
 			let nice_event = self.getNiceEvent( job.event_title, col_width )
 			let nice_arg = self.getNiceArgument(job.arg, 30)
 
+			let niceJob = job.repeat ? `<div style="white-space:nowrap;"><i class="fa fa-play-circle">&nbsp;</i>${job.id}</div>` : self.getNiceJob(job.id)
+
 			if (job.pending && job.log_file) {
-				// job in retry delay
+				// job in retry delay or in repeat cycle
+
+				let perf = ''
+				let memo = ''
+				let remain = 'n/a'
+
+				if(job.cycles) {
+					// remain = getJobStateInfo(job.code)
+					// last 10 runs
+					memo = Array.isArray(job.trend) ? (job.trend.slice(-10).map(e=> e.code ? ( parseInt(e.code) === 255 ? '⚠' : '✖') : '✔').join('|')) : ''
+					perf =  `cycle: ${job.cycles} | ❤ ${job.health}%`
+				}
+
 				tds = [
-					'<div class="td_big"><span class="link" onMouseUp="$P().go_job_details('+idx+')">' + self.getNiceJob(job.id) + '</span></div>',
+					'<div class="td_big"><span class="link" onMouseUp="$P().go_job_details('+idx+')">' + niceJob + '</span></div>',
 					nice_event,
 					nice_arg,
 					self.getNiceCategory( cat, col_width ),
@@ -626,16 +656,17 @@ Class.subclass( Page.Base, "Page.Home", {
 					self.getNiceGroup( null, job.hostname, col_width ),
 					'<div id="d_home_jt_elapsed_'+job.id+'">' + self.getNiceJobElapsedTime(job) + '</div>',
 					'<div id="d_home_jt_progress_'+job.id+'">' + self.getNiceJobPendingText(job) + '</div>',
-					'n/a',
-					'', // perf
-					'', //memo
+					'n/a', // remain,
+					perf,
+					memo,
+					job.cycles ? getJobStateInfo(job.code) : '',
 					actions.join(' | ')
 				];
 			}
 			else if (job.pending) {
 				// multiplex stagger delay
 				tds = [
-					'<div class="td_big">' + self.getNiceJob(job.id ) + '</div>',
+					'<div class="td_big">' + niceJob + '</div>',
 					nice_event,
 					nice_arg,
 					self.getNiceCategory( cat, col_width ),
@@ -643,16 +674,17 @@ Class.subclass( Page.Base, "Page.Home", {
 					self.getNiceGroup( null, job.hostname, col_width ),
 					'n/a',
 					'<div id="d_home_jt_progress_'+job.id+'">' + self.getNiceJobPendingText(job) + '</div>',
-					'n/a',
+					'n/a', //remain
 					'', // perf
 					'', // memo
+					'', // state
 					actions.join(' | ')
 				];
 			} // pending job
 			else {
 				// active job
 				tds = [
-					'<div class="td_big"><span class="link" onMouseUp="$P().go_job_details('+idx+')">' + self.getNiceJob(job.id) + '</span></div>',
+					'<div class="td_big"><span class="link" onMouseUp="$P().go_job_details('+idx+')">' + niceJob + '</span></div>',
 					nice_event,
 					nice_arg,
 					self.getNiceCategory( cat, col_width ),
@@ -663,6 +695,7 @@ Class.subclass( Page.Base, "Page.Home", {
 					'<div id="d_home_jt_remaining_'+job.id+'">' + self.getNiceJobRemainingTime(job) + '</div>',
 					`<div style="width:180px;max-width:180px;" id="d_home_jt_perf_${job.id}"> ${job.cpu ? short_float(job.cpu.current) + '% | ' + get_text_from_bytes(job.mem.current) + ' | ' + get_text_from_bytes(job.log_file_size) : ''} </div>`,
 					'<div style="width:180px;max-width:180px;" id="d_home_jt_memo_'+job.id+'">' + '</div>',
+					job.cycles ? getJobStateInfo(job.last_exit_code) : '',
 					actions.join(' | ')
 				];
 			} // active job

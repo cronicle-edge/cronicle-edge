@@ -28,6 +28,7 @@
 		"@iarna/toml": "^2.2.5",
 		"@kubernetes/client-node": "^1.0.0",
 		"@mdi/font": "2.1.99",
+		"@xterm/xterm": "^5.5.0",
 		"ansi_up": "^5.1.0",
 		"async": "2.6.4",
 		"bcrypt-node": "0.1.0",

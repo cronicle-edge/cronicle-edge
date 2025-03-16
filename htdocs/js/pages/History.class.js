@@ -128,7 +128,7 @@ Class.subclass( Page.Base, "Page.History", {
 			var job_link = '<div class="td_big">--</div>';
 			if (job.id) job_link = `<div class="td_big">${href}` + self.getNiceJob('<b>' + job.id + '</b>') + '</a></div>';
 			
-			var errorTitle = job.description ? job.description.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "") : " " 
+			var errorTitle = typeof job.description === 'string' ? job.description.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "").replace(/"/g, "&quot;") : " " 
 			var jobStatus = (job.code == 0) ? '<span class="color_label green"><i class="fa fa-check">&nbsp;</i>Success</span>' : `<span class="color_label red" title="${errorTitle}"><i class="fa fa-warning">&nbsp;</i>Error</span>`
 			if(job.code == 255) {jobStatus = `<span class="color_label yellow" title="${errorTitle}"><i class="fa fa-warning">&nbsp;</i>Warning</span>`}
 			

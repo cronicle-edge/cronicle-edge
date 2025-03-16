@@ -181,6 +181,7 @@ Copy-Item -Force  `
   , node_modules/xss/dist/xss.min.js `
   , node_modules/jquery-datetimepicker/build/jquery.datetimepicker.full.min.js `
   , node_modules/diff/dist/diff.min.js `
+  , node_modules/@xterm/xterm/lib/xterm.js `
   $Path/htdocs/js/external/
 
 # CSS
@@ -191,6 +192,7 @@ Copy-Item -Force htdocs/css/style.css `
   , node_modules/jquery-datetimepicker/build/jquery.datetimepicker.min.css `
   , node_modules/pixl-webapp/css/base.css `
   , node_modules/chart.js/dist/Chart.min.css `
+  , node_modules/@xterm/xterm/css/xterm.css `
   $Path/htdocs/css/
 
 # FONTS
