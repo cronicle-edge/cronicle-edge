@@ -919,8 +919,18 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			// check if event is has limited time range
 			let inactiveTitle
-			if (item.start_time && Number(item.start_time) > new Date().valueOf() + 60000) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
-			if (item.end_time && Number(item.end_time) < new Date().valueOf()) inactiveTitle = 'Schedule expired on ' + new Date(item.end_time).toLocaleString()
+			let item_start = parseInt(item.start_time) || 0
+			let item_end = parseInt(item.end_time) || Infinity
+			let next = new Date().valueOf()
+
+			if(item_end < item_start) { // reverse mode: suspend job betwen end and start times
+				if( next > item_end && next < item_start ) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
+			}
+			else {  // normal mode: run job between start and end
+				if (item_start > next + 60000 ) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
+				if (item_end < next) inactiveTitle = 'Schedule expired on ' + new Date(item.end_time).toLocaleString()
+			}
+
 			// for timing     
 			let niceTiming = summarize_event_timing(item.timing, item.timezone, (inactiveTitle || isGrid) ? null : item.ticks)
 			let gridTiming = niceTiming.length > 20 ? summarize_event_timing_short(item.timing) : niceTiming

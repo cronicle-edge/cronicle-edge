@@ -49,6 +49,25 @@ function normalize_tick(ts, tz) {
 	return (te.valueOf() - offset) / 1000
 }
 
+/**
+ * 
+ * @param {*} item 
+ * @param {Number} cursor 
+ * @returns {Boolean}
+ */
+function isActive(item, cursor) {
+	if(!item) return false
+	let sStart = Math.round(Number(item.start_time)/1000) || 0
+	let sEnd = Math.round(Number(item.end_time)/1000) || Infinity
+	let isActive = cursor >= sStart && cursor <= sEnd
+
+	if(sEnd < sStart) { // let user to suspend job for the interval by flipping to/from.
+		isActive = cursor <= sEnd || cursor >= sStart
+	}
+	return isActive	
+}
+
+
 onmessage = function (e) {
 	// process schedule and cursors, find out which events run in the next 24 hours
 	var data = e.data;
@@ -74,7 +93,10 @@ onmessage = function (e) {
 		if (!item.enabled) continue;
 
 		// check if item is past due
-		if (item.end_time && Number(item.end_time) < new Date().valueOf()) continue
+		// if (item.end_time && Number(item.end_time) < new Date().valueOf()) continue
+		let item_start = Math.round(Number(item.start_time)/1000) || 0
+		let item_end = Math.round(Number(item.end_time)/1000) || Infinity
+		if(item_end > item_start && item_end < time_start) continue
 
 		// check category for disabled flag as well
 		let cat = categories.find(e => e.id === item.category)
@@ -127,12 +149,14 @@ onmessage = function (e) {
 			let nextRun = interval_start + intervalsPassed*interval
 
 			for(let cur = nextRun; cur <= now + 60*60*24; cur += interval) {
-				if (item.start_time && parseInt(item.start_time) > cur*1000) {
-					continue
-				} 
-				if (item.end_time && parseInt(item.end_time) < cur*1000 ) {
-					continue
-				} 
+				if(!isActive(item, cur)) continue  // validate start/end time
+				// if( (item_end > item_start) !== (item_start >= cur && item_end <= cur)) continue
+				// if (item.start_time && parseInt(item.start_time) > cur*1000) {
+				// 	continue
+				// } 
+				// if (item.end_time && parseInt(item.end_time) < cur*1000 ) {
+				// 	continue
+				// } 
 				if(cur > now) {
 					events.push({ epoch: cur, id: item.id });
 				} 
@@ -157,8 +181,10 @@ onmessage = function (e) {
 						var actual = hour_start + (min * 60);
 
 						//  check if actual is within start/end
-						if (item.start_time && Number(item.start_time) > actual * 1000) continue
-						if (item.end_time && Number(item.end_time) < actual * 1000) continue
+						if(!isActive(item, actual)) continue
+						// if( (item_end > item_start) !== (item_start >= actual && item_end <= actual)) continue
+						// if (item.start_time && Number(item.start_time) > actual * 1000) continue
+						// if (item.end_time && Number(item.end_time) < actual * 1000) continue
 
 						if ((actual >= min_epoch) && (actual < max_epoch)) {
 
@@ -174,8 +200,10 @@ onmessage = function (e) {
 						var actual = hour_start + (idy * 60);
 
 						//  check if actual is within start/end
-						if (item.start_time && Number(item.start_time) > actual * 1000) continue
-						if (item.end_time && Number(item.end_time) < actual * 1000) continue
+						if(!isActive(item, actual)) continue
+						// if( (item_end > item_start) !== (item_start >= actual && item_end <= actual)) continue
+						// if (item.start_time && Number(item.start_time) > actual * 1000) continue
+						// if (item.end_time && Number(item.end_time) < actual * 1000) continue
 
 						if ((actual >= min_epoch) && (actual < max_epoch)) {
 							events.push({ epoch: actual, id: item.id });
