@@ -65,7 +65,7 @@
 		"pixl-server-api": "^1.0.2",
 		"pixl-server-storage": "^3.2.2",
 		"pixl-server-web": "^2.0.7",
-		"pixl-tools": "^1.1.5",
+		"pixl-tools": "^1.1.7",
 		"pixl-webapp": "^2.0.2",
 		"read-last-lines": "^1.8.0",
 		"shell-quote": "1.7.3",
