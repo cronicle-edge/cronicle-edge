@@ -952,9 +952,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			if(parseInt(item.repeat) > 0) {
 				niceTiming = gridTiming = summarize_repeat_interval(parseInt(item.repeat), isGrid)
+				gridTimingTitle = summarize_repeat_interval(parseInt(item.repeat))
 			}
-			/// zzzzz
-
 
 			if (inactiveTitle) {
 				gridTiming = `<s>${gridTiming}</s>`
@@ -1955,13 +1954,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		      <div class="caption" style="margin-top:6px;">Optional extra minute ticks (extends regular schedule). Separate by comma or pipe.<br> Use HH:mm fromat for daily recurring or YYYY-MM-DD HH:mm for onetime ticks</div>
 		     <div style="padding: 5px 0px 0px 5px;"><span style="color: green" id="fe_ee_parsed_ticks"/></div>
 		    </div>			
-			<div class="plugin_params_label">Only Run From</div>
+			<div class="plugin_params_label">Start/Resume at</div>
 			<div class="plugin_params_content">
 			  <input id="event_starttime" type="text" autocomplete="one-time-code" placeholder="(now)" >
 			</div>
 			
-			<div class="plugin_params_label">And Until</div>
-			<div class="plugin_params_content"><input autocomplete="one-time-code" placeholder="(forever)" id="event_endtime" type="text"></div>
+			<div class="plugin_params_label">Stop/Suspend at</div>
+			<div class="plugin_params_content"><input autocomplete="one-time-code" placeholder="(never)" id="event_endtime" type="text"></div>
 			</fieldset>
 			<script>$P().render_time_options()</script>
 		`

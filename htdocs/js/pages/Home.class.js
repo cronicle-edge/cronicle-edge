@@ -590,7 +590,9 @@ Class.subclass( Page.Base, "Page.Home", {
 		
 		// sort events by time_start descending
 		this.jobs = jobs.sort( function(a, b) {
+			if(parseInt(a.repeat)) return -1
 			if(a.plugin === 'workflow') return  -1
+			if(parseInt(b.repeat)) return 1
 			if(b.plugin === 'workflow') return 1
 			return (a.time_start - b.time_start)
 			// return (a.time_start > b.time_start) ? 1 : -1;
@@ -620,8 +622,10 @@ Class.subclass( Page.Base, "Page.Home", {
 		html += this.getBasicTable( this.jobs, cols, 'active job', function(job, idx) {
 			let actions = [
 				// '<span class="link" onMouseUp="$P().go_job_details('+idx+')"><b>Details</b></span>',
-				'<span class="link" onMouseUp="$P().abort_job('+idx+')"><b>Abort Job</b></span>'
+				'<span class="link" onMouseUp="$P().abort_job('+idx+')"><b>Abort Job</b></span>', 				
 			];
+
+			if(parseInt(job.repeat)) actions.push('<span class="link" onMouseUp="$P().suspend_job('+idx+')"><b>Stop Job</b></span>')
 			
 			let cat = job.category ? find_object( app.categories || [], { id: job.category } ) : { title: 'n/a' };
 			// var group = item.target ? find_object( app.server_groups || [], { id: item.target } ) : null;
@@ -794,6 +798,22 @@ Class.subclass( Page.Base, "Page.Home", {
 				app.api.post( 'app/abort_job', job, function(resp) {
 					app.hideProgress();
 					app.showMessage('success', "Job '"+job.event_title+"' was aborted successfully.");
+				} );
+			}
+		} );
+	},
+
+	suspend_job: function(idx) {
+		// add "suspended" property to runnig repeat job, so it will exit upon current cycle completion
+		let job = this.jobs[idx];
+		if(!job.repeat) return app.showMessage('error', "Only repeat job can be suspended");
+		if(job.suspended) return app.showMessage('error', "Job is already suspended");
+		app.confirm( '<span style="color:red">Abort Job</span>', `This will prevent job &ldquo;<b> ${job.id}</b>&rdquo; (${job.event_title}) to get into the next cycle. Do you want to continue?</br>`, "Suspend", function(result) {
+			if (result) {
+				app.showProgress( 1.0, "Suspending job..." );
+				app.api.post( 'app/update_job', { suspended: true, id: job.id, hostname: job.hostname }, function(resp) {
+					app.hideProgress();
+					app.showMessage('success', "Job suspended successfully.");
 				} );
 			}
 		} );

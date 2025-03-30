@@ -1061,7 +1061,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 
 	start_live_log_watcher: function(job) {
 
-		if(app.config.ui.live_log_ws) { 
+		if(config.ui.live_log_ws) { 
 			this.start_live_log_watcher_ws(job) // use classic websocket live log
 		}
 		else {
@@ -1075,7 +1075,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		self.curr_live_log_job = job.id;
 
 		let offset = 0
-		let maxBytes = 4096*2
+		let maxBytes = config.live_log_page_size || 8192
 
 		let lag = 800
 		const minLag = 800
