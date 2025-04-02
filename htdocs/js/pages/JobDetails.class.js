@@ -1,7 +1,6 @@
 // Cronicle JobDetails Page
 
 
-
 Class.subclass(Page.Base, "Page.JobDetails", {
 
 	pie_colors: {
@@ -18,6 +17,8 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		// this.div.html( html );
 		this.charts = {};
 	},
+
+	live_log_is_up: false,
 
 	onActivate: function (args) {
 		// page activation
@@ -1098,8 +1099,11 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 
 		liveLogDiv.scrollIntoView();
 
+		self.live_log_is_up = true
+
 		function refresh() {
 			if(self.curr_live_log_job != job.id) return; // prevent double logging
+			if(!self.live_log_is_up) return // stop polling when tab is deactivated
 
 			app.api.post('app/get_live_console', { id: job.id, offset: offset, max_bytes: maxBytes }
 				, (data) => {  // success callback                  
@@ -1107,7 +1111,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 					if(data.error) {						
 						console.error('Live log poll error: ', data.error)
 						return
-					}
+					}					 
 
 					// update offset. Log file might be truncated for repeat jobs, in this case reduce offset to new file size
 					if(data.fileSize < data.next) { 
@@ -1472,6 +1476,8 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 			if(this.term.dispose) this.term.dispose()
 			delete this.term
 		}
+
+		this.live_log_is_up = false
 
 		this.charts = {};
 		this.div.html('');
