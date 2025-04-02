@@ -919,8 +919,18 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			// check if event is has limited time range
 			let inactiveTitle
-			if (item.start_time && Number(item.start_time) > new Date().valueOf() + 60000) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
-			if (item.end_time && Number(item.end_time) < new Date().valueOf()) inactiveTitle = 'Schedule expired on ' + new Date(item.end_time).toLocaleString()
+			let item_start = parseInt(item.start_time) || 0
+			let item_end = parseInt(item.end_time) || Infinity
+			let next = new Date().valueOf()
+
+			if(item_end < item_start) { // reverse mode: suspend job betwen end and start times
+				if( next > item_end && next < item_start ) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
+			}
+			else {  // normal mode: run job between start and end
+				if (item_start > next + 60000 ) inactiveTitle = 'Schedule will resume at ' + new Date(item.start_time).toLocaleString()
+				if (item_end < next) inactiveTitle = 'Schedule expired on ' + new Date(item.end_time).toLocaleString()
+			}
+
 			// for timing     
 			let niceTiming = summarize_event_timing(item.timing, item.timezone, (inactiveTitle || isGrid) ? null : item.ticks)
 			let gridTiming = niceTiming.length > 20 ? summarize_event_timing_short(item.timing) : niceTiming
@@ -940,6 +950,10 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				gridTimingTitle = niceTiming + `<br>Starting from ${interval_start}`
 			}
 
+			if(parseInt(item.repeat) > 0) {
+				niceTiming = gridTiming = summarize_repeat_interval(parseInt(item.repeat), isGrid)
+				gridTimingTitle = summarize_repeat_interval(parseInt(item.repeat))
+			}
 
 			if (inactiveTitle) {
 				gridTiming = `<s>${gridTiming}</s>`
@@ -1694,7 +1708,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 
 		// if the event was disabled and there are running jobs, ask user to abort them
-		if (this.old_event.enabled && !event.enabled && jobs.length) {
+		if (this.old_event.enabled && !event.enabled && jobs.length && !parseInt(event.repeat)) {
 			app.confirm('<span style="color:red">Abort Jobs</span>', "There " + ((jobs.length != 1) ? 'are' : 'is') + " currently still " + jobs.length + " active " + pluralize('job', jobs.length) + " using the disabled event <b>" + event.title + "</b>.  Do you want to abort " + ((jobs.length != 1) ? 'these' : 'it') + " now?", "Abort", function (result) {
 				if (result) {
 					app.showProgress(1.0, "Aborting " + pluralize('Job', jobs.length) + "...");
@@ -1714,7 +1728,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			// if certain key properties were changed and event has active jobs, ask user to update them
 			var need_update = false;
 			var updates = {};
-			var keys = ['title', 'timeout', 'retries', 'retry_delay', 'chain', 'chain_error', 'notify_success', 'notify_fail', 'web_hook', 'cpu_limit', 'cpu_sustain', 'memory_limit', 'memory_sustain', 'log_max_size'];
+			var keys = ['title', 'timeout', 'repeat', 'interval', 'enabled', 'retries', 'retry_delay', 'chain', 'chain_error', 'notify_success', 'notify_fail', 'web_hook', 'cpu_limit', 'cpu_sustain', 'memory_limit', 'memory_sustain', 'log_max_size'];
 
 			for (var idx = 0, len = keys.length; idx < len; idx++) {
 				var key = keys[idx];
@@ -1880,8 +1894,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// timing
 		var timing = event.timing;
 		var tmode = '';
-
-		if (parseInt(event.interval) > 0) tmode = 'interval'
+        
+		if(parseInt(event.repeat)) tmode = 'repeat'
+		else if (parseInt(event.interval) > 0) tmode = 'interval'
 		else if (!timing) tmode = 'demand';
 		else if (timing.years && timing.years.length) tmode = 'custom';
 		else if (timing.months && timing.months.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
@@ -1901,7 +1916,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			['weekly', 'Weekly'],
 			['daily', 'Daily'],
 			['hourly', 'Hourly'],
-			['interval', 'Interval']
+			['interval', 'Interval'],
+			['repeat', 'Repeat']
 		];
 
 		html += get_form_table_row('Timing',
@@ -1938,13 +1954,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		      <div class="caption" style="margin-top:6px;">Optional extra minute ticks (extends regular schedule). Separate by comma or pipe.<br> Use HH:mm fromat for daily recurring or YYYY-MM-DD HH:mm for onetime ticks</div>
 		     <div style="padding: 5px 0px 0px 5px;"><span style="color: green" id="fe_ee_parsed_ticks"/></div>
 		    </div>			
-			<div class="plugin_params_label">Only Run From</div>
+			<div class="plugin_params_label">Start/Resume at</div>
 			<div class="plugin_params_content">
 			  <input id="event_starttime" type="text" autocomplete="one-time-code" placeholder="(now)" >
 			</div>
 			
-			<div class="plugin_params_label">And Until</div>
-			<div class="plugin_params_content"><input autocomplete="one-time-code" placeholder="(forever)" id="event_endtime" type="text"></div>
+			<div class="plugin_params_label">Stop/Suspend at</div>
+			<div class="plugin_params_content"><input autocomplete="one-time-code" placeholder="(never)" id="event_endtime" type="text"></div>
 			</fieldset>
 			<script>$P().render_time_options()</script>
 		`
@@ -2239,7 +2255,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 				// redraw display
 				var tmode = '';
-				if (parseInt(self.event.interval) > 0) tmode = 'interval';
+				if(parseInt(self.event.repeat) > 0) tmode = 'repeat'
+				else if (parseInt(self.event.interval) > 0) tmode = 'interval';
 				else if (timing.years && timing.years.length) tmode = 'custom';
 				else if (timing.months && timing.months.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
 				else if (timing.days && timing.days.length && timing.weekdays && timing.weekdays.length) tmode = 'custom';
@@ -2479,18 +2496,28 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			case 'interval':
 				timing = false;
 				event.timing = false;
+				event.repeat = false;
+				break;
+
+			case 'repeat':
+				timing = false;
+				event.timing = false;
+				event.interval = false;
+				event.interval_start = false;
 				break;
 
 			case 'custom':
 				if (!timing) timing = event.timing = {};
 				event.interval = false;
 				event.interval_start = false;
+				event.repeat = false;
 				break;
 
 			case 'yearly':
 				if (!timing) timing = event.timing = {};
 				event.interval = false;
 				event.interval_start = false;
+				event.repeat = false;
 				delete timing.years;
 				if (!timing.months) timing.months = [];
 				if (!timing.months.length) timing.months.push(dargs.mon);
@@ -2506,6 +2533,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				if (!timing) timing = event.timing = {};
 				event.interval = false;
 				event.interval_start = false;
+				event.repeat = false;
 				delete timing.years;
 				delete timing.months;
 				delete timing.days;
@@ -2520,6 +2548,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				if (!timing) timing = event.timing = {};
 				event.interval = false;
 				event.interval_start = false;
+				event.repeat = false;
 				delete timing.years;
 				delete timing.months;
 				delete timing.weekdays;
@@ -2534,6 +2563,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				if (!timing) timing = event.timing = {};
 				event.interval = false;
 				event.interval_start = false;
+				event.repeat = false;
 				delete timing.years;
 				delete timing.months;
 				delete timing.weekdays;
@@ -2546,6 +2576,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				if (!timing) timing = event.timing = {};
 				event.interval = false;
 				event.interval_start = false;
+				event.repeat = false;
 				delete timing.years;
 				delete timing.months;
 				delete timing.weekdays;
@@ -2559,6 +2590,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			if (!timing.minutes.length) timing.minutes.push(0);
 			event.interval = false;
 			event.interval_start = false;
+			event.repeat = false;
 		}
 
 		$('#d_ee_timing_params').html(this.get_timing_params_html(tmode));
@@ -2590,6 +2622,17 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			html += `<table cellspacing="0" cellpadding="0"><tr>
 			<td><label>Every: </label><td style="padding:12px"> ${intSelect} </td></td><td style="padding:12px"><label> Starting From: </label>&nbsp;</td>
 			<td><input type="text" id="fe_ee_interval_start" style="font-size:13px; width:200px;" value="${intStart}" onclick="$P().set_interval_start()"/></td>
+			<td></td>
+			</tr></table>
+			</div>`
+		} // interval
+
+		if (tmode == 'repeat') {
+			// html += '<div class="timing_details_label">Interval</div>';
+			html += '<div class="timing_details_content">'
+			let repeatSelect = this.get_relative_time_combo_box('fe_ee_repeat', (parseInt(event.repeat) || 30), null, true);
+			html += `<table cellspacing="0" cellpadding="0"><tr>
+			<td><label>Repeat event every: </label><td style="padding:12px"> ${repeatSelect} </td></td>
 			<td></td>
 			</tr></table>
 			</div>`
@@ -2655,7 +2698,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 
 		// summary (for non-interval)
-		if (tmode !== 'interval') {
+		if (tmode !== 'interval' && tmode !== 'repeat') {
 			html += '<div class="info_label">The event will run:</div>';
 			html += '<div class="info_value" id="d_ee_timing_summary">' + summarize_event_timing(timing, event.timezone).replace(/(every\s+minute)/i, '<span style="color:red">$1</span>');
 			// add event webhook info if "On demand" is selected
@@ -3155,16 +3198,26 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		event.end_time = new Date($('#event_endtime').val()).valueOf()
 
 		let eventInterval = $('#fe_ee_interval').val()
-
-		if (eventInterval) {
+		let repeatInterval = $('#fe_ee_repeat').val()
+         
+		if(repeatInterval) {
+			if ((parseInt(repeatInterval) || 0) < 1) return app.badField('fe_ee_repeat', "Invalid repeat value (must be positive integer)");
+			event.repeat = (parseInt($('#fe_ee_repeat').val()) * parseInt($('#fe_ee_repeat_units').val()));
+			event.timing = false
+			event.interval = false
+			event.interval_start = false 
+		}
+		else if (eventInterval) {
 			if ((parseInt(eventInterval) || 0) < 1) return app.badField('fe_ee_interval', "Invalid interval value (must be positive integer)");
 			event.interval = (parseInt($('#fe_ee_interval').val()) * parseInt($('#fe_ee_interval_units').val()));
 			event.interval_start = parseInt(event.interval_start) || 0
 			event.timing = false
+			event.repeat = false
 		}
 		else {
 			event.interval = false
 			event.interval_start = false
+			event.repeat = false
 		}
 
 

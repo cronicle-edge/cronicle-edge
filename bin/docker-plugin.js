@@ -234,25 +234,23 @@ async function main(image, onFinish) {
         if (String(evt.status).includes('Status')) printInfo(evt.status) // print final notes
     }
 
-    try {
-        await imageInfo.inspect();
-        onFinish() // if image exists just run container
-    }
-    catch (e) {
 
-        if (autoPull) { //
-            printWarning(`Image not found, pulling from registry`)
-            try {
-                let pullStream = await docker.pull(image, {'authconfig': registryAuth})
-                docker.modem.followProgress(pullStream, onFinish, onProgress)
-            }
-            catch (e) { exit(e.message) }
-        }
-        else {
-            printError(`No such image [${image}], pull it manually or check "Pull Image" option`)
-            exit(`No such image [${image}]`)
-        }
+    if(!autoPull) {
+        onFinish()
     }
+    else {
+        // pull image
+        printWarning(`Pulling image...`)
+        try {
+            let pullStream = await docker.pull(image, {'authconfig': registryAuth})
+            docker.modem.followProgress(pullStream, onFinish, onProgress)
+        }
+        catch (e) { 
+            exit(e.message)
+        }
+
+    }
+
 }
 
 // ------ MAIN -----

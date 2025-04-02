@@ -878,6 +878,21 @@ function summarize_event_interval(interval, short) {
 
 }
 
+function summarize_repeat_interval(interval, short) {	
+	if(!parseInt(interval)) return 'Inactive' // sanity, should check before passing this arg
+	if(interval % (3600*24) === 0) {
+		return (short ? `⟳ ${interval/(3600*24)} day` : `Repeat after: ${interval/(3600*24)} day/s`)
+	}
+	if(interval % 3600 === 0) {
+		return (short ? `⟳ ${interval/3600} h` : `Repeat after: ${interval/3600} hour/s`)
+	}
+	if(interval % 60 === 0) {
+		return (short ? `⟳ ${interval/60} min` : `Repeat after: ${interval/60} minute/s`)
+	}
+	return  (short ? `⟳ ${interval} s` : `Repeat after: ${interval} second/s` )
+
+}
+
 // override get_nice_time from base class
 function get_nice_time(epoch, secs) {
 	let dargs = get_date_args(epoch);

@@ -1,7 +1,6 @@
 // Cronicle JobDetails Page
 
 
-
 Class.subclass(Page.Base, "Page.JobDetails", {
 
 	pie_colors: {
@@ -18,6 +17,8 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		// this.div.html( html );
 		this.charts = {};
 	},
+
+	live_log_is_up: false,
 
 	onActivate: function (args) {
 		// page activation
@@ -768,19 +769,19 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		});
 	},
 
-	toggle_autoscroll: function (element) {
+	// toggle_autoscroll: function (element) {
 
-		if(app.getPref('autoscroll') === 'N') {
-			app.setPref('autoscroll', 'Y')
-			element.innerHTML = '<b>autoscroll: on</b>'
-		}
-		else {
-			app.setPref('autoscroll', 'N')
-			element.innerHTML = '<b>autoscroll: off</b>'
-		}
+	// 	if(app.getPref('autoscroll') === 'N') {
+	// 		app.setPref('autoscroll', 'Y')
+	// 		element.innerHTML = '<b>autoscroll: on</b>'
+	// 	}
+	// 	else {
+	// 		app.setPref('autoscroll', 'N')
+	// 		element.innerHTML = '<b>autoscroll: off</b>'
+	// 	}
 
-     	console.log('autoscropp is set to', app.getPref('autoscroll'))
-	},
+    //  	console.log('autoscropp is set to', app.getPref('autoscroll'))
+	// },
 
 	gosub_live: function (args) {
 		// show live job status
@@ -892,14 +893,15 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		html += `Live Job Event Log `;
 		//html += '<div class="subtitle_widget" style="margin-left:2px;"><a href="' + remote_api_url + '/app/get_live_job_log?id=' + job.id + '" target="_blank"><i class="fa fa-external-link">&nbsp;</i><b>View Full Log</b></a></div>';
 		html += `<div class="subtitle_widget"><a target="_blank" href="./console?id=${job.id}&download=1"><i class="fa fa-download">&nbsp;</i><b>View Full Log</b></a></div>`;
-		let autoScroll = app.getPref('autoscroll') === 'N' ? 'autoscroll: off' :  'autoscroll: on'
-		html += `<div class="subtitle_widget"><a id="autoscroll_url" style="cursor:pointer" onMouseUp="$P().toggle_autoscroll(this)"><b>${autoScroll}</b></a></div>`;
+		// let autoScroll = app.getPref('autoscroll') === 'N' ? 'autoscroll: off' :  'autoscroll: on'
+		// html += `<div class="subtitle_widget"><a id="autoscroll_url" style="cursor:pointer" onMouseUp="$P().toggle_autoscroll(this)"><b>${autoScroll}</b></a></div>`;
 		html += '<div class="clear"></div>';
 		html += '</div>';
 
 		var size = get_inner_window_size();
-		var iheight = size.height - 100;
-		html += '<div id="d_live_job_log" style="width:100%; height:' + iheight + 'px; overflow-y:scroll; position:relative;"></div>';
+		// var iheight = size.height - 10;
+		// html += '<div id="d_live_job_log" style="width:100%; height:' + iheight + 'px; overflow-y:scroll; position:relative;"></div>';
+		html += `<div id="d_live_job_log" style="width:100%; height:100%; position:relative;"></div>`;
 
 		this.div.html(html);
 
@@ -1052,100 +1054,87 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		this.update_live_progress(job);
 	},
 
-	scrollToBottom: function() {
-	if(app.getPref('autoscroll') === 'N') return
-	var container = document.getElementById('d_live_job_log');
-	container.scrollTop = container.scrollHeight;
-    },
+	// scrollToBottom: function () {
+	// 	if (app.getPref('autoscroll') === 'N') return
+	// 	let container = document.getElementById('d_live_job_log');
+	// 	if (container) container.scrollTop = container.scrollHeight;
+	// },
 
 	start_live_log_watcher: function(job) {
 
-		if(app.config.ui.live_log_ws) { 
+		if(config.ui.live_log_ws) { 
 			this.start_live_log_watcher_ws(job) // use classic websocket live log
 		}
-		else if (app.config.ui.live_log_poll) {
-			this.start_live_log_watcher_poll(job)
-		}
 		else {
-			this.start_live_log_watcher_diff(job)
+			this.start_live_log_watcher_chunk(job)
 		}
 
 	},
 
-	start_live_log_watcher_poll: function (job) {
+	start_live_log_watcher_chunk: function (job) { // better version of start_live_log_watcher_poll
 		let self = this;
 		self.curr_live_log_job = job.id;
 
-		let ansi_up = new AnsiUp;
-		webConsole = document.getElementById('d_live_job_log');
-		// poll live_console api until job is running or some error occur
-		function refresh() {
-			if(self.curr_live_log_job != job.id) return; // prevent double logging
-			app.api.post('app/get_live_console', { id: job.id, tail: parseInt(app.config.ui.live_log_tail_size) || 80 }
-				, (data) => {  // success callback
-					if (!data.data) return; // stop polling if no data
-					webConsole.innerHTML = `<pre>${ansi_up.ansi_to_html(data.data.replace(/\u001B=/g, ''))} </pre>`;
-					pollInterval = parseInt(app.config.ui.live_log)
-					if(!pollInterval || pollInterval < 1000) pollInterval = 1000;
-					self.scrollToBottom()
-					setTimeout(refresh,  1000);
-				}
-				// stop polling on error, report unexpected errors
-				, (e) => {			
-					if(e.code != 'job') console.error('Live log poll error: ', e)
-					return
-				}
-			)
-		}
+		let offset = 0
+		let maxBytes = config.live_log_page_size || 8192
 
-		refresh();
-
-	},
-
-	start_live_log_watcher_diff: function (job) { // better version of start_live_log_watcher_poll
-		let self = this;
-		self.curr_live_log_job = job.id;
-
-		let ansi_up = new AnsiUp;
-
-		let oldChunk = ''
 		let lag = 800
 		const minLag = 800
 		const maxLag = 2000
-		const maxLogSize = 30000
+
+		let liveLogDiv = document.getElementById('d_live_job_log')
+
+		const term = new Terminal({
+            disableStdin: true, // Disable user input
+            cursorStyle: false,
+            cursorBlink: false,
+			cols: Math.round(liveLogDiv.clientWidth / 10),
+			rows: 40, 
+			convertEol: true
+        });
+
+		self.term = term;
+
+		term.open(liveLogDiv);
+
+		liveLogDiv.scrollIntoView();
+
+		self.live_log_is_up = true
 
 		function refresh() {
 			if(self.curr_live_log_job != job.id) return; // prevent double logging
-			app.api.post('app/get_live_console', { id: job.id, tail: parseInt(app.config.ui.live_log_tail_size) || 80 }
-				, (data) => {  // success callback
-					if (!data.data) return; // stop polling if no data
-					
-					let newChunk = (Diff.diffTrimmedLines(oldChunk, data.data).filter(e=>e.added)[0] || {}).value
+			if(!self.live_log_is_up) return // stop polling when tab is deactivated
 
-					if(newChunk) {
+			app.api.post('app/get_live_console', { id: job.id, offset: offset, max_bytes: maxBytes }
+				, (data) => {  // success callback                  
 
- 				      oldChunk += newChunk 
-					  $('#d_live_job_log').append(
-					  	`<pre class="log_chunk" style="color:#888">${ansi_up.ansi_to_html(newChunk.replace(/\u001B=/g, ''))}</pre>`
-					  );
-
-					  self.scrollToBottom()
-
-					  if(oldChunk.length > maxLogSize) {
-						$('#d_live_job_log').append(
-							'<pre class="log_chunk" style="color:red">Log size reached max size. Refresh page to continue...</pre>'
-						)
-						
+					if(data.error) {						
+						console.error('Live log poll error: ', data.error)
 						return
-					  }
-					  
-					  lag = minLag
-					  
+					}					 
+
+					// update offset. Log file might be truncated for repeat jobs, in this case reduce offset to new file size
+					if(data.fileSize < data.next) { 
+						term.clear()
+						term.writeln('# log file got truncated, reloading ...')
+						offset = 0
 					}
 					else {
+						offset = data.next || offset 
+					}
+					
+					// write new data chunk into terminal, if no new data then increase lag
+					if(data.data) {
+						term.write(data.data)						
+					}
+					else { 
 						if(lag > maxLag) lag = minLag
 						lag = lag*1.2
 					}
+
+					// Debug.trace
+					// console.log(`live log = next: ${data.next} | offset: ${offset} | lag: ${lag} | size: ${data.fileSize} `)
+
 					setTimeout(refresh,  lag);
 				}
 				// stop polling on error, report unexpected errors
@@ -1456,6 +1445,12 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		else {
 			$('#i_arch_job_log').css('height', '' + iheight + 'px');
 		}
+		if(this.term) {
+			// let liveLogDiv = document.getElementById('d_live_job_log')
+			// let col = Math.round(liveLogDiv.clientWidth / 10)
+			// let row = Math.round(liveLogDiv.clientHeight / 10) - 5
+			// this.term.resize(col, row)
+		}
 	},
 
 	onResizeDelay: function (size) {
@@ -1476,6 +1471,14 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 			this.socket.disconnect();
 			delete this.socket;
 		}
+
+		if (this.term) {
+			if(this.term.dispose) this.term.dispose()
+			delete this.term
+		}
+
+		this.live_log_is_up = false
+
 		this.charts = {};
 		this.div.html('');
 		// this.tab.hide();

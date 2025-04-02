@@ -164,6 +164,7 @@ mkdir -p $dist/htdocs/js/external && cp \
  node_modules/xss/dist/xss.min.js \
  node_modules/jquery-datetimepicker/build/jquery.datetimepicker.full.min.js \
  node_modules/diff/dist/diff.min.js \
+ node_modules/@xterm/xterm/lib/xterm.js \
  $dist/htdocs/js/external/
 
 mkdir -p $dist/htdocs/css && cp \
@@ -172,6 +173,7 @@ mkdir -p $dist/htdocs/css && cp \
   node_modules/jquery-ui-dist/jquery-ui.min.css \
   node_modules/jquery-datetimepicker/build/jquery.datetimepicker.min.css \
   node_modules/pixl-webapp/css/base.css \
+  node_modules/@xterm/xterm/css/xterm.css \
  $dist/htdocs/css/
 
 mkdir -p $dist/htdocs/fonts && cp \
