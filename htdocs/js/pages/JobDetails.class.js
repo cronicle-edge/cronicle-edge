@@ -664,7 +664,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		let curr = document.getElementById('log_' + id)
 		if(curr) { curr.remove(); return }
 
-		$.get(`./api/app/get_job_log?id=${job.id}&session_id=${localStorage.session_id}`, (resp)=>{
+		$.get(`./api/app/get_job_log?id=${id}&session_id=${localStorage.session_id}`, (resp)=>{
 			let size = this.args.tail || 25
 			data = new AnsiUp().ansi_to_html(resp.split("\n").slice(-1*size - 4, -4).join("\n"))
 			const newItem = document.createElement('div');
