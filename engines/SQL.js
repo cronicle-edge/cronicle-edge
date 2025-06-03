@@ -218,11 +218,11 @@ module.exports = class SQLEngine extends Component {
 
         try {
             let rows = await db(this.tableName).where('K', key).select([
-                db.raw(`${this.getBlobSizeFn} as len`),
-                db.raw('1 as mod')
+                db.raw(`${this.getBlobSizeFn} as len`)
+                // db.raw('1 as mod')
             ])
             if (rows.length > 0) {
-                callback(null, rows[0]);
+                callback(null, {len: rows[0].len, mod: 1});
             }
             else {
                 // let err = new Error("Failed to head key: " + key + ": Not found");
