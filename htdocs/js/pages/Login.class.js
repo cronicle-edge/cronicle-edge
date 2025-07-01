@@ -25,7 +25,13 @@ Class.subclass( Page.Base, "Page.Login", {
 			this.showRecoverPasswordForm();
 			return true;
 		}
-		
+		else if (app.config.cas_auth) {
+			// redirect to CAS login page
+			// this is used for single sign-on (SSO) with CAS
+			this.doCASauth();
+			return true;
+		}
+
 		app.setWindowTitle('Login');
 		app.showTabBar(false);
 		
@@ -81,6 +87,24 @@ Class.subclass( Page.Base, "Page.Login", {
 		}, 1 );
 
 		return true;
+	},
+
+	doCASauth: function() {
+		// attempt to log user in via CAS authentication
+
+		if(localStorage.session_id) { 
+			// user might be logged aleready in differnt tab, then just refresh the page
+			Nav.go(app.navAfterLogin || config.DefaultPage)
+		}
+		else {
+			// redirect to oauth login page
+			app.showMessage('success', "Redirecting to CAS Login.");
+			setTimeout(() => {
+				let orig_location = encodeURIComponent(app.navAfterLogin || config.DefaultPage);
+				window.location.href = app.config.base_api_uri + `/user/casauth?orig_location=${orig_location}`;	
+			}, 1000);
+		}
+
 	},
 
 	doOauth: function() {
