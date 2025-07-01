@@ -87,6 +87,8 @@ Example:
 	"cas_auth": true,
 	"cas_url": "https://example.com/casauth"
 
+The validated user should exist. If user does not exist, but validated through CAS, an error is thrown. For now, there is no way to authenticate locally when cas auth is configured. It is a good idea to create all users first, mark atleast one of them as administrator, then turn on CAS authentication. 
+
 ### Serve cronicle on custom base path
 Ever wanted to serve cronicle on ```https://myserver/cron``` ? Just set ```base_path = /cron``` in config.json or set ```CRONICLE_base_path=/cron``` variable 
 Refer to [1.10.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.10.1) for more details.
