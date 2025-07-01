@@ -79,6 +79,14 @@ Refer to [1.5.14 release notes](https://github.com/cronicle-edge/cronicle-edge/r
 Can verify user via common oauth providers (github, google, authentik, microsof, keyclock, etc)
 Refer to [1.11.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.11.1) for more details.
 
+### SSO login via CAS
+User can be authenticated via cas authentication mechanism. Update the config.json variables cas_auth to true and cas_url to CAS Url base path.
+
+Example:
+
+	"cas_auth": true,
+	"cas_url": "https://example.com/casauth"
+
 ### Serve cronicle on custom base path
 Ever wanted to serve cronicle on ```https://myserver/cron``` ? Just set ```base_path = /cron``` in config.json or set ```CRONICLE_base_path=/cron``` variable 
 Refer to [1.10.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.10.1) for more details.
