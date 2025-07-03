@@ -97,12 +97,18 @@ Class.subclass( Page.Base, "Page.Login", {
 			Nav.go(app.navAfterLogin || config.DefaultPage)
 		}
 		else {
-			// redirect to oauth login page
-			app.showMessage('success', "Redirecting to CAS Login.");
-			setTimeout(() => {
-				let orig_location = encodeURIComponent(app.navAfterLogin || config.DefaultPage);
-				window.location.href = app.config.base_api_uri + `/user/casauth?orig_location=${orig_location}`;	
-			}, 1000);
+
+			// CAS login link
+			let orig_location = encodeURIComponent(app.navAfterLogin || config.DefaultPage);
+			let html = `<div>
+			<a href="${app.config.base_api_uri}/user/casauth?orig_location=${orig_location}" class="button" style="width:120px; font-weight:normal;">
+				<i class="fa fa-sign-in">&nbsp;&nbsp;</i>Login with CAS
+			</a>
+			</div>
+				`;
+
+			this.div.html( html );
+
 		}
 
 	},
