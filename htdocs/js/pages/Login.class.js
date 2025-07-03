@@ -28,6 +28,10 @@ Class.subclass( Page.Base, "Page.Login", {
 		else if (app.config.cas_auth) {
 			// redirect to CAS login page
 			// this is used for single sign-on (SSO) with CAS
+
+			app.setWindowTitle('Login');
+			app.showTabBar(false);
+
 			this.doCASauth();
 			return true;
 		}
