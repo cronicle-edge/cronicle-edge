@@ -102,19 +102,40 @@ Class.subclass( Page.Base, "Page.Login", {
 		}
 		else {
 
-			// CAS login link
 			let orig_location = encodeURIComponent(app.navAfterLogin || config.DefaultPage);
-			let html = `<div>
-			<a href="${app.config.base_api_uri}/user/casauth?orig_location=${orig_location}" class="button" style="width:120px; font-weight:normal;">
-				<i class="fa fa-sign-in">&nbsp;&nbsp;</i>Login with CAS
-			</a>
-			</div>
-				`;
+			if(app.config.cas_login_auto_redirect) {
+				// redirect to CAS login page
+				app.showMessage('success', "Redirecting to CAS Login.");
+				setTimeout(() => {
+					let orig_location = encodeURIComponent(app.navAfterLogin || config.DefaultPage);
+					window.location.href = app.config.base_api_uri + `/user/casauth?orig_location=${orig_location}`;	
+				}, 1000);
+			}
+			else {
 
-			this.div.html( html );
+				let html = `
+				<div class="inline_dialog_container">
+					<div class="dialog_title shade-light">User Login</div>
+					<div class="dialog_content">
+						<center>
+							<table style="margin:0px;">
+								<tr>
+									<td align="left" class="table_value">
+										<a href="${app.config.base_api_uri}/user/casauth?orig_location=${orig_location}" class="button" style="width:120px; font-weight:normal;">
+											<i class="fa fa-sign-in">&nbsp;&nbsp;</i>Login with CAS
+										</a>						
+									</td>
+								</tr>
+							</table>
+						</center>
+					</div>
+					<div class="dialog_buttons" />
+				</div>
+					`;
 
+				this.div.html( html );
+			}
 		}
-
 	},
 
 	doOauth: function() {

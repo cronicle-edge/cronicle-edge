@@ -9,6 +9,8 @@
 		
 	"cas_auth": false,
 	"cas_url": "",
+	"cas_logout": false,
+	"cas_login_auto_redirect": false,
 
 	"log_dir": "logs",
 	"log_filename": "[component].log",

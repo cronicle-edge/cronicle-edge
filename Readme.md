@@ -89,6 +89,18 @@ Example:
 
 The validated user should exist. If user does not exist, but validated through CAS, an error is thrown. For now, there is no way to authenticate locally when cas auth is configured. It is a good idea to create all users first, mark atleast one of them as administrator, then turn on CAS authentication. 
 
+Options:
+
+	"cas_logout": Boolean, default false
+	"cas_login_auto_redirect": Boolean, default false
+
+If cas_logout is set to true, logging out of the app, invalidates the CAS session. By default, when cas authentication is enabled, login page shows a link that user has to click to be redirected to the cas authentication server. Setting cas_login_auto_redirect to true will make login page automatically redirect to cas authentication without any action from user.
+
+CAUTION: If cas_login_auto_redirect is set to true, cas_logout should be set to true as well. Or else, once logged out, it redirects to login page, which redirects to cas authentication page, which will be validated since the CAS session is still active, and user is logged in again.
+
+Limitations: Currently, logout registration with cas server is not supported. If CAS session is invalidated by some other app, cronicle session is **NOT** automatically logged out.
+
+
 ### Serve cronicle on custom base path
 Ever wanted to serve cronicle on ```https://myserver/cron``` ? Just set ```base_path = /cron``` in config.json or set ```CRONICLE_base_path=/cron``` variable 
 Refer to [1.10.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.10.1) for more details.
