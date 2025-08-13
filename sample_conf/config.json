@@ -112,33 +112,39 @@
 	},
 	
 	"WebServer": {
-		"http_port": 3012,
-		"http_htdocs_dir": "htdocs",
-		"http_max_upload_size": 104857600,
-		"http_static_ttl": 3600,
-		"http_static_index": "index.html",
-		"http_server_signature": "Cronicle 1.0",
-		"http_gzip_text": true,
-		"http_timeout": 30,
-		"http_regex_json": "(text|javascript|js|json)",
-		"http_response_headers": {
-			"Access-Control-Allow-Origin": "*"
-		},
-		
-		"https": false,
-		"https_port": 3013,
-		"https_cert_file": "conf/ssl.crt",
-		"https_key_file": "conf/ssl.key",
-		"https_force": false,
-		"https_timeout": 30,
-		"https_header_detect": {
-			"Front-End-Https": "^on$",
-			"X-Url-Scheme": "^https$",
-			"X-Forwarded-Protocol": "^https$",
-			"X-Forwarded-Proto": "^https$",
-			"X-Forwarded-Ssl": "^on$"
-		}
-	},
+    "http_port": 3012,
+    "http_htdocs_dir": "htdocs",
+    "http_max_upload_size": 104857600,
+    "http_static_ttl": 3600,
+    "http_static_index": "index.html",
+    "http_server_signature": "Cronicle 1.0",
+    "http_gzip_text": true,
+    "http_timeout": 30,
+    "http_regex_json": "(text|javascript|js|json)",
+    "http_response_headers": {},
+    "http_uri_response_headers": {
+      "(/|\\.html)$": {
+        "X-Frame-Options": "DENY",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=(), fullscreen=()"
+      }
+    },
+
+    "https": false,
+    "https_port": 3013,
+    "https_cert_file": "conf/ssl.crt",
+    "https_key_file": "conf/ssl.key",
+    "https_force": false,
+    "https_timeout": 30,
+    "https_header_detect": {
+      "Front-End-Https": "^on$",
+      "X-Url-Scheme": "^https$",
+      "X-Forwarded-Protocol": "^https$",
+      "X-Forwarded-Proto": "^https$",
+      "X-Forwarded-Ssl": "^on$"
+    }
+  },
 	
 	"User": {
 		"session_expire_days": 30,
