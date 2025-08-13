@@ -22,7 +22,7 @@ Images:
  -p 3012:3012 --restart always  \
  -v $HOME/cron:/opt/cronicle/data  \
  -e CRONICLE_secret_key=mysecretKey  \
- cronicle/edge:v1.9.6 manager 
+ cronicle/edge:v1.13.2 manager 
 ```
 
 Above images based on alpine linux, and include some demo items and storage engines (S3/SQL). If you need custom base image or to include you custom patches, build you own image, use Dockerfile as an example:
