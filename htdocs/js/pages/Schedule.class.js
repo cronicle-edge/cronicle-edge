@@ -1320,16 +1320,16 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			if (resp.ids.length > 1) {
 				// multiple jobs (multiplex)
 				var num = resp.ids.length;
-				msg = 'Event "' + event.title + '" has been started (' + num + ' jobs).  View their progress on the <a href="#Home">Home Tab</a>.';
+				msg = 'Event "' + event.title + '" has been started (' + num + ' jobs).  View their progress on the Home Tab.';
 			}
 			else if (resp.ids.length == 1) {
 				// single job
 				var id = resp.ids[0];
-				msg = 'Event "' + event.title + '" has been started.  <a href="#JobDetails?id=' + id + '">Click here</a> to view its progress.';
+				msg = 'Event "' + event.title + '" has been started. View its progress on the Home Tab.';
 			}
 			else {
 				// queued
-				msg = 'Event "' + event.title + '" could not run right away, but was queued up.  View the queue progress on the <a href="#Home">Home Tab</a>.';
+				msg = 'Event "' + event.title + '" could not run right away, but was queued up.  View the queue progress on the Home Tab.';
 			}
 			app.showMessage('success', msg);
 		});
@@ -2658,7 +2658,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			var mday_items = [];
 			for (var idx = 1; idx < 32; idx++) {
 				var num_str = '' + idx;
-				var num_label = num_str + _number_suffixes[parseInt(num_str.substring(num_str.length - 1))];
+
+				// sync to 0.9.81				
+				//var num_label = num_str + _number_suffixes[parseInt(num_str.substring(num_str.length - 1))];
+				var num_label = num_str;
+				if (idx >= 11 && idx < 20) num_label += 'th'; // teens break the rule (11th, 12th, 13th, etc.)
+				else num_label += _number_suffixes[ parseInt( num_str.substring(num_str.length - 1) ) ];
+
 				mday_items.push([idx, num_label]);
 			}
 

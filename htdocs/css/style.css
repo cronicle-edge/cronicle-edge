@@ -366,6 +366,34 @@ pre.log_chunk {
 
 /* Misc */
 
+body.dark span.color_label.checkbox {
+	background: #c8c8c86c;
+}
+body.dark span.color_label {
+	color: #ffffffbb;
+}
+body.dark span.color_label.checkbox:hover {
+	background: #d8d8d8aa !important;
+}
+body.dark span.color_label.checkbox.checked {
+	background: #3f7ed5 !important;
+	color: #fff !important
+}
+body.dark span.color_label.checkbox.checked:hover {
+	background: rgb(120, 174, 249) !important;
+}
+
+span.color_label.checkbox {
+	background: #c8c8c8;
+}
+span.color_label.checkbox:hover {
+	background: #d8d8d8;
+}
+span.color_label.checkbox.checked:hover {
+	background: rgb(120, 174, 249);
+}
+
+
 span.color_label.clicky {
 	cursor: pointer;
 	user-select: none;
