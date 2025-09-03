@@ -873,6 +873,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			}
 			else {
 				actions = [
+					'<span class="link" onMouseUp="$P().run_event(' + idx + ',event, true)"><b>Start</b></span>',
 					'<span class="link" onMouseUp="$P().run_event(' + idx + ',event)"><b>Run</b></span>',
 					'<span class="link" onMouseUp="$P().edit_event(' + idx + ')"><b>Edit</b></span>',
 					'<a href="#History?sub=event_stats&id=' + item.id + '"><b>Stats</b></a>',
@@ -1288,7 +1289,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	},
 
-	run_event: function (event_idx, e) {
+	run_event: function (event_idx, e, background) {
 		// run event ad-hoc style
 		var self = this;
 		var event = (event_idx == 'edit') ? this.event : this.events[event_idx];
@@ -1303,14 +1304,14 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				timezone: event.timezone || app.tz,
 
 				callback: function (new_epoch) {
-					self.run_event_now(event_idx, new_epoch);
+					self.run_event_now(event_idx, new_epoch, background);
 				}
 			});
 		}
-		else this.run_event_now(event_idx);
+		else this.run_event_now(event_idx, undefined, background);
 	},
 
-	run_event_now: function (idx, now) {
+	run_event_now: function (idx, now, background) {
 		// run event ad-hoc style
 		var event = (idx == 'edit') ? this.event : this.events[idx];
 		if (!now) now = time_now();
@@ -1326,6 +1327,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				// single job
 				var id = resp.ids[0];
 				msg = 'Event "' + event.title + '" has been started. View its progress on the Home Tab.';
+				if(!background) window.open(`#JobDetails?id=${id}`)
 			}
 			else {
 				// queued
