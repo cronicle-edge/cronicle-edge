@@ -125,8 +125,10 @@
     "http_server_signature": "Cronicle 1.0",
     "http_gzip_text": true,
     "http_timeout": 30,
-    "http_regex_json": "(text|javascript|js|json)",
-    "http_response_headers": {},
+    "http_regex_json": "(text|javascript|js|json)",    
+	"http_response_headers": {
+			"Access-Control-Allow-Origin": "*"
+	},
     "http_uri_response_headers": {
       "(/|\\.html)$": {
         "X-Frame-Options": "DENY",
