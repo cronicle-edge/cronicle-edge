@@ -5,6 +5,7 @@ import { KubeConfig, CoreV1Api, AppsV1Api, BatchV1Api, Watch, Log } from '@kuber
 import { readFileSync } from 'fs'
 import { PassThrough } from 'stream';
 import { EOL } from 'os'
+import { load } from 'js-yaml'
 
 // cronicle should send job json to stdin
 let job = {}
@@ -55,12 +56,22 @@ const autoRemove = !parseInt(process.env['KEEP_POD'])
 const podPrefix = params.prefix || 'cronicle-'
 const logTailSize = process.env['LOG_TAIL'] ? parseInt(process.env['LOG_TAIL']) : 40
 
-const asJob = !!parseInt(process.env['KUBE_JOB'])  // run as job vs pod
+let asJob = !!parseInt(process.env['KUBE_JOB'])  // run as job vs pod
 const jobTTL = parseInt(process.env['KUBE_JOB_TTL']) || 60 * 60 // keep job record TTL, seconds
 const jobRetries = parseInt(process.env['KUBE_JOB_BACKOFF']) || 0 // backoff limit
 
 const listLimit = parseInt(process.env['LIST_LIMIT']) || 50
 const listObject = process.env['LIST_OBJECT'] || 'pods'
+
+let volumes = []
+let volumeMounts = []
+
+if(typeof params.pvc === 'string' && params.pvc.trim() !== '') {
+  let mntPath = params.pvc.split(':')[1] || '/data'
+  let pvc = params.pvc.split(':')[0]
+  volumes.push({ name: `cronicle-volume`, persistentVolumeClaim: { claimName: pvc } });
+  volumeMounts.push({ mountPath: mntPath, name: `cronicle-volume` });
+}
 
 // ---------------- KUBERNETES APIs
 
@@ -70,6 +81,7 @@ if (KUBE_CONFIG && KUBE_CONFIG.trim() !== "") {
   try { kc.loadFromString(KUBE_CONFIG) }
   catch {
     printWarning("Invalid kube config setting. Falling back to default")
+    console.log(KUBE_CONFIG)
     kc.loadFromDefault()
   }
 }
@@ -115,6 +127,9 @@ let envVars = Object.entries(process.env)
 
 // ------------------------ POD/JOB Manifest --------------------------------
 
+let cpu_limit = (job.params.cpu_limit || '').trim() || '1000m'
+let mem_limit = (job.params.mem_limit || '').trim() || '512Mi'
+
 let objName = podPrefix + JOB_ID
 let SCRIPT_BASE64 = Buffer.from(SCRIPT).toString('base64')
 let podLabels = {
@@ -133,18 +148,27 @@ let podManifest = {
     labels: podLabels
   },
   spec: {
+    serviceAccountName: (job.params.svc_account || '').trim() || 'default',
+    volumes: volumes,
     containers: [
       {
         name: objName,
         image: IMAGE,
         imagePullPolicy: process.env['IMAGE_PULL_POLICY'] || 'Always',
         terminationGracePeriodSeconds: 10, // vs 30 default, to be inline with cronicle
+        resources: {
+          limits: {
+            cpu: cpu_limit,
+            memory: mem_limit
+          }
+        },
         command: [
           'sh',
           '-c',
           `echo "${SCRIPT_BASE64}" | base64 -di > ./tmp-script.sh && chmod +x ./tmp-script.sh && ./tmp-script.sh`
         ],
-        env: envVars
+        env: envVars,
+        volumeMounts: volumeMounts
       },
     ],
     restartPolicy: process.env['RESTART_POLICY'] || 'Never',
@@ -153,7 +177,7 @@ let podManifest = {
 
 // ----
 
-const jobManifest = {
+let jobManifest = {
   apiVersion: 'batch/v1',
   kind: 'Job',
   metadata: {
@@ -170,18 +194,27 @@ const jobManifest = {
         labels: podLabels
       },
       spec: {
+        serviceAccountName: (job.params.svc_account || '').trim() || 'default',
+        volumes: volumes,
         containers: [
           {
             name: objName,
             image: IMAGE,
             imagePullPolicy: process.env['IMAGE_PULL_POLICY'] || 'Always',
             terminationGracePeriodSeconds: 10, // vs 30 default, to be inline with cronicle
+            resources: {
+              limits: {
+                cpu: cpu_limit,
+                memory: mem_limit
+              }
+            },
             command: [
               'sh',
               '-c',
               `echo "${SCRIPT_BASE64}" | base64 -di > ./tmp-script.sh && chmod +x ./tmp-script.sh && ./tmp-script.sh`
             ],
-            env: envVars
+            env: envVars,
+            volumeMounts: volumeMounts
           },
         ],
         restartPolicy: process.env['RESTART_POLICY'] || 'Never',
@@ -189,6 +222,66 @@ const jobManifest = {
     },
   },
 };
+
+// -------- Kube-Yaml plugin prep -------------------------
+if (process.argv[2] === "manifest") {
+  let manifest
+  
+  // parse manifest yaml
+  try {
+    manifest = load(job.params.manifest);
+  } catch {
+    exit("Failed to parse manifest (invalid yaml)");
+  }
+
+
+  // make sure manifest is Pod or Job
+  if(manifest.kind === "Job") {
+    asJob = true;
+    jobManifest = manifest;
+  }
+  else if(manifest.kind === "Pod") {
+    asJob = false
+    podManifest = manifest;
+  }
+  else { exit("Invalid manifest kind: " + manifest.kind + " ( expected Pod or Job)") }
+
+
+  // massage manifest structure
+  manifest.metadata = manifest.metadata || {}
+  manifest.spec = manifest.spec || {}
+  manifest.metadata.labels = manifest.metadata.labels || {}
+  if (manifest.metadata.name) objName = manifest.metadata.name + "-" + JOB_ID; // default is cronicle-jobid
+  manifest.metadata.name = objName;
+  manifest.metadata.labels = {...(manifest.metadata.labels), ...podLabels} // merge labels
+
+  if(asJob) {
+    manifest.spec.template = manifest.spec.template || {}
+    manifest.spec.template.spec = manifest.spec.template.spec || {}
+    manifest.spec.template.metadata = manifest.spec.template.metadata || {}
+    manifest.spec.template.metadata.labels = {...(manifest.spec.template.metadata.labels || {}), ...podLabels}
+    manifest.spec.template.metadata.name = objName;
+    
+  }
+
+  let spec = (asJob ? manifest.spec.template.spec : manifest.spec) || {};
+  if(!spec.restartPolicy) spec.restartPolicy = 'Never'; // prevent job/pod restart unless user wants it.
+
+  let container = (spec.containers || [])[0]
+  if(!container) exit(`Cannot locate container definition (${asJob ? '.spec.template.spec.containers[0]' : '.spec.containers[0]'})`)   
+
+  container.name = objName;
+  container.env = [...envVars, ...(container.env || []) ] // merge env vars
+  
+  if (!job.params.custom_cmd) {
+    container.command = [
+      "sh",
+      "-c",
+      `echo "${SCRIPT_BASE64}" | base64 -di > ./tmp-script.sh && chmod +x ./tmp-script.sh && ./tmp-script.sh`,
+    ];
+  }
+  
+}
 
 // ==========================================================================================
 
@@ -281,22 +374,6 @@ async function listJobs(namespace = 'default') {
   if (process.connected) process.disconnect();
   process.exit(0);
 }
-
-// async function listPodResources(namespace) {
-//     let metrics = await metricsClient.getPodMetrics() || []
-//     console.table(metrics.items.map(e => {
-//         return {
-//             name: e.metadata.name,
-//             window: e.window,
-//             cpu: e.containers[0].usage.cpu,
-//             memory: e.containers[0].usage.memory
-//         }
-//     }))
-    
-    // nodes
-    // nodeLimits =  await topNodes(k8sApi)
-    // nodeMetrics = await metricsClient.getNodeMetrics()
-// }
 
 /// ----------------  LIST DEPLOY -----
 async function listApps(namespace = 'default', kind = 'Deployments') {
@@ -449,7 +526,7 @@ async function runPod(namespace = 'default') {
 
     let podWatchRequest;
 
-    // ------ shtdown logic -------
+    // ------ shutdown logic -------
     kubeShutDown = async function () {  // this will run on job Abort      
       shuttingDown = true
       if (eventWatch) eventWatch.abort()
@@ -485,7 +562,7 @@ async function runPod(namespace = 'default') {
         }
         else {
           printInfo('Pod is ready, setting up logger')
-          try { logReq = await log.log(namespace, objName, objName, logStream, { follow: true, tailLines: 10, pretty: false, timestamps: false }) }
+          try { logReq = await log.log(namespace, objName, objName, logStream, { follow: true, pretty: false, timestamps: false }) }  // , tailLines: 200
           catch { printWarning('failed to init log') }
         }
 
