@@ -336,12 +336,6 @@
 				"title": "Kube Config",
 				"rows": 5,
 				"value": ""
-			},
-			{
-				"type": "filelist",
-				"id": "manifest",
-				"title": "Base Manifest",
-				"theme": "darcula"
 			}
 		],
 		"title": "Kube-Run",
