@@ -47,7 +47,7 @@ function getPrettyAge(startTime, endTime) {
 // ------------ Resolve job parameters -----------------------
 
 const KUBE_CONFIG = params.config || process.env['KUBE_CONFIG']
-const NAMESPACE = process.env['NAMESPACE'] || 'default'
+let NAMESPACE = process.env['NAMESPACE'] || 'default'
 const SCRIPT = process.env['SCRIPT'] || '#!/usr/bin/env sh\necho "Empty script"'
 const JOB_ID = job.id || process.pid
 const IMAGE = process.env['IMAGE'] || 'alpine:latest';
@@ -249,6 +249,7 @@ if (process.argv[2] === "manifest") {
 
   // massage manifest structure
   manifest.metadata = manifest.metadata || {}
+  NAMESPACE = manifest.metadata.namespace || NAMESPACE;
   manifest.spec = manifest.spec || {}
   manifest.metadata.labels = manifest.metadata.labels || {}
   if (manifest.metadata.name) objName = manifest.metadata.name + "-" + JOB_ID; // default is cronicle-jobid
