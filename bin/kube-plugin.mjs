@@ -5,6 +5,7 @@ import { KubeConfig, CoreV1Api, AppsV1Api, BatchV1Api, Watch, Log } from '@kuber
 import { readFileSync } from 'fs'
 import { PassThrough } from 'stream';
 import { EOL } from 'os'
+import { load } from 'js-yaml'
 
 // cronicle should send job json to stdin
 let job = {}
@@ -46,7 +47,7 @@ function getPrettyAge(startTime, endTime) {
 // ------------ Resolve job parameters -----------------------
 
 const KUBE_CONFIG = params.config || process.env['KUBE_CONFIG']
-const NAMESPACE = process.env['NAMESPACE'] || 'default'
+let NAMESPACE = process.env['NAMESPACE'] || 'default'
 const SCRIPT = process.env['SCRIPT'] || '#!/usr/bin/env sh\necho "Empty script"'
 const JOB_ID = job.id || process.pid
 const IMAGE = process.env['IMAGE'] || 'alpine:latest';
@@ -55,12 +56,22 @@ const autoRemove = !parseInt(process.env['KEEP_POD'])
 const podPrefix = params.prefix || 'cronicle-'
 const logTailSize = process.env['LOG_TAIL'] ? parseInt(process.env['LOG_TAIL']) : 40
 
-const asJob = !!parseInt(process.env['KUBE_JOB'])  // run as job vs pod
+let asJob = !!parseInt(process.env['KUBE_JOB'])  // run as job vs pod
 const jobTTL = parseInt(process.env['KUBE_JOB_TTL']) || 60 * 60 // keep job record TTL, seconds
 const jobRetries = parseInt(process.env['KUBE_JOB_BACKOFF']) || 0 // backoff limit
 
 const listLimit = parseInt(process.env['LIST_LIMIT']) || 50
 const listObject = process.env['LIST_OBJECT'] || 'pods'
+
+let volumes = []
+let volumeMounts = []
+
+if(typeof params.pvc === 'string' && params.pvc.trim() !== '') {
+  let mntPath = params.pvc.split(':')[1] || '/data'
+  let pvc = params.pvc.split(':')[0]
+  volumes.push({ name: `cronicle-volume`, persistentVolumeClaim: { claimName: pvc } });
+  volumeMounts.push({ mountPath: mntPath, name: `cronicle-volume` });
+}
 
 // ---------------- KUBERNETES APIs
 
@@ -70,6 +81,7 @@ if (KUBE_CONFIG && KUBE_CONFIG.trim() !== "") {
   try { kc.loadFromString(KUBE_CONFIG) }
   catch {
     printWarning("Invalid kube config setting. Falling back to default")
+    console.log(KUBE_CONFIG)
     kc.loadFromDefault()
   }
 }
@@ -81,7 +93,6 @@ const batchV1Api = kc.makeApiClient(BatchV1Api);
 const appsV1Api = kc.makeApiClient(AppsV1Api)
 const log = new Log(kc);
 // let metricsClient = new Metrics(kc)
-
 
 // ------ ABORT/SHUTDOWN ------
 
@@ -100,7 +111,6 @@ let sig = process.connected ? 'disconnect' : 'SIGTERM'
 process.on(sig, async (message) => {
   printWarning('Caught SIGTERM')
   await kubeShutDown()
-  // exit('Kubernetes workload aborted')
 })
 
 
@@ -113,7 +123,10 @@ let envVars = Object.entries(process.env)
   .map(([k, v]) => { return { name: (truncVar ? k.replace(/^KUBE_/, '') : k), value: v } })
 
 
-// ------------------------ POD/JOB Manifest --------------------------------
+// ------------------------ POD/JOB Manifest for Kube-Run --------------------------------
+
+let cpu_limit = (job.params.cpu_limit || '').trim() || '1000m'
+let mem_limit = (job.params.mem_limit || '').trim() || '512Mi'
 
 let objName = podPrefix + JOB_ID
 let SCRIPT_BASE64 = Buffer.from(SCRIPT).toString('base64')
@@ -133,18 +146,27 @@ let podManifest = {
     labels: podLabels
   },
   spec: {
+    serviceAccountName: (job.params.svc_account || '').trim() || 'default',
+    volumes: volumes,
     containers: [
       {
         name: objName,
         image: IMAGE,
         imagePullPolicy: process.env['IMAGE_PULL_POLICY'] || 'Always',
         terminationGracePeriodSeconds: 10, // vs 30 default, to be inline with cronicle
+        resources: {
+          limits: {
+            cpu: cpu_limit,
+            memory: mem_limit
+          }
+        },
         command: [
           'sh',
           '-c',
           `echo "${SCRIPT_BASE64}" | base64 -di > ./tmp-script.sh && chmod +x ./tmp-script.sh && ./tmp-script.sh`
         ],
-        env: envVars
+        env: envVars,
+        volumeMounts: volumeMounts
       },
     ],
     restartPolicy: process.env['RESTART_POLICY'] || 'Never',
@@ -153,7 +175,7 @@ let podManifest = {
 
 // ----
 
-const jobManifest = {
+let jobManifest = {
   apiVersion: 'batch/v1',
   kind: 'Job',
   metadata: {
@@ -170,18 +192,27 @@ const jobManifest = {
         labels: podLabels
       },
       spec: {
+        serviceAccountName: (job.params.svc_account || '').trim() || 'default',
+        volumes: volumes,
         containers: [
           {
             name: objName,
             image: IMAGE,
             imagePullPolicy: process.env['IMAGE_PULL_POLICY'] || 'Always',
             terminationGracePeriodSeconds: 10, // vs 30 default, to be inline with cronicle
+            resources: {
+              limits: {
+                cpu: cpu_limit,
+                memory: mem_limit
+              }
+            },
             command: [
               'sh',
               '-c',
               `echo "${SCRIPT_BASE64}" | base64 -di > ./tmp-script.sh && chmod +x ./tmp-script.sh && ./tmp-script.sh`
             ],
-            env: envVars
+            env: envVars,
+            volumeMounts: volumeMounts
           },
         ],
         restartPolicy: process.env['RESTART_POLICY'] || 'Never',
@@ -190,11 +221,72 @@ const jobManifest = {
   },
 };
 
+// -------- Kube-Yaml plugin prep -------------------------
+if (process.argv[2] === "manifest") {
+  let manifest
+  
+  // parse manifest yaml
+  try {
+    manifest = load(job.params.manifest);
+  } catch {
+    exit("Failed to parse manifest (invalid yaml)");
+  }
+
+
+  // make sure manifest is Pod or Job
+  if(manifest.kind === "Job") {
+    asJob = true;
+    jobManifest = manifest;
+  }
+  else if(manifest.kind === "Pod") {
+    asJob = false
+    podManifest = manifest;
+  }
+  else { exit("Invalid manifest kind: " + manifest.kind + " ( expected Pod or Job)") }
+
+
+  // massage manifest structure
+  manifest.metadata = manifest.metadata || {}
+  NAMESPACE = manifest.metadata.namespace || NAMESPACE;
+  manifest.spec = manifest.spec || {}
+  manifest.metadata.labels = manifest.metadata.labels || {}
+  if (manifest.metadata.name) objName = manifest.metadata.name + "-" + JOB_ID; // default is cronicle-jobid
+  manifest.metadata.name = objName;
+  manifest.metadata.labels = {...(manifest.metadata.labels), ...podLabels} // merge labels
+
+  if(asJob) {
+    manifest.spec.template = manifest.spec.template || {}
+    manifest.spec.template.spec = manifest.spec.template.spec || {}
+    manifest.spec.template.metadata = manifest.spec.template.metadata || {}
+    manifest.spec.template.metadata.labels = {...(manifest.spec.template.metadata.labels || {}), ...podLabels}
+    manifest.spec.template.metadata.name = objName;
+    
+  }
+
+  let spec = (asJob ? manifest.spec.template.spec : manifest.spec) || {};
+  if(!spec.restartPolicy) spec.restartPolicy = 'Never'; // prevent job/pod restart unless user wants it.
+
+  let container = (spec.containers || [])[0]
+  if(!container) exit(`Cannot locate container definition (${asJob ? '.spec.template.spec.containers[0]' : '.spec.containers[0]'})`)   
+
+  container.name = objName;
+  container.env = [...envVars, ...(container.env || []) ] // merge env vars
+  
+  if (!job.params.custom_cmd) {
+    container.command = [
+      "sh",
+      "-c",
+      `echo "${SCRIPT_BASE64}" | base64 -di > ./tmp-script.sh && chmod +x ./tmp-script.sh && ./tmp-script.sh`,
+    ];
+  }
+  
+}
+
 // ==========================================================================================
 
 async function listPods(namespace = 'default') {
 
-  const res = await k8sApi.listNamespacedPod({ namespace: namespace });
+  const res = await k8sApi.listNamespacedPod({ namespace: namespace }); // to do wrap it in try/catch
   const limit = listLimit || 50;
   let pods = res.items;
   let podNote = ''
@@ -282,22 +374,6 @@ async function listJobs(namespace = 'default') {
   process.exit(0);
 }
 
-// async function listPodResources(namespace) {
-//     let metrics = await metricsClient.getPodMetrics() || []
-//     console.table(metrics.items.map(e => {
-//         return {
-//             name: e.metadata.name,
-//             window: e.window,
-//             cpu: e.containers[0].usage.cpu,
-//             memory: e.containers[0].usage.memory
-//         }
-//     }))
-    
-    // nodes
-    // nodeLimits =  await topNodes(k8sApi)
-    // nodeMetrics = await metricsClient.getNodeMetrics()
-// }
-
 /// ----------------  LIST DEPLOY -----
 async function listApps(namespace = 'default', kind = 'Deployments') {
   
@@ -306,9 +382,6 @@ async function listApps(namespace = 'default', kind = 'Deployments') {
   else if(kind === 'DaemonSets') res = await appsV1Api.listNamespacedDaemonSet({namespace: namespace})
   else res = await appsV1Api.listNamespacedDeployment({namespace: namespace})
 
-  // const res = await listNamespacedApp({namespace: namespace});
- 
-  // const res = await appsV1Api.listNamespacedStatefulSet({namespace: namespace});
   const limit = listLimit || 50;
   let deployments = res.items || [];  
   let deploymentNote = '';
@@ -440,8 +513,6 @@ async function runPod(namespace = 'default') {
   let pod;
   let logReq;
 
-  try {
-
     pod = await k8sApi.createNamespacedPod({
       namespace: namespace,
       body: podManifest,
@@ -449,7 +520,7 @@ async function runPod(namespace = 'default') {
 
     let podWatchRequest;
 
-    // ------ shtdown logic -------
+    // ------ shutdown logic -------
     kubeShutDown = async function () {  // this will run on job Abort      
       shuttingDown = true
       if (eventWatch) eventWatch.abort()
@@ -468,8 +539,6 @@ async function runPod(namespace = 'default') {
     try { eventWatch = await startEventWatch(namespace, objName) }
     catch (err) { printWarning("Failed to start event watch") }
 
-
-
     // ----- POD WATCH 
 
     podWatchRequest = await watch.watch(`/api/v1/namespaces/${namespace}/pods`, {}, async (type, obj) => {
@@ -485,7 +554,7 @@ async function runPod(namespace = 'default') {
         }
         else {
           printInfo('Pod is ready, setting up logger')
-          try { logReq = await log.log(namespace, objName, objName, logStream, { follow: true, tailLines: 10, pretty: false, timestamps: false }) }
+          try { logReq = await log.log(namespace, objName, objName, logStream, { follow: true, pretty: false, timestamps: false }) }  // , tailLines: 200
           catch { printWarning('failed to init log') }
         }
 
@@ -551,32 +620,11 @@ async function runPod(namespace = 'default') {
     });  // POD WATCH FINAL CALLBACK END
 
     printInfo('Pod Watch started')
-
-
-  } catch (err) {
-
-    if (err.body && err.code) { // error coming from kubernetes
-      printError('ERROR CODE: ' + err.code)
-      printError(err.body)
-      let message = 'unknown'
-      try { message = JSON.parse(err.body).reason } catch { }
-      printJSONMessage(1, parseInt(err.code) || 1, 'Kubernetes API error:' + message)
-      process.exit(parseInt(err.code) || 1)
-    }
-    else {  // run time errors
-      printError(`Error: ${err}`)
-      printError(err.stack)
-      exit('Plugin runtime error')
-    }
-
-  }
-}
+} // end of runPod
 
 // ---------------------------- RUN JOB -------------------------------------------------------
 
-async function runJob(namespace = 'default') {
-
-  try {
+async function runJob(namespace = 'default') { 
 
     let job = await batchV1Api.createNamespacedJob({ namespace: namespace, body: jobManifest });
     printInfo(`Job ${objName} created`)
@@ -692,23 +740,30 @@ async function runJob(namespace = 'default') {
 
         process.exit(EXIT_CODE)
 
-        // if (err && err.type === 'aborted') { // normal shutdown
-        //   printJSONMessage(1, EXIT_CODE, EXIT_CODE > 0 ? `Script failed with code: ${EXIT_CODE}` : null)
-        //   process.exit(EXIT_CODE)
-        // }
-        
-        // else exit(`Watch error: ${err}`);
       }
     )
+} // end of runJob
 
+// ===================== MAIN =========================
+
+async function main() {
+  try {     
+    if (process.argv[2] === 'list') {
+      if (listObject === 'Jobs') await listJobs(NAMESPACE)
+      else if (listObject === 'Deployments') await listApps(NAMESPACE, listObject)
+      else if (listObject === 'StatefulSets') await listApps(NAMESPACE, listObject)
+      else if (listObject === 'DaemonSets') await listApps(NAMESPACE, listObject)
+      else await listPods(NAMESPACE)
+    }
+    else if (asJob) await runJob(NAMESPACE)
+    else await runPod(NAMESPACE)
   }
   catch (err) {
     if (err.body && err.code) { // error coming from kubernetes
       printError('ERROR CODE: ' + err.code)
-      printError(err.body)
-      let message = 'unknown'
-      try { message = JSON.parse(err.body).reason } catch { }
-      printJSONMessage(1, parseInt(err.code) || 1, 'Kubernetes API error: ' + message)
+      try {err.body = JSON.parse(err.body)} catch { }
+      printError(err.body.message || err.body)    
+      printJSONMessage(1, parseInt(err.code) || 1, 'Kubernetes API error: ' + (err.body.reason || ''))
       process.exit(parseInt(err.code) || 1)
     }
     else {  // run time errors
@@ -717,19 +772,6 @@ async function runJob(namespace = 'default') {
       exit('Plugin runtime error')
     }
   }
-
 }
 
-// ===================== MAIN =========================
-
-
-if (process.argv[2] === 'list') {
-  if(listObject === 'Jobs') listJobs(NAMESPACE)
-  else if(listObject === 'Deployments') listApps(NAMESPACE, listObject)
-  else if(listObject === 'StatefulSets') listApps(NAMESPACE, listObject)
-  else if(listObject === 'DaemonSets') listApps(NAMESPACE, listObject)
-  else listPods(NAMESPACE)
-
-}
-else if (asJob) runJob(NAMESPACE)
-else runPod(NAMESPACE)
+main();

@@ -125,43 +125,366 @@
 				{"type":"filelist","id":"files","title":"File List","theme":"default", "value":0}
 			]
 		} ],
-		[ "listPush", "global/plugins", {
-			"params": [
-			  { "type": "text", "id": "namespace", "title": "Namespace", "size": 20, "value": "default" },
-			  { "type": "text", "id": "image", "title": "Image", "size": 20, "value": "alpine" },
-			  { "type": "text", "id": "prefix", "title": "Pod prefix", "size": 20, "value": "cronicle-" },
-			  { "type": "select", "id": "restart_policy", "title": "Restart Policy", "items": ["Never", "OnFailure", "Always"], "value": "Never" },
-			  { "type": "select", "id": "image_pull_policy", "title": "Image Pull Policy", "items": ["Always", "IfNotPresent", "Never"], "value": "Always" },
-			  { "type": "checkbox", "id": "keep_pod", "title": "Keep pod", "value": 0 },
-			  { "type": "checkbox", "id": "detach", "title": "Detach", "value": 0 },
-			  { "type": "checkbox", "id": "kube_job", "title": "Run as job", "value": 0 },
-			  { "type": "select", "id": "kube_job_backoff", "title": "Job Backoff limit", "items": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16"], "value": "0" },
-			  { "type": "text", "id": "kube_job_ttl", "title": "Job TTL (seconds)", "size": 4, "value": "3600" },
-			  { "type": "select", "id": "log_tail", "title": "Log tail size", "items": ["0", "10", "20", "40", "80", "200", "400", "1000"], "value": "20" },
-			  { "type": "textarea", "id": "script", "title": "Script", "rows": 15, "value": "#!/bin/sh\n\necho '| '\necho -e '| \\e[1mHello from Kubernetes!\\e[0m' \necho '| '; sleep 2\necho \"| This script is executing in temporary Pod [$HOSTNAME] using [$IMAGE] image\" ; \necho '| Pod will be deleted upon job completion (unless [Keep Pod] option used)'\nsleep 1; echo '| '\necho '| To hide INFO message uncheck [Verbose] checkbox'\nsleep 1; echo '| '\necho '| Like in a shell plugin, you can use memo, progress and json messages'\necho '#TEST MEMO#'\necho '10%'\nsleep 1; echo '| '; echo '50%'\necho '| To pass env variables/secrets to Pod, add prefix KUBE_ to it'\necho '| It can be truncated (in pod runtime) by checking [Truncate variable prefix] option'\nsleep 1; echo '| '\necho '| If not provided, default kube config will be used (from .kube/config file or pod svc account)'\necho '| To specify custom config, add multiline KUBE_CONFIG secret with your configuraiton yaml'\necho '| For test purposes you can use [Kube Config] parameter'\nsleep 1; echo '| '; echo '70%'\necho '| You can execute this script as kubernetes job (vs Pod) by checking [Run as Job] parameter'\necho '| In this case cronicle will just watch for job status updates, and optionally print log tail at the end'\necho '| Such job will be removed after TTL expiration by Kubernetes, cronicle will only delete job if it gets aborted'\nsleep 1; echo '| '; echo '80%'\necho '| If you want cronicle just to trigger Pod/Job and exit - use [Detach] checkbox'\nsleep 1; echo '| '; echo '90%'\necho '| Cronicle will attach app=cronicle-job label to pods/jobs it creates'\necho '| It also add event, event_title and category labels'\necho '| It can be used later to examine cronicle related object using kubectl, e.g.'\necho '| kubectl get pods -l app=cronicle-job'\necho '| kubectl delete jobs -l event_title=myTestJob'\necho '| kubectl get pods -l category=General'\necho '| '\nsleep 1\n" },
-			  { "type": "select", "id": "theme", "title": "theme", "items": ["default", "gruvbox-dark", "solarized light", "solarized dark", "darcula", "ambiance", "base16-dark", "nord"], "value": "default" },
-			  { "type": "select", "id": "lang", "title": "Syntax", "items": ["shell", "powershell", "javascript", "python", "perl", "groovy", "java", "csharp", "scala", "sql", "yaml", "dockerfile", "json", "props"], "value": "shell" },
-			  { "type": "checkbox", "id": "json", "title": "Interpret JSON in Output", "value": 0 },
-			  { "type": "checkbox", "id": "trunc_var", "title": "Truncate variable prefix (KUBE_)", "value": 0 },
-			  { "type": "checkbox", "id": "verbose", "title": "Verbose", "value": 1 },
-			  { "type": "textarea", "id": "config", "title": "Kube Config", "rows": 5, "value": "" }
-			],
-			"title": "Kube-Run",
-			"id": "kuberun",
-			"command": "node bin/kube-plugin.js",
-			"username": "admin",
-			"enabled": 1,
-			"ipc": 1,
-			"wf": 0,
-			"stdin": 0,
-			"modified": 1434125333,
-			"created": 1434125333,
-			"uid": "",
-			"gid": "",
-			"cwd": ""
-		  }
-		  
+[
+	"listPush",
+	"global/plugins",
+	{
+		"params": [
+			{
+				"type": "text",
+				"id": "namespace",
+				"title": "Namespace",
+				"size": 20,
+				"value": "default"
+			},
+			{
+				"type": "text",
+				"id": "image",
+				"title": "Image",
+				"size": 20,
+				"value": "alpine"
+			},
+			{
+				"type": "text",
+				"id": "prefix",
+				"title": "Pod prefix",
+				"size": 20,
+				"value": "cronicle-"
+			},
+			{
+				"type": "textarea",
+				"id": "script",
+				"title": "Script",
+				"rows": 15,
+				"value": "#!/bin/sh\n\necho '| '\necho -e '| \\e[1mHello from Kubernetes!\\e[0m' \necho '| '; sleep 2\necho \"| This script is executing in temporary Pod [$HOSTNAME] using [$IMAGE] image\" ; \necho '| Pod will be deleted upon job completion (unless [Keep Pod] option used)'\nsleep 1; echo '| '\necho '| To hide INFO message uncheck [Verbose] checkbox'\nsleep 1; echo '| '\necho '| Like in a shell plugin, you can use memo, progress and json messages'\necho '#TEST MEMO#'\necho '10%'\nsleep 1; echo '| '; echo '50%'\necho '| To pass env variables/secrets to Pod, add prefix KUBE_ to it'\necho '| It can be truncated (in pod runtime) by checking [Truncate variable prefix] option'\nsleep 1; echo '| '\necho '| If not provided, default kube config will be used (from .kube/config file or pod svc account)'\necho '| To specify custom config, add multiline KUBE_CONFIG secret with your configuraiton yaml'\necho '| For test purposes you can use [Kube Config] parameter'\nsleep 1; echo '| '; echo '70%'\necho '| You can execute this script as kubernetes job (vs Pod) by checking [Run as Job] parameter'\necho '| In this case cronicle will just watch for job status updates, and optionally print log tail at the end'\necho '| Such job will be removed after TTL expiration by Kubernetes, cronicle will only delete job if it gets aborted'\nsleep 1; echo '| '; echo '80%'\necho '| If you want cronicle just to trigger Pod/Job and exit - use [Detach] checkbox'\necho '| To mount pvc as data directory you can set parameter [PVC mount] as pvc_name:/data/dir, or just pvc_name (will be mounted as /data)'\nsleep 1; echo '| '; echo '90%'\necho '| Cronicle will attach app=cronicle-job label to pods/jobs it creates'\necho '| It also add event, event_title and category labels'\necho '| It can be used later to examine cronicle related object using kubectl, e.g.'\necho '| kubectl get pods -l app=cronicle-job'\necho '| kubectl delete jobs -l event_title=myTestJob'\necho '| kubectl get pods -l category=General'\necho '| '\nsleep 1"
+			},
+			{
+				"type": "select",
+				"id": "theme",
+				"title": "theme",
+				"items": [
+					"default",
+					"gruvbox-dark",
+					"solarized light",
+					"solarized dark",
+					"darcula",
+					"ambiance",
+					"base16-dark",
+					"nord"
+				],
+				"value": "default"
+			},
+			{
+				"type": "select",
+				"id": "lang",
+				"title": "Syntax",
+				"items": [
+					"shell",
+					"powershell",
+					"javascript",
+					"python",
+					"perl",
+					"groovy",
+					"java",
+					"csharp",
+					"scala",
+					"sql",
+					"yaml",
+					"dockerfile",
+					"json",
+					"props"
+				],
+				"value": "shell"
+			},
+			{
+				"type": "checkbox",
+				"id": "json",
+				"title": "Interpret JSON in Output",
+				"value": 0
+			},
+			{
+				"type": "checkbox",
+				"id": "trunc_var",
+				"title": "Truncate variable prefix (KUBE_)",
+				"value": 0
+			},
+			{
+				"type": "checkbox",
+				"id": "verbose",
+				"title": "Verbose",
+				"value": 1
+			},
+			{
+				"type": "checkbox",
+				"id": "keep_pod",
+				"title": "Keep pod",
+				"value": 0
+			},
+			{
+				"type": "select",
+				"id": "restart_policy",
+				"title": "Restart Policy",
+				"items": [
+					"Never",
+					"OnFailure",
+					"Always"
+				],
+				"value": "Never"
+			},
+			{
+				"type": "select",
+				"id": "image_pull_policy",
+				"title": "Image Pull Policy",
+				"items": [
+					"Always",
+					"IfNotPresent",
+					"Never"
+				],
+				"value": "Always"
+			},
+			{
+				"type": "checkbox",
+				"id": "detach",
+				"title": "Detach",
+				"value": 0
+			},
+			{
+				"type": "text",
+				"id": "svc_account",
+				"title": "Service Account",
+				"size": 20,
+				"value": ""
+			},
+			{
+				"type": "text",
+				"id": "pvc",
+				"title": "PVC mount",
+				"size": 20,
+				"value": ""
+			},
+			{
+				"type": "text",
+				"id": "mem_limit",
+				"title": "Memory Limit",
+				"size": 20,
+				"value": "1Gi"
+			},
+			{
+				"type": "text",
+				"id": "cpu_limit",
+				"title": "CPU Limit",
+				"size": 20,
+				"value": "1000m"
+			},
+			{
+				"type": "checkbox",
+				"id": "kube_job",
+				"title": "Run as kubernetes job",
+				"value": 0
+			},
+			{
+				"type": "select",
+				"id": "kube_job_backoff",
+				"title": "Job Backoff limit",
+				"items": [
+					"0",
+					"1",
+					"2",
+					"3",
+					"4",
+					"5",
+					"6",
+					"7",
+					"8",
+					"9",
+					"10",
+					"11",
+					"12",
+					"13",
+					"14",
+					"15",
+					"16"
+				],
+				"value": "0"
+			},
+			{
+				"type": "text",
+				"id": "kube_job_ttl",
+				"title": "Job TTL (seconds)",
+				"size": 4,
+				"value": "3600"
+			},
+			{
+				"type": "select",
+				"id": "log_tail",
+				"title": "Job log tail size",
+				"items": [
+					"0",
+					"10",
+					"20",
+					"40",
+					"80",
+					"200",
+					"400",
+					"1000"
+				],
+				"value": "20"
+			},
+			{
+				"type": "textarea",
+				"id": "config",
+				"title": "Kube Config",
+				"rows": 5,
+				"value": ""
+			}
 		],
+		"title": "Kube-Run",
+		"id": "kuberun",
+		"command": "node bin/kube-plugin.js",
+		"username": "admin",
+		"enabled": 1,
+		"ipc": 1,
+		"wf": 0,
+		"stdin": 0,
+		"modified": 1434125333,
+		"created": 1434125333,
+		"uid": "",
+		"gid": "",
+		"cwd": ""
+	}
+],
+[
+	"listPush",
+	"global/plugins",
+	{
+		"params": [
+			{
+				"type": "textarea",
+				"id": "manifest",
+				"title": "Pod Manifest",
+				"rows": 15,
+				"value": "apiVersion: v1\nkind: Pod\nmetadata:\n  name: cronicle\n  namespace: default\n  labels:\n    app: cronicle-job\nspec:\n  restartPolicy: Never\n  containers:\n  - name: cronicle\n    image: alpine\n    env:\n    - name: FOO\n      value: \"BAR\"\n    imagePullPolicy: IfNotPresent\n    terminationGracePeriodSeconds: 10  \n    resources:\n      requests:\n        memory: \"256Mi\"\n        cpu: \"250m\"\n      limits:\n        memory: \"512Mi\"\n        cpu: \"500m\"\n  #   volumeMounts:\n  #   - name: data\n  #     mountPath: /data\n  # volumes:\n  # - name: data\n  #   emptyDir: {}"
+			},
+			{
+				"type": "checkbox",
+				"id": "custom_cmd",
+				"title": "Allow custom command",
+				"value": 0
+			},
+			{
+				"type": "textarea",
+				"id": "script",
+				"title": "Script",
+				"rows": 15,
+				"value": "#!/bin/sh\n\necho \"|\"\necho \"| Hello from Kubernetes!\"\nsleep 1\n\necho \"| This plugin works the same way as Kube-Run plugin,\"\necho \"| just let you use custom Pod or Job manifest\"\necho \"| Cronicle will add custom command, some extra variables/labels and prefixes jobId to pod name\"\nsleep 1\n\necho \"|\"\necho \"| Event script will be used to generate container command\"\necho \"| To keep command from manifest, check [Allow custom command] box\"\necho \"|\"\nsleep 1"
+			},
+			{
+				"type": "select",
+				"id": "theme",
+				"title": "theme",
+				"items": [
+					"default",
+					"gruvbox-dark",
+					"solarized light",
+					"solarized dark",
+					"darcula",
+					"ambiance",
+					"base16-dark",
+					"nord"
+				],
+				"value": "default"
+			},
+			{
+				"type": "select",
+				"id": "lang",
+				"title": "Syntax",
+				"items": [
+					"shell",
+					"powershell",
+					"javascript",
+					"python",
+					"perl",
+					"groovy",
+					"java",
+					"csharp",
+					"scala",
+					"sql",
+					"yaml",
+					"dockerfile",
+					"json",
+					"props"
+				],
+				"value": "shell"
+			},
+			{
+				"type": "checkbox",
+				"id": "json",
+				"title": "Interpret JSON in Output",
+				"value": 0
+			},
+			{
+				"type": "checkbox",
+				"id": "trunc_var",
+				"title": "Truncate variable prefix (KUBE_)",
+				"value": 0
+			},
+			{
+				"type": "checkbox",
+				"id": "verbose",
+				"title": "Verbose",
+				"value": 1
+			},
+			{
+				"type": "checkbox",
+				"id": "keep_pod",
+				"title": "Keep pod",
+				"value": 0
+			},
+			{
+				"type": "checkbox",
+				"id": "detach",
+				"title": "Detach",
+				"value": 0
+			},
+			{
+				"type": "select",
+				"id": "log_tail",
+				"title": "Job log tail size",
+				"items": [
+					"0",
+					"10",
+					"20",
+					"40",
+					"80",
+					"200",
+					"400",
+					"1000"
+				],
+				"value": "40"
+			},
+			{
+				"type": "textarea",
+				"id": "config",
+				"title": "Kube Config",
+				"rows": 5,
+				"value": ""
+			}
+		],
+		"title": "Kube-Yaml",
+		"id": "kubeyaml",
+		"command": "node bin/kube-plugin.js manifest",
+		"username": "admin",
+		"enabled": 1,
+		"ipc": 1,
+		"wf": 0,
+		"stdin": 0,
+		"modified": 1434125333,
+		"created": 1434125333,
+		"uid": "",
+		"gid": "",
+		"cwd": ""
+	}
+],
 
 		[ "listPush", "global/plugins", {
 			"params": [
