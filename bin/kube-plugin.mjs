@@ -94,7 +94,6 @@ const appsV1Api = kc.makeApiClient(AppsV1Api)
 const log = new Log(kc);
 // let metricsClient = new Metrics(kc)
 
-
 // ------ ABORT/SHUTDOWN ------
 
 let EXIT_CODE = 0
@@ -112,7 +111,6 @@ let sig = process.connected ? 'disconnect' : 'SIGTERM'
 process.on(sig, async (message) => {
   printWarning('Caught SIGTERM')
   await kubeShutDown()
-  // exit('Kubernetes workload aborted')
 })
 
 
@@ -125,7 +123,7 @@ let envVars = Object.entries(process.env)
   .map(([k, v]) => { return { name: (truncVar ? k.replace(/^KUBE_/, '') : k), value: v } })
 
 
-// ------------------------ POD/JOB Manifest --------------------------------
+// ------------------------ POD/JOB Manifest for Kube-Run --------------------------------
 
 let cpu_limit = (job.params.cpu_limit || '').trim() || '1000m'
 let mem_limit = (job.params.mem_limit || '').trim() || '512Mi'
@@ -288,7 +286,7 @@ if (process.argv[2] === "manifest") {
 
 async function listPods(namespace = 'default') {
 
-  const res = await k8sApi.listNamespacedPod({ namespace: namespace });
+  const res = await k8sApi.listNamespacedPod({ namespace: namespace }); // to do wrap it in try/catch
   const limit = listLimit || 50;
   let pods = res.items;
   let podNote = ''
@@ -384,9 +382,6 @@ async function listApps(namespace = 'default', kind = 'Deployments') {
   else if(kind === 'DaemonSets') res = await appsV1Api.listNamespacedDaemonSet({namespace: namespace})
   else res = await appsV1Api.listNamespacedDeployment({namespace: namespace})
 
-  // const res = await listNamespacedApp({namespace: namespace});
- 
-  // const res = await appsV1Api.listNamespacedStatefulSet({namespace: namespace});
   const limit = listLimit || 50;
   let deployments = res.items || [];  
   let deploymentNote = '';
@@ -518,8 +513,6 @@ async function runPod(namespace = 'default') {
   let pod;
   let logReq;
 
-  try {
-
     pod = await k8sApi.createNamespacedPod({
       namespace: namespace,
       body: podManifest,
@@ -545,8 +538,6 @@ async function runPod(namespace = 'default') {
     // --- start tracking container scheduling errors 
     try { eventWatch = await startEventWatch(namespace, objName) }
     catch (err) { printWarning("Failed to start event watch") }
-
-
 
     // ----- POD WATCH 
 
@@ -629,32 +620,11 @@ async function runPod(namespace = 'default') {
     });  // POD WATCH FINAL CALLBACK END
 
     printInfo('Pod Watch started')
-
-
-  } catch (err) {
-
-    if (err.body && err.code) { // error coming from kubernetes
-      printError('ERROR CODE: ' + err.code)
-      printError(err.body)
-      let message = 'unknown'
-      try { message = JSON.parse(err.body).reason } catch { }
-      printJSONMessage(1, parseInt(err.code) || 1, 'Kubernetes API error:' + message)
-      process.exit(parseInt(err.code) || 1)
-    }
-    else {  // run time errors
-      printError(`Error: ${err}`)
-      printError(err.stack)
-      exit('Plugin runtime error')
-    }
-
-  }
-}
+} // end of runPod
 
 // ---------------------------- RUN JOB -------------------------------------------------------
 
-async function runJob(namespace = 'default') {
-
-  try {
+async function runJob(namespace = 'default') { 
 
     let job = await batchV1Api.createNamespacedJob({ namespace: namespace, body: jobManifest });
     printInfo(`Job ${objName} created`)
@@ -770,23 +740,30 @@ async function runJob(namespace = 'default') {
 
         process.exit(EXIT_CODE)
 
-        // if (err && err.type === 'aborted') { // normal shutdown
-        //   printJSONMessage(1, EXIT_CODE, EXIT_CODE > 0 ? `Script failed with code: ${EXIT_CODE}` : null)
-        //   process.exit(EXIT_CODE)
-        // }
-        
-        // else exit(`Watch error: ${err}`);
       }
     )
+} // end of runJob
 
+// ===================== MAIN =========================
+
+async function main() {
+  try {     
+    if (process.argv[2] === 'list') {
+      if (listObject === 'Jobs') await listJobs(NAMESPACE)
+      else if (listObject === 'Deployments') await listApps(NAMESPACE, listObject)
+      else if (listObject === 'StatefulSets') await listApps(NAMESPACE, listObject)
+      else if (listObject === 'DaemonSets') await listApps(NAMESPACE, listObject)
+      else await listPods(NAMESPACE)
+    }
+    else if (asJob) await runJob(NAMESPACE)
+    else await runPod(NAMESPACE)
   }
   catch (err) {
     if (err.body && err.code) { // error coming from kubernetes
       printError('ERROR CODE: ' + err.code)
-      printError(err.body)
-      let message = 'unknown'
-      try { message = JSON.parse(err.body).reason } catch { }
-      printJSONMessage(1, parseInt(err.code) || 1, 'Kubernetes API error: ' + message)
+      try {err.body = JSON.parse(err.body)} catch { }
+      printError(err.body.message || err.body)    
+      printJSONMessage(1, parseInt(err.code) || 1, 'Kubernetes API error: ' + (err.body.reason || ''))
       process.exit(parseInt(err.code) || 1)
     }
     else {  // run time errors
@@ -795,19 +772,6 @@ async function runJob(namespace = 'default') {
       exit('Plugin runtime error')
     }
   }
-
 }
 
-// ===================== MAIN =========================
-
-
-if (process.argv[2] === 'list') {
-  if(listObject === 'Jobs') listJobs(NAMESPACE)
-  else if(listObject === 'Deployments') listApps(NAMESPACE, listObject)
-  else if(listObject === 'StatefulSets') listApps(NAMESPACE, listObject)
-  else if(listObject === 'DaemonSets') listApps(NAMESPACE, listObject)
-  else listPods(NAMESPACE)
-
-}
-else if (asJob) runJob(NAMESPACE)
-else runPod(NAMESPACE)
+main();
