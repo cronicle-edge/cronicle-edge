@@ -362,11 +362,31 @@ $sqlArgs.AddRange(@("--external:better-sqlite3", "--external:mysql"))
 
 if($SQL) { $Oracle = $MSSQL = $Mysql = $Pgsql = $true }
 
-$Mysql ? $sqlDrivers.Add("mysql2"): $sqlArgs.Add("--external:mysql2") | Out-Null
-$Pgsql ? $sqlDrivers.AddRange(@("pg", "pg-query-stream")) : $sqlArgs.AddRange(@("--external:pg", "--external:pg-query-stream")) | Out-Null
-$Oracle ? $sqlDrivers.Add("oracledb@6.5.0") : $sqlArgs.Add("--external:oracledb") | Out-Null
-$MSSQL ? $sqlDrivers.Add("tedious") : $sqlArgs.Add("--external:tedious") | Out-Null
-$Sqlite ? $sqlDrivers.Add("sqlite3") : $sqlArgs.Add("--external:sqlite3") | Out-Null
+if ($Mysql) {
+  $sqlDrivers.Add("mysql2") | Out-Null
+} else {
+  $sqlArgs.Add("--external:mysql2") | Out-Null
+}
+if ($Pgsql) {
+  $sqlDrivers.AddRange(@("pg", "pg-query-stream")) | Out-Null
+} else {
+  $sqlArgs.AddRange(@("--external:pg", "--external:pg-query-stream")) | Out-Null
+}
+if ($Oracle) {
+  $sqlDrivers.Add("oracledb@6.5.0") | Out-Null
+} else {
+  $sqlArgs.Add("--external:oracledb") | Out-Null
+}
+if ($MSSQL) {
+  $sqlDrivers.Add("tedious") | Out-Null
+} else {
+  $sqlArgs.Add("--external:tedious") | Out-Null
+}
+if ($Sqlite) {
+  $sqlDrivers.Add("sqlite3") | Out-Null
+} else {
+  $sqlArgs.Add("--external:sqlite3") | Out-Null
+}
 
 # bundle SQL engine if at least 1 SQL driver selected
 if($sqlDrivers.Count -gt 0) {
