@@ -58,6 +58,8 @@ stream.on('json', function (job) {
 
 	let script = (job.params.script || '').trim()
 
+	let childOpts = {stdio: ['pipe', 'pipe', 'pipe']}
+
 	if (os.platform() == 'win32') { // if Windows - try to parse shebang or invoke as bat file
 		let fl = script.substring(0, script.indexOf("\n")).trim()
 		script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + job.id + '.ps1')
@@ -87,11 +89,12 @@ stream.on('json', function (job) {
 		else { // if no shebang - just treat it as bat file
 			script_file += '.bat'
 			child_exec = script_file
+			childOpts['shell'] = true // set shell to true to work around CVE-2024-27980 
 		}
 	}
 	
 	fs.writeFileSync(script_file, script, { mode: "775" });
-	const child = cp.spawn(child_exec, child_args, {stdio: ['pipe', 'pipe', 'pipe']});
+	const child = cp.spawn(child_exec, child_args, childOpts);
 
 	let kill_timer = null;
 	let stderr_buffer = '';
