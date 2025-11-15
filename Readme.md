@@ -16,7 +16,7 @@ Images:
  # test latest and greatest:
  docker run -it --rm -p 3012:3012 ghcr.io/cronicle-edge/cronicle-edge:main manager
 
-# typicall local setup
+# typical local setup
  mkdir -p $HOME/cron && docker run -d --name cron \
  --hostname manager1 \
  -p 3012:3012 --restart always  \
