@@ -29,7 +29,7 @@ Class.add( Page.Admin, {
 		
 		// Active Server Cluster
 		
-		var cols = ['Hostname', 'IP Address', 'PID', 'Node', 'Engine', 'Groups', 'Status', 'Active Jobs', 'Uptime', 'CPU', 'Mem', 'Actions'];
+		var cols = ['Hostname', 'IP Address', 'Platform', 'PID', 'Node', 'Engine', 'Groups', 'Status', 'Active Jobs', 'Uptime', 'CPU', 'Mem', 'Actions'];
 		
 		html += '<div class="subtitle">';
 			html += 'Server Cluster';
@@ -106,6 +106,7 @@ Class.add( Page.Admin, {
 			var tds = [
 				'<div class="td_big">' + self.getNiceGroup(null, server.hostname, col_width) + '</div>',
 				(server.ip || 'n/a').replace(/^\:\:ffff\:(\d+\.\d+\.\d+\.\d+)$/, '$1'),
+				`<span title="release: ${encode_entities(server.release)}"> ${server.platform}</span>`,
 				server.pid,
 				server.nodev,
 				server.engine || '',
