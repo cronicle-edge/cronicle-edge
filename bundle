@@ -279,6 +279,7 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/run-detached.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  --loader:.node=file bin/docker-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/  bin/kube-plugin.mjs
+esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/ --external:node-pty bin/terminal-plugin.js
 
 # ----------- Tools (repair/migrate)
 if [ "$tools" = 1 ]; then
@@ -422,6 +423,20 @@ if [ ! -e 'package.json' ]; then
    npm pkg set bin="bin/control.sh"
    npm pkg set main="bin/cronicle.js"
    npm pkg set scripts.start="bin/cronicle.js --foreground --echo --manager --color"
+fi
+
+# installing node-pty if needed
+# for musl/alpine need to build module from src (install python3 and alpine-sdk)
+# for other plaforms just use @lydell/node-pty fork with pre-built binaries
+if [ -d node_modules/node-pty ]; then
+ : do nothing
+elif [ -f /etc/alpine-release ]; then
+    ## @lydell fork doesnt support musl
+    writehead "Installing node-pty, it requires python3 and alpine-sdk to build"
+    npm i node-pty
+else
+    writehead "Installing @lydell/node-pty as node-pty"
+    npm i node-pty@npm:@lydell/node-pty
 fi
 
 if [ "$lmdb" = 1 ]; then

@@ -313,6 +313,7 @@ esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/run-detached.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:ssh2 bin/docker-plugin.js
 esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/  bin/kube-plugin.mjs
+esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$Path/bin/ --external:node-pty bin/terminal-plugin.js
 
 
 # ------------ Bundle Storage Engines ------------------------------ #
@@ -449,6 +450,12 @@ if(!(Test-Path "package.json")) {
   npm pkg set scripts.start="node bin/cronicle.js --foreground --echo --manager --color"
 }
 if($Lmdb) { npm i "lmdb@2.9.4" --loglevel silent}
+
+if(!(Test-Path node_modules/node-pty)) {
+  Write-Host " Installing @lydell/node-pty as node-pty" 
+  npm i 'node-pty@npm:@lydell/node-pty'
+}
+
 Pop-Location
 
 if($Restart) {
