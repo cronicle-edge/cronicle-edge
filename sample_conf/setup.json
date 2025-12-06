@@ -612,6 +612,60 @@
 				{ "type":"text", "id":"error_match", "title":"Error Match", "size":20, "value":"" }
 			]
 		} ],
+
+		["listPush", "global/plugins", {
+            "id": "terminal",
+            "title": "Terminal",
+            "enabled": 1,
+            "command": "node  bin/terminal-plugin.js",
+            "uid": "",
+            "params": [
+              { "type": "text",  "id": "cols", "title": "Terminal Width", "size": 5, "value": "120" },
+              { "type": "text", "id": "rows", "title": "Terminal Height",  "size": 5, "value": "" },
+              { "type": "textarea", "id": "script", "title": "Script Source", "rows": 10,
+                "value": "#!/usr/bin/env node\n\nconsole.log('This plugin will execute the script in terminal emulator (to capture colors)')\nconsole.table(Object.entries(process.env)\n  .filter(([key, val]) => key.startsWith('JOB_') && val.length < 100)\n  .slice(0,25)\n  .map(([key, val]) => ({ key, val }))\n);"
+              },
+              { "type": "select", "id": "lang", "title": "syntax",  "items": [
+                  "shell",
+                  "powershell",
+                  "javascript",
+                  "python",
+                  "perl",
+                  "groovy",
+                  "java",
+                  "csharp",
+                  "scala",
+                  "sql",
+                  "yaml",
+                  "toml",
+                  "dockerfile"
+                ],
+                "value": "shell"
+              },
+              { "type": "select",  "id": "theme",  "title": "theme",  "items": [
+                  "default",
+                  "light",
+                  "gruvbox-dark",
+                  "solarized light",
+                  "solarized dark",
+                  "darcula",
+                  "ambiance",
+                  "base16-dark",
+                  "nord"
+                ],
+                "value": "default"
+              },
+              { "type": "filelist", "id": "files", "title": "File List", "theme": "default", "value": 0 }
+            ],
+            "ipc": 1,
+            "wf": 0,
+            "stdin": 0,
+            "cwd": "",
+            "gid": "",
+            "script": ""
+          }
+		],
+
 		[ "listCreate", "global/categories", {} ],
 		[ "listPush", "global/categories", {
 			"id": "general",
