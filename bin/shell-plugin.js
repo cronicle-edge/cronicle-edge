@@ -28,6 +28,14 @@ process.stdout.setEncoding('utf8');
 
 const stream = new JSONStream(process.stdin, process.stdout);
 
+// detect "clear line" like sequences and return string after it.
+function trimAnimation(line) {
+		if(line.lastIndexOf('\x1b[0K') > -1)  return line.substring(line.lastIndexOf('\x1b[0K') + 4)
+	    if(line.lastIndexOf('\x1b[K\r') > -1)   return line.substring(line.lastIndexOf('\x1b[K\r') + 4)
+		if(line.trimEnd().lastIndexOf('\r') > -1) return (line.trimEnd().lastIndexOf('\r') + 1)
+		return line
+}
+
 stream.on('json', function (job) {
 	// got job from parent 
 
@@ -103,6 +111,14 @@ stream.on('json', function (job) {
 	// if tty option is checked do not pass stdin (to avoid it popping up in the log)
 	const cstream = job.tty ? new JSONStream(child.stdout) : new JSONStream(child.stdout, child.stdin);
 
+	// TODO: parse animations (progress bars/spinners ) into memo. 
+	// if (job.params.animation) {
+    // child.stdout.on("data", (data) => {  // data is set to be string by "process.stdout.setEncoding('utf8');"
+	//   let ax = indexOfAnimationEnd(data)
+    //   if (ax > 0) { stream.write({memo: data.substring(ax)}); }
+    //   });
+    // }
+
 	cstream.recordRegExp = /^\s*\{.+\}\s*$/;
 	cstream.EOL = "\n" // force \n on Windows (default \r\n will cause issues if \n is used by the app (e.g. console.log))
 
@@ -116,36 +132,49 @@ stream.on('json', function (job) {
 	});
 
 	cstream.on('text', function (line) {
+
+		let l = line.trim()
+
 		// received non-json text from child
-		// look for plain number from 0 to 100, treat as progress update
-		if (line.match(/^\s*(\d+)\%\s*$/)) {
-			let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
-			stream.write({
-				progress: progress
-			});
-		}
-		else if(line.match(/^\s*\#(.{1,140})\#\s*$/)){
-			let memoText = RegExp.$1
-			stream.write({
-				memo: memoText
-			});	
-			
-			// if(job.params.logmemo) { 
-			// 	let dint = moment().diff(start) > 999000 ? 'm' : 's'
-			// 	let diff = String(moment().diff(start, dint)).padStart(2, ' ')
-			// 	start = moment()
-			// 	console.log(`[${start.format('yyyy-MM-DD HH:mm:ss')}][${diff}${dint}]: ${memoText}`);
-			// }
-		}
-		else {
-			// otherwise just log it
-			if (job.params.annotate) {
-				// let dargs = Tools.getDateArgs(new Date());
-				// line = '[' + dargs.yyyy_mm_dd + ' ' + dargs.hh_mi_ss + '] ' + line;
-				line = `[${new Date().toISOString()}] ${line}`
-			}
-			fs.appendFileSync(job.log_file, line);  
-		}
+		// memo parsing
+        if (l.startsWith("#") && l.endsWith("#") && l.length <= 142) {
+          stream.write({
+            memo: l.substring(1, l.length - 1),
+          });
+        }
+		// parse percentage
+        else if (l.endsWith("%") && l.length <= 4) {
+          let p = parseInt(l);
+          if (p) {
+            stream.write({
+              progress: Math.max(0, Math.min(100, p)) / 100
+            });
+          }
+        }
+        // legacy regex
+        // look for plain number from 0 to 100, treat as progress update
+        // if (line.match(/^\s*(\d+)\%\s*$/)) {
+        // 	let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
+        // 	stream.write({
+        // 		progress: progress
+        // 	});
+        // }
+        // else if(line.match(/^\s*\#(.{1,140})\#\s*$/)){
+        // 	let memoText = RegExp.$1
+        // 	stream.write({
+        // 		memo: memoText
+        // 	});
+        // }
+        else {
+          // otherwise just log it
+		  line = trimAnimation(line)
+          if (job.params.annotate) {
+            // let dargs = Tools.getDateArgs(new Date());
+            // line = '[' + dargs.yyyy_mm_dd + ' ' + dargs.hh_mi_ss + '] ' + line;
+            line = `[${new Date().toISOString()}] ${line}`;
+          }
+          fs.appendFileSync(job.log_file, line.endsWith('\n') ? line : line + "\n");
+        }
 	});
 
 	cstream.on('error', function (err, text) {

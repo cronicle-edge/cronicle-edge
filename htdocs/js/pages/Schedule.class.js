@@ -2032,7 +2032,10 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			'<div class="caption">Hide job from common reporting (for maintenance/debug).</div>' +
 
 			'<div style="margin-top:10px"><input type="checkbox" id="fe_ee_concurrent_arg" value="1" ' + (event.concurrent_arg ? 'checked="checked"' : '') + '/><label for="fe_ee_concurrent_arg">Argument Concurrency</label>' +
-			'<div class="caption">Apply concurrency setting to event/argument combination, allowing concurrent job for each distinct argument passed by WF.</div>'
+			'<div class="caption">Apply concurrency setting to event/argument combination, allowing concurrent job for each distinct argument passed by WF.</div>' +
+
+			'<div style="margin-top:10px"><input type="checkbox" id="fe_ee_debug" value="1" ' + (event.debug ? 'checked="checked"' : '') + '/><label for="fe_ee_debug">Debug</label>' +
+			'<div class="caption">Ask event plugin to print debug logs if available</div>'
 
 		);
 		html += get_form_table_spacer();
@@ -3129,6 +3132,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		// event silent
 		event.silent = $('#fe_ee_silent').is(':checked') ? 1 : 0;
+
+		// event debug
+		event.debug = $('#fe_ee_debug').is(':checked') ? 1 : 0;
 
 		// argument concurrency
 		event.concurrent_arg = $('#fe_ee_concurrent_arg').is(':checked') ? 1 : 0;
