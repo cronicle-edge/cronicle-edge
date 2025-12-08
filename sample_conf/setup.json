@@ -38,7 +38,7 @@
 			"enabled": 1,
 			"command": "node bin/shell-plugin.js",
 			"username": "admin",
-			"uid": 1000,
+			"uid": "cronicle",
 			"modified": 1434125333,
 			"created": 1434125333,
 			"params": [
@@ -618,7 +618,9 @@
             "title": "Terminal",
             "enabled": 1,
             "command": "node  bin/terminal-plugin.js",
-            "uid": "",
+            "uid": "cronicle",
+			"modified": 1608659489,
+			"created": 1608659489,
             "params": [
               { "type": "text",  "id": "cols", "title": "Terminal Width", "size": 5, "value": "120" },
               { "type": "text", "id": "rows", "title": "Terminal Height",  "size": 5, "value": "" },
