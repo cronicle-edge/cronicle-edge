@@ -7,7 +7,7 @@
 # FROM alpine:3.19.1
 # RUN apk add --no-cache bash nodejs tini util-linux bash openssl procps coreutils curl tar jq
 
-FROM cronicle/base-alpine as build
+FROM cronicle/base-alpine AS build
 RUN apk add --no-cache npm python3 alpine-sdk
 COPY . /build
 WORKDIR /build
@@ -22,7 +22,7 @@ RUN  addgroup cronicle --gid $CRONICLE_GID && adduser -D -h /opt/cronicle -u $CR
 
 COPY --from=build /dist /opt/cronicle
 
-ENV PATH "/opt/cronicle/bin:${PATH}"
+ENV PATH="/opt/cronicle/bin:${PATH}"
 ENV CRONICLE_foreground=1
 ENV CRONICLE_echo=1
 ENV TZ=America/New_York 
