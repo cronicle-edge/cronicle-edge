@@ -63,18 +63,42 @@ docker stack deploy --compose-file  Docker/LocalCluster.yaml cron_stack
 
 You can import some demo jobs from **sample_conf/backup** file. This can be done via UI (see below). Check [Docker](https://github.com/cronicle-edge/cronicle-edge/tree/main/Docker) section for Dockerfile and other examples for real life use. 
 
+# What's new
+
+# Plugins
+ - ### Shell Plugin Improvements:
+
+1) Syntax highlighting with editor themes and full-screen mode (F11)
+2) Fixed ANSI colors in live-log and console output 
+3) Parameters - you can define custom parameters in configuration under *params* property and inject them in your shell scripts.  E.g. if you have `params.sql.query1` config you can refer to it in the script as [/sql/query1]
+4) Arguments - similar to parameter, but those are defined in event properties and injected as env variables (e.g. $ARG1). Those also could be changed by non-editor users. Arguments could also be used with other plugins (HTTP and Workflow, see below)
+
+- ### Workflow Plugin
+Use this plugin to run multiple jobs in parallel, or invoke same event multiple times with different parameters. You can run group of jobs based on category or event title prefix. To run same event multiple times you can specify comma separated argument list (argument value will be available as `JOB_ARG` env variable).
+
+- ### SSH Plugin
+Run your code snippets on remote machines over SSH. No cronicle agent or openssh installation needed! Can even run on Windows hosts (if openssh is configured). Use with WF plugin to run on multiple hosts.
+
+- ### Docker Plugin
+Run your code snippet in docker. Cronicle will set up container with your script and optionally some other files. Can use local or remote (over ssh) docker engine.
+
+- ### Kubernetes Plugin
+Run your code snippet in Kubernetes. Cronicle will set up pod or kubernetes job using your script. Will use local kubeconfig by default, but can specify custom configuration via secrets.
+
+- ### Terminal Plugin  
+Run your script in actual terminal emulator (using node-pty) in order to capture colorful outputs and simple animations of your cli tools.
+
+# New Storage Engines
+- ### S3 Storage in the box
+  Refer to [1.5.14 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.5.14) for more details.
+
+- ### SQL Engines
+  Supports SQLite (local), Postgre, Mysql, Oracle, MSSQL. Can be added during bundling (e.g. ./bundle --sqlite --mysql --oracle). If using SQLite, can specify local db (file) in manager entrypoint and storage-cli (e.g. ./dist/bin/managet --sqlite /path/to/sql.db)
+  
+- ### KV Engines
+  Supports LevelDB and LMDB  (./bundle --level --lmdb). Along with SQLite this could be a good alternative for default FS Engine, since it's using 1 or several files.
+
 # New Features
-
- ### Shell Plugin Improvement:
-
-- Syntax highlighting with editor themes and full-screen mode (F11)
-- Fixed ANSI colors in live-log and console output 
-- Parameters - you can define custom parameters in configuration under *params* property and inject them in your shell scripts.  E.g. if you have `params.sql.query1` config you can refer to it in the script as [/sql/query1]
-- Arguments - similar to parameter, but those are defined in event properties and injected as env variables (e.g. $ARG1). Those also could be changed by non-editor users. Arguments could also be used with other plugins (HTTP and Workflow, see below)
-
-### S3 Storage in the box
-Refer to [1.5.14 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.5.14) for more details.
-
 ### SSO login via oauth2
 Can verify user via common oauth providers (github, google, authentik, microsof, keyclock, etc)
 Refer to [1.11.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.11.1) for more details.
@@ -109,12 +133,6 @@ In order to modify shell plug script and run it manually user should have Admin 
 
 ### Schedule - Graph View
 Scheduled event page can be viewed as a graph. It's useful to track chained jobs. Graph nodes are clickable. You can also delete event via graph (press del key). There is also cycled chain auto-detection. E.g. if a job is chaining from itself, you'll see a warning.
-
-### Workflow Plugin
-Use this plugin to run multiple jobs in parallel, or invoke same event multiple times with different parameters. You can run group of jobs based on category or event title prefix. To run same event multiple times you can specify comma separated argument list (argument value will be available as `JOB_ARG` env variable).
-
-### SSH Plugin
-Run your code snippets on remote machines over SSH. No cronicle agent or openssh installation needed! Can even run on Windows hosts (if openssh is configured). Use with WF plugin to run on multiple hosts.
 
 ### Event History Chart
 Main page will include a bar chart showing last N completed jobs. It will help to quickly catch failed or long running jobs. You can set default job count and scale (linear/logarithmic) via `ui.job_chart_limit` and `ui.job_chart_scale` configs.
