@@ -7,9 +7,9 @@ This is a fork of [jhuckaby/Cronicle](https://github.com/jhuckaby/Cronicle) with
 # Install:
 ## Docker
 Images:
- - dockerhub (auto, releases, arm64 supported): **cronicle/edge:latest  | cronicle/edge:v1.x.y**
+ - dockerhub (auto, releases, arm64, arm/v7 supported): **cronicle/edge:latest  | cronicle/edge:v1.x.y**
  - github (auto, main/releases): **ghcr.io/cronicle-edge/cronicle-edge:main  | ghcr.io/cronicle-edge/cronicle-edge:v1.x.y**
- - arm32 (raspberry pi): **cronicle/edge-pi:latest**
+ - arm32/v7 (raspberry pi): **cronicle/edge-pi:latest**  (before 1.14.1)
  - classic cronicle: **cronicle/cronicle:latest**  (it also supports manager/worker entrypoint)
 
 ```bash
