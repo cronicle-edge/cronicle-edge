@@ -28,7 +28,12 @@ catch {
 }
 
 let script = process.env["SCRIPT"]
-let child_opts = {cols: parseInt(process.env['COLS']) || 80, rows: parseInt(process.env['ROWS']) || 80 }
+
+let child_opts = {
+      name: 'xterm-256color',
+      cols: parseInt(process.env['COLS']) || 80,
+      rows: parseInt(process.env['ROWS']) || 80,
+}
 let child_args = []
 let script_file = path.join(os.tmpdir(), 'cronicle-script-temp-' + process.env['JOB_ID'] + '.sh');	
 let child_exec = script_file
@@ -60,7 +65,7 @@ fs.writeFileSync(script_file, script, { mode: "775" });
 const child = pty.spawn(child_exec, child_args, child_opts)
 printDebug(cmdInfo + ` (pid: ${child.pid})`)
 
-child.on('data', (d)=>{    
+child.on('data', (d)=>{     
    fs.appendFileSync(process.env["JOB_LOG_FILE"], d)
 }) 
 

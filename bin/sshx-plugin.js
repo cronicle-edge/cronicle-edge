@@ -11,9 +11,11 @@ const job = JSON.parse(fs.readFileSync(process.stdin.fd))
 
 let pref = !!job.params.annotate
 
+const debug = parseInt(process.env["JOB_DEBUG"]);
+
 const print = (text) => process.stdout.write((pref ?  `[${new Date().toISOString()}] ` : '') + text + EOL)
-const printInfo = (text) => process.stdout.write(`[INFO] \x1b[32m${text}\x1b[0m` + EOL)
-const printWarning = (text) => process.stdout.write(`[INFO] \x1b[33m${text}\x1b[0m` + EOL)
+const printInfo = (text) => { if(debug) process.stdout.write(`[INFO] \x1b[32m${text}\x1b[0m` + EOL) }
+const printWarning = (text) => { if(debug) process.stdout.write(`[WARN] \x1b[33m${text}\x1b[0m` + EOL) }
 const printError = (text) => process.stdout.write(`\x1b[31m${text}\x1b[0m` + EOL)
 
 const printComplete = (complete, code, desc) => {
@@ -40,8 +42,8 @@ let json = parseInt(process.env['JSON'])
 let truncVar = parseInt(process.env['TRUNC_VAR']) // optionally remove SSH_ prefix from passed vars
 
 let ext = { powershell: 'ps1', csharp: 'cs', java: 'java', python: 'py', javascript: 'js' } // might be useful in Windows (TODO)
-
-let tmpFile = '/tmp/cronicle-' + process.env['JOB_ID'] + '.' + (ext[process.env['LANG']] || 'sh')
+let tmpDir = process.env['SSH_TMPDIR'] || '/tmp'
+let tmpFile = tmpDir + '/cronicle-' + process.env['JOB_ID'] + '.' + (ext[process.env['LANG']] || 'sh')
 
 // set interpreter for stdin script
 let command = 'sh -'  // process.env['SSH_CMD'] ?? 'ls -lah /'
@@ -156,22 +158,32 @@ try {
 
                 String(data).trim().split('\n').forEach(line => {
 
-                    if (line.trim().startsWith('trap:')) {
-                        trapCmd = line.trim().substring(5)
-                        printInfo(`Kill command set to: ${trapCmd}\x1b[0m`)
-                    }
+                    let l = line.trim()
 
-                    else if (line.match(/^\s*(\d+)\%\s*$/)) { // handle progress
-                        let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
-                        printJson({ progress: progress })
+                    if (line.trim().startsWith("trap:")) {
+                      trapCmd = line.trim().substring(5);
+                      printInfo(`Kill command set to: ${trapCmd}\x1b[0m`);
+                    } 
+                    else if (l.startsWith("#") && l.endsWith("#") && l.length <= 142 ) {
+                      printJson({ memo: l.substring(1, l.length - 1) });
                     }
-                    else if (line.match(/^\s*\#(.{1,60})\#\s*$/)) { // handle memo
-                        let memoText = RegExp.$1
-                        printJson({ memo: memoText })
+                    // parse percentage
+                    else if (l.endsWith("%") && l.length <= 4) {
+                      let p = parseInt(l);
+                      if (p) printJson({ progress: Math.max(0, Math.min(100, p)) / 100 })
                     }
+                    // legacy memo/progress calc 
+                    // else if (line.match(/^\s*(\d+)\%\s*$/)) { // handle progress
+                    //     let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
+                    //     printJson({ progress: progress })
+                    // }
+                    // else if (line.match(/^\s*\#(.{1,140})\#\s*$/)) { // handle memo
+                    //     let memoText = RegExp.$1
+                    //     printJson({ memo: memoText })
+                    // }
                     else {
-                        // adding ANSI sequence (grey-ish color) to prevent JSON interpretation
-                        print(json ? line : `\x1b[109m${line}\x1b[0m`)
+                      // adding ANSI sequence (grey-ish color) to prevent JSON interpretation
+                      print(json ? line : `\x1b[109m${line}\x1b[0m`);
                     }
                 }) // foreach
 

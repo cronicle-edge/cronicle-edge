@@ -11,18 +11,21 @@ const fs = require('fs')
 let job = {}
 try { job = JSON.parse(fs.readFileSync(process.stdin.fd)) } catch { }
 
+const debug = parseInt(process.env["JOB_DEBUG"]);
+
 // helpers functions
 const print = (text) => process.stdout.write(text + EOL)
-const printInfo = (text) => process.stdout.write(`[INFO] \x1b[32m${text}\x1b[0m` + EOL)
-const printWarning = (text) => process.stdout.write(`[INFO] \x1b[33m${text}\x1b[0m` + EOL)
+const printInfo = (text) => { if(debug) process.stdout.write(`[INFO] \x1b[32m${text}\x1b[0m` + EOL) }
+const printWarning = (text) => { if(debug) process.stdout.write(`[WARN] \x1b[33m${text}\x1b[0m` + EOL) }
+const printJson = (json) => { process.stdout.write(JSON.stringify(json) + EOL) }
 const printError = (text) => process.stdout.write(`\x1b[31m${text}\x1b[0m` + EOL)
-const printJSONMessage = (complete, code, description) => {
+const reportCompletion = (complete, code, description) => {
     let msg = JSON.stringify({ complete: complete, code: code, description: description })
     process.stdout.write(msg + EOL)
 }
 
 const exit = (message) => {
-    printJSONMessage(1, 1, message)
+    reportCompletion(1, 1, message)
     if (process.connected) process.disconnect()
     process.exit(1)
 }
@@ -91,14 +94,24 @@ const stdout = new Writable({
 
         String(chunk).trim().split('\n').forEach(line => {
 
-            if (line.match(/^\s*(\d+)\%\s*$/)) { // handle progress
-                let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
-                print(JSON.stringify({ progress: progress }))
+            let l = line.trim()
+
+            if (l.startsWith("#") && l.endsWith("#") && l.length <= 142) {
+                printJson({ memo: l.substring(1, l.length - 1) });
             }
-            else if (line.match(/^\s*\#(.{1,60})\#\s*$/)) { // handle memo
-                let memoText = RegExp.$1
-                print(JSON.stringify({ memo: memoText }))
+            else if (l.endsWith("%") && l.length <= 4) {
+                let p = parseInt(l);
+                if (p) printJson({ progress: Math.max(0, Math.min(100, p)) / 100 })
             }
+            // legacy memo/progress
+            // if (line.match(/^\s*(\d+)\%\s*$/)) { // handle progress
+            //     let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
+            //     print(JSON.stringify({ progress: progress }))
+            // }
+            // else if (line.match(/^\s*\#(.{1,140})\#\s*$/)) { // handle memo
+            //     let memoText = RegExp.$1
+            //     print(JSON.stringify({ memo: memoText }))
+            // }
             else {
                 // hack: wrap line with ANSI color to prevent JSON interpretation (default Cronicle behavior)
                 print(json ? line : `\x1b[109m${line}\x1b[0m`)
@@ -207,7 +220,7 @@ const dockerRun = async () => {
         };
 	    
         // normal shutdown    
-        printJSONMessage(1, exit.StatusCode, exit.StatusCode ? `code: ${exit.StatusCode}; ${stderr_msg || '(unknown error)'} ` : null)
+        reportCompletion(1, exit.StatusCode, exit.StatusCode ? `code: ${exit.StatusCode}; ${stderr_msg || '(unknown error)'} ` : null)
         process.exit(exit.StatusCode)
     }
     catch (e) {

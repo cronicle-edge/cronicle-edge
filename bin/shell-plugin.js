@@ -60,9 +60,12 @@ stream.on('json', function (job) {
 		}
 	}
 
-	if (job.tty) process.env['TERM'] = 'xterm';
-	let child_exec = job.tty ? "/usr/bin/script" : script_file;
-	let child_args = job.tty ? ["-qec", script_file, "--flush", "/dev/null"] : [];
+	// Deprecating tty option, use Terminal plugin instead
+	// if (job.tty) process.env['TERM'] = 'xterm';
+	// let child_exec = job.tty ? "/usr/bin/script" : script_file;
+	// let child_args = job.tty ? ["-qec", script_file, "--flush", "/dev/null"] : [];
+	let child_exec = script_file;
+	let child_args = [];
 
 	let script = (job.params.script || '').trim()
 
@@ -109,7 +112,9 @@ stream.on('json', function (job) {
 	let sent_html = false;
 
 	// if tty option is checked do not pass stdin (to avoid it popping up in the log)
-	const cstream = job.tty ? new JSONStream(child.stdout) : new JSONStream(child.stdout, child.stdin);
+	// deprecating tty - use Terminal plugin instead
+	// const cstream = job.tty ? new JSONStream(child.stdout) : new JSONStream(child.stdout, child.stdin);
+	const cstream = new JSONStream(child.stdout, child.stdin);
 
 	// TODO: parse animations (progress bars/spinners ) into memo. 
 	// if (job.params.animation) {
