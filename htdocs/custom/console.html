@@ -14,9 +14,9 @@
         }
 
         body {
-            background-color: black;
+            background-color: #0C0C0C;
             color: #f2f2f2;
-            background-image: radial-gradient(rgba(47, 79, 79, 0.75), black 120%);
+            /* background-image: radial-gradient(rgba(47, 79, 79, 0.75), black 120%); */
             font: 1rem Inconsolata, monospace;
         }
 
@@ -34,6 +34,33 @@
 
      <script>
         let ansi_up = new AnsiUp;
+        // set Campbell color scheme
+	    const campbellColors = {
+             'ansi-black': [12, 12, 12],
+             'ansi-red': [197, 15, 31],
+             'ansi-green': [19, 161, 14],
+             'ansi-yellow': [193, 156, 0],
+             'ansi-blue': [0, 55, 218],
+             'ansi-magenta': [136, 23, 152],
+             'ansi-cyan': [58, 150, 221],
+             'ansi-white': [204, 204, 204],
+             'ansi-bright-black': [118, 118, 118],
+             'ansi-bright-red': [231, 72, 86],
+             'ansi-bright-green': [22, 198, 12],
+             'ansi-bright-yellow': [249, 241, 165],
+             'ansi-bright-blue': [59, 120, 255],
+             'ansi-bright-magenta': [180, 0, 158],
+             'ansi-bright-cyan': [97, 214, 214],
+             'ansi-bright-white': [242, 242, 242]
+         };
+
+        ansi_up.ansi_colors.forEach(colorGroup => {
+          colorGroup.forEach(color => {
+            if (campbellColors[color.class_name]) {
+              color.rgb = campbellColors[color.class_name];
+            }
+          });
+        });
 
         let invalidJobError = `<span style="color:red"><b>Invalid job id </b></span>`
         let prog = document.getElementById('progress');
@@ -43,11 +70,13 @@
         let qParams = new URLSearchParams(query)
 
     function trimAnimation(line) {
-        // if(typeof line !== 'string') return
-		if(line.indexOf('\x1b[H') > -1) return line.substring(line.lastIndexOf("\x1b[H") + 3); // line has "return to home" character, that should be animation
+        let homeMatch =  line.split(/\x1b\[(?:1[;\d]*|)H/).at(-1) // catch "return home" sequence
+		if(homeMatch) line = homeMatch        
+		// if(line.indexOf('\x1b[H') > -1) return line.substring(line.lastIndexOf("\x1b[H") + 3); // line has "return to home" character, that should be animation
+        if (line.endsWith("\x1B[0K\x1B[0m\x1B[m")) return line; // used by git diff / delta for row highlight
         if (line.indexOf("\x1b[0K") > -1) return line.substring(line.lastIndexOf("\x1b[0K") + 4);
 		if (line.indexOf("\x1b[K\r") > -1) return line.substring(line.lastIndexOf("\x1b[K\r") + 4); // windows version of [0K
-        if (line.trimEnd().indexOf("\r") > -1) return line.substring(line.trimEnd().indexOf("\r"));
+        if (line.trimEnd().indexOf("\r") > -1) return line.substring(line.trimEnd().lastIndexOf("\r"));
         return line;
       }
 
