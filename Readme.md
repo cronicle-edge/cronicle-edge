@@ -93,7 +93,7 @@ Run your script in actual terminal emulator (using node-pty) in order to capture
   Refer to [1.5.14 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.5.14) for more details.
 
 - ### SQL Engines
-  Supports SQLite (local), Postgre, Mysql, Oracle, MSSQL. Can be added during bundling (e.g. ./bundle --sqlite --mysql --oracle). If using SQLite, can specify local db (file) in manager entrypoint and storage-cli (e.g. ./dist/bin/managet --sqlite /path/to/sql.db)
+  Supports SQLite (local), Postgre, Mysql, Oracle, MSSQL. Can be added during bundling (e.g. ./bundle --sqlite --mysql --oracle). If using SQLite, can specify local db (file) in manager entrypoint and storage-cli (e.g. ./dist/bin/manager --sqlite /path/to/sql.db)
   
 - ### KV Engines
   Supports LevelDB and LMDB  (./bundle --level --lmdb). Along with SQLite this could be a good alternative for default FS Engine, since it's using 1 or several files.
