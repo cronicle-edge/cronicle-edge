@@ -61,7 +61,7 @@ function printJSONmessage(complete, code, desc) {
                     let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
                     stream.write({progress: progress})
                 }
-                else if (line.match(/^\s*\#(.{1,60})\#\s*$/)) { // handle memo
+                else if (line.match(/^\s*\#(.{1,140})\#\s*$/)) { // handle memo
                     let memoText = RegExp.$1
                     stream.write({
                         memo: memoText

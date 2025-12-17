@@ -2170,13 +2170,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// debugging options (avoid emails/webhooks/history), existing events only
 		if (event.id) {
 			let sudo = app.isAdmin() ? '<input type="checkbox" id="fe_ee_debug_sudo" class="debug_options" value="1"><label for="fe_ee_debug_sudo" title="This will ignore plugin UID setting and run the job using main process UID"> Sudo </label><br>' : "";
-			let ttyTitle = "This option let you capture colorized terminal output using /usr/bin/script tool (typically in the box, on alpine install util-linux). Please note - it will supress stdin/stderr sent to/from job and will also hang on interactive prompts"
+			// let ttyTitle = "This option let you capture colorized terminal output using /usr/bin/script tool (typically in the box, on alpine install util-linux). Please note - it will supress stdin/stderr sent to/from job and will also hang on interactive prompts"
 			html += get_form_table_row('Debug Opts', `				
 				  <input type="checkbox" id="fe_ee_debug_chain"  value="1"><label for="fe_ee_debug_chain"> Omit chaining</label><br>
 				  <input type="checkbox" id="fe_ee_debug_notify"  value="1"><label for="fe_ee_debug_notify"> Omit notification </label><br>
-				  <input type="checkbox" id="fe_ee_debug_tty" value="1"><label for="fe_ee_debug_tty" title="${ttyTitle}"> Use terminal emulator</label><br>
-				  ${sudo}
+				 ${sudo}
 				  `);
+			//   <input type="checkbox" id="fe_ee_debug_tty" value="1"><label for="fe_ee_debug_tty" title="${ttyTitle}"> Use terminal emulator</label><br>
 			html += get_form_table_caption("Debugging options. Applies only to manual execution (not stored with event)");
 			html += get_form_table_spacer();
 		} //

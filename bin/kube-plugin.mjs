@@ -14,10 +14,11 @@ const params = job.params || {}
 
 
 // ------  helpers functions
-const VERBOSE = parseInt(process.env['VERBOSE'])
+const debug = parseInt(process.env['JOB_DEBUG']) ||  parseInt(process.env['VERBOSE'])
 const print = (text) => process.stdout.write(text + EOL)
-const printInfo = (text) => { if (VERBOSE) process.stdout.write(`[INFO][${new Date().toISOString()}] \x1b[32m${text}\x1b[0m` + EOL) }
-const printWarning = (text) => process.stdout.write(`[WARN][${new Date().toISOString()}] \x1b[33m${text}\x1b[0m` + EOL)
+const printJson = (json) => { process.stdout.write(JSON.stringify(json) + EOL) }
+const printInfo = (text) => { if (debug) process.stdout.write(`[INFO][${new Date().toISOString()}] \x1b[32m${text}\x1b[0m` + EOL) }
+const printWarning = (text) => {if(debug) process.stdout.write(`[WARN][${new Date().toISOString()}] \x1b[33m${text}\x1b[0m` + EOL) }
 const printError = (text) => process.stdout.write(`\x1b[31m${text}\x1b[0m` + EOL)
 const printJSONMessage = (complete, code, description) => {
   let msg = JSON.stringify({ complete: complete, code: code, description: description })
@@ -495,13 +496,14 @@ async function runPod(namespace = 'default') {
   logStream.on('data', (chunk) => {
     String(chunk).trim().split('\n').forEach(line => {
 
-      if (line.match(/^\s*(\d+)\%\s*$/)) { // handle progress
-        let progress = Math.max(0, Math.min(100, parseInt(RegExp.$1))) / 100;
-        print(JSON.stringify({ progress: progress }))
+      let l = line.trim()
+
+      if (l.endsWith("%") && l.length <= 4) { // handle progress
+        let p = parseInt(l);
+        if (p) print(JSON.stringify({ progress: Math.max(0, Math.min(100, p)) / 100 }))
       }
-      else if (line.match(/^\s*\#(.{1,60})\#\s*$/)) { // handle memo
-        let memoText = RegExp.$1
-        print(JSON.stringify({ memo: memoText }))
+      else if (l.startsWith("#") && l.endsWith("#") && l.length <= 142) { // handle memo
+        print(JSON.stringify({ memo: l.substring(1, l.length - 1) }))
       }
       else {
         // hack: wrap line with ANSI color to prevent JSON interpretation (default Cronicle behavior)

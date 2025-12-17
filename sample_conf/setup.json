@@ -48,7 +48,6 @@
 				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","toml","dockerfile"],"value":"shell"},
 				{"type":"select","id":"theme","title":"theme","items":["default","light","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"},
 				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0},
-				{"type":"checkbox","id":"logmemo","title":"Log Memo","value":0},
 				{"type":"filelist","id":"files","title":"File List","theme":"default", "value":0}	
 			]
 		} ],
@@ -86,7 +85,7 @@
 			"params": [
 				{ "id":"ssh_host", "type":"text", "size":40, "title":"SSH Host", "value": "ssh://cronicle:Password@localhost:22" },
 				{ "id":"kill_cmd", "type":"text", "size":40, "title":"Kill Command", "value": "pkill -s $$" },
-				{ "id":"script", "type":"textarea", "rows":10, "title":"Script", "value": "\n#!/bin/sh\n\necho \"Running SSHX job on $HOSTNAME\"\n\nsleep 10\n\n# Specify conneciton info using URI format:\n# [ssh://]user[:Password]@host[:port]?[privateKey=/path/to/file&passphrase=Password]\n# URI can be passed directly or as a reference to environment variable\n# If passing password via URI, you'd need to encode special characters (e.g. @ => %40)\n# You can also set SSH_KEY/SSH_PASSWORD/SSH_PASSPHRASE as variables in event/plugin secrets\n\n# If no SSH Host specified on event parameters, it can be resolved from WF argument\n\n# Kill Command parameter is used to properly handle job abortion\n# Default command is [pkill -S $$]\n# $$ is refering to PID of your script parent process (bootstrap script)\n\n# To pass variables other then JOB_ / ARG*, use SSH_ prefix on variable name\n# If this event is chained by other job, you can access chain data using CHAIN_DATA variable\n\n" },
+				{ "id":"script", "type":"textarea", "rows":10, "title":"Script", "value": "#!/bin/sh\n\necho \"|\"\necho \"| Hello from SSH!\"\necho \"| Running job on $(hostname) machine as $LOGNAME\"\necho \"|\" && sleep 1\necho \"| To include SSH debug logs use Debug checkbox \"\necho \"|\" && sleep 1\necho \"| You can create #memos, progress% and json events the same way as on Shell Plugin\"\necho \"#ssh memo#\"\necho \"20%\"\necho \"|\" && sleep 2\n\necho \"| Specify conneciton info using URI format:\"\necho \"| [ssh://]user[:Password]@host[:port]?[privateKey=/path/to/file&passphrase=Password]\"\necho \"| URI can be passed directly or as a reference to environment variable\"\necho \"| If passing password via URI, you'd need to encode special characters (e.g. @ => %40)\"\necho \"| You can also set SSH_KEY/SSH_PASSWORD/SSH_PASSPHRASE as variables in event/plugin secrets\"\necho \"|\" && sleep 2\necho \"| You can also pass [SSH Host] parameter as WF plugin argument (e.g. to run same script on multiple ssh hosts)\"\necho \"| In this case keep [SSH Host] blank on target event\"\necho \"|\" && sleep 2\necho \"| Kill Command parameter is used to properly handle job abortion\"\necho \"| Default command is [pkill -S \\$\\$]\"\necho \"| \\$\\$ is refering to PID of your script parent process (bootstrap script)\"\necho \"| \" && sleep 2\necho \"| To pass variables other then JOB_ / ARG*, use SSH_ prefix on variable name\"\necho \"| If this event is chained by other job, you can access chain data using CHAIN_DATA variable\"\necho \"|\"" },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{ "id":"trunc_var", "type":"checkbox", "title":"Truncate Environment Variable Prefix", "value": 0 },
 				{ "type": "checkbox", "id": "annotate", "title": "Add Date/Time Stamps to Log",	"value": 0 },
@@ -110,7 +109,7 @@
 				{ "id":"docker_host", "type":"text", "size":40, "title":"Docker Host", "value": "" },
 				{ "id":"image", "type":"text", "size":40, "title":"Image", "value": "alpine" },
 				{ "id":"command", "type":"text", "size":40, "title":"Command", "value": "" },
-				{ "id":"script", "type":"textarea", "rows":10, "title":"Script", "value": "\n#!/bin/sh\n\necho \"Running Docker job on $HOSTNAME\"\n\ncat /etc/os-release\n\nls -lah chain_data || echo \"no chain data\"\n\n# If Docker Host is not specified, docker socket will be used\n# To access remote docker machine via ssh (on top of socket) specify DH as:\n# ssh://user[:password]@host[:port]\n# To specify ssh credentials you can also use SSH_PASSWORD/SSH_KEY env varaibles\n# To access remote docker instance with exposed http:\n# http://dockerhost:2375  (there is no auth options for that at this point)\n# To specify image registry credentials use DOCKER_USER, DOCKER_PASSWORD variables\n# All credential variables can be set via event/plugin secrets\n\n# To specify volumes to be mount, list the volumes separated by comma:\n# /host/path1:/container/path1:rw,/host/path2:/container/path2,named_volume:/container/named_volume\n# To delete named volumes when the container is destroyed, untick \"Keep Named Volumes\".\n\n# This script will be used as an entrypoint on the container (mounted as /cronicle.sh by default).\n# To use original entrypoint check corresponding checkbox below,\n#  and use command parameter above to pass argument to it\n# If this job is chained by other event, chain data will be mounted to the container\n#   as chain_data file \n\n# In order to pass variables to container (other than JOB_ and ARG*) it should start with DOCKER_\n\n# If job is aborted \"docker stop\" is invoked (SIGTERM), docker will send SIGKILL after some time\n# Try to handle SIGTERM in your script for proper shutdown on abortion\n"},
+				{ "id":"script", "type":"textarea", "rows":10, "title":"Script", "value": "#!/bin/sh\n\necho \"|\"\necho \"| Hello from Docker!\"\necho \"| Running job on $HOSTNAME container\"\necho \"|\" && sleep 1\necho \"| To include docker debug logs use Debug checkbox \"\necho \"|\" && sleep 1\necho \"| You can create #memos#, progress% and json events the same way as on Shell Plugin\"\necho \"#docker memo#\"\necho \"20%\"\necho \"|\" && sleep 2\necho \"| If Docker Host is not specified, docker socket on current machine will be used by default\"\necho \"| To access remote docker machine via ssh (on top of socket) specify Docker Host as:\"\necho \"| ssh://user[:password]@host[:port]\"\necho \"| To specify ssh credentials you can also use SSH_PASSWORD/SSH_KEY env varaibles\"\necho \"| To access remote docker instance with exposed http:\"\necho \"| http://dockerhost:2375  (there is no auth options for that at this point)\"\necho \"| To specify image registry credentials use DOCKER_USER, DOCKER_PASSWORD variables\"\necho \"| All credential variables can be set via event/plugin secrets\"\necho \"|\" && sleep 2\necho \"| To specify volumes to be mounted, list the volumes separated by comma:\"\necho \"| /host/path1:/container/path1:rw,/host/path2:/container/path2,named_volume:/container/named_volume\"\necho \"| To delete named volumes when the container is destroyed, uncheck [Keep Named Volumes]\"\necho \"|\" && sleep 2\necho \"| This script will be used as an entrypoint on the container (mounted as /cronicle.sh by default).\"\necho \"| To use original entrypoint check corresponding checkbox below,\"\necho \"|  and use command parameter above to pass argument to it\"\necho \"| If this job is chained by other event, chain data will be mounted to the container\"\necho \"|   as chain_data file \"\necho \"|\" && sleep 2\necho \"| In order to pass variables to container (other than JOB_ and ARG*) it should start with DOCKER_\"\necho \"|\" && sleep 2\necho \"| If job is aborted \"docker stop\" is invoked (SIGTERM), docker will send SIGKILL after some time\"\necho \"| Try to handle SIGTERM in your script for proper shutdown on abortion\"\necho \"|\""},
 				{ "id":"entrypoint_path", "type":"text", "size":40, "title":"Mount As", "value": "" },
 				{ "id":"volumes", "type":"text", "size":100, "title":"Volumes", "value": ""},
 				{ "id":"network", "type":"text", "size":20, "title":"Network", "value": "" },
@@ -156,7 +155,7 @@
 				"id": "script",
 				"title": "Script",
 				"rows": 15,
-				"value": "#!/bin/sh\n\necho '| '\necho -e '| \\e[1mHello from Kubernetes!\\e[0m' \necho '| '; sleep 2\necho \"| This script is executing in temporary Pod [$HOSTNAME] using [$IMAGE] image\" ; \necho '| Pod will be deleted upon job completion (unless [Keep Pod] option used)'\nsleep 1; echo '| '\necho '| To hide INFO message uncheck [Verbose] checkbox'\nsleep 1; echo '| '\necho '| Like in a shell plugin, you can use memo, progress and json messages'\necho '#TEST MEMO#'\necho '10%'\nsleep 1; echo '| '; echo '50%'\necho '| To pass env variables/secrets to Pod, add prefix KUBE_ to it'\necho '| It can be truncated (in pod runtime) by checking [Truncate variable prefix] option'\nsleep 1; echo '| '\necho '| If not provided, default kube config will be used (from .kube/config file or pod svc account)'\necho '| To specify custom config, add multiline KUBE_CONFIG secret with your configuraiton yaml'\necho '| For test purposes you can use [Kube Config] parameter'\nsleep 1; echo '| '; echo '70%'\necho '| You can execute this script as kubernetes job (vs Pod) by checking [Run as Job] parameter'\necho '| In this case cronicle will just watch for job status updates, and optionally print log tail at the end'\necho '| Such job will be removed after TTL expiration by Kubernetes, cronicle will only delete job if it gets aborted'\nsleep 1; echo '| '; echo '80%'\necho '| If you want cronicle just to trigger Pod/Job and exit - use [Detach] checkbox'\necho '| To mount pvc as data directory you can set parameter [PVC mount] as pvc_name:/data/dir, or just pvc_name (will be mounted as /data)'\nsleep 1; echo '| '; echo '90%'\necho '| Cronicle will attach app=cronicle-job label to pods/jobs it creates'\necho '| It also add event, event_title and category labels'\necho '| It can be used later to examine cronicle related object using kubectl, e.g.'\necho '| kubectl get pods -l app=cronicle-job'\necho '| kubectl delete jobs -l event_title=myTestJob'\necho '| kubectl get pods -l category=General'\necho '| '\nsleep 1"
+				"value": "#!/bin/sh\n\necho '| '\necho -e '| \\e[1mHello from Kubernetes!\\e[0m' \necho '| '; sleep 2\necho \"| This script is executing in temporary Pod [$HOSTNAME] using [$IMAGE] image\" ; \necho '| Pod will be deleted upon job completion (unless [Keep Pod] option used)'\nsleep 1; echo '| '\necho '| To include Kubernetes debug logs use [Debug] checkbox'\nsleep 1; echo '| '\necho '| Like in a shell plugin, you can use memo, progress and json messages'\necho \"| \"\necho '#kubernetes memo#'\necho '20%'\nsleep 2\necho '| To pass env variables/secrets to Pod, add prefix KUBE_ to it'\necho '| This prefix can be truncated in pod runtime by checking [Truncate variable prefix] option'\nsleep 1; echo '| '\necho '| If not provided, default kube config will be used (from .kube/config file or pod svc account)'\necho '| To specify custom config, add multiline KUBE_CONFIG secret with your configuraiton yaml'\necho '| For test purposes you can use [Kube Config] parameter'\nsleep 1; echo '| '; echo '70%'\necho '| You can execute this script as kubernetes job (vs Pod) by checking [Run as Job] parameter'\necho '| In this case cronicle will just watch for job status updates, and optionally print log tail at the end'\necho '| Such job will be removed after TTL expiration by Kubernetes, cronicle will only delete job if it gets aborted'\nsleep 1; echo '| '; echo '80%'\necho '| If you want cronicle just to trigger Pod/Job and exit - use [Detach] checkbox'\necho '| To mount pvc as data directory you can set parameter [PVC mount] as pvc_name:/data/dir, or just pvc_name (will be mounted as /data)'\nsleep 1; echo '| '; echo '90%'\necho '| If you want to use custom YAML configuraiton for your pod/job use Kube-Yaml plugin'\nsleep 1; echo '| '; echo '95%'\necho '| Cronicle will attach app=cronicle-job label to pods/jobs it creates'\necho '| It will also add event, event_title and category labels'\necho '|  which can be used later to examine cronicle related objects using kubectl, e.g.'\necho '| kubectl get pods -l app=cronicle-job'\necho '| kubectl delete jobs -l event_title=myTestJob'\necho '| kubectl get pods -l category=General'\necho '| '\nsleep 1"
 			},
 			{
 				"type": "select",
@@ -209,10 +208,10 @@
 				"value": 0
 			},
 			{
-				"type": "checkbox",
+				"type": "hidden",
 				"id": "verbose",
 				"title": "Verbose",
-				"value": 1
+				"value": 0
 			},
 			{
 				"type": "checkbox",
@@ -340,7 +339,7 @@
 		],
 		"title": "Kube-Run",
 		"id": "kuberun",
-		"command": "node bin/kube-plugin.js",
+		"command": "node --no-deprecation bin/kube-plugin.js",
 		"username": "admin",
 		"enabled": 1,
 		"ipc": 1,
@@ -625,7 +624,7 @@
               { "type": "text",  "id": "cols", "title": "Terminal Width", "size": 5, "value": "120" },
               { "type": "text", "id": "rows", "title": "Terminal Height",  "size": 5, "value": "" },
               { "type": "textarea", "id": "script", "title": "Script Source", "rows": 10,
-                "value": "#!/usr/bin/env node\n\nconsole.log('This plugin will execute the script in terminal emulator (to capture colors)')\nconsole.table(Object.entries(process.env)\n  .filter(([key, val]) => key.startsWith('JOB_') && val.length < 100)\n  .slice(0,25)\n  .map(([key, val]) => ({ key, val }))\n);"
+                "value": "#!/usr/bin/env node\n\nconsole.log(\"|\")\nconsole.log('| Hello from terminal emulator (node-pty)!')\nconsole.log('| This plugin will capture raw script output with all the colors and animations')\nconsole.log('| This may lead to bloated log file size, consider using Shell Plugin instead')\nconsole.log('| Please note that it may stuck on interactive prompts')\nconsole.log(\"|\")\nconsole.log(\"| Prinitng data with console.table:\")\nconsole.table(Object.entries(process.env)\n  .filter(([key, val]) => key.startsWith('JOB_') && val.length < 100)\n  .slice(0,25)\n  .map(([key, val]) => ({ key, val }))\n);"
               },
               { "type": "select", "id": "lang", "title": "syntax",  "items": [
                   "shell",
@@ -642,7 +641,7 @@
                   "toml",
                   "dockerfile"
                 ],
-                "value": "shell"
+                "value": "javascript"
               },
               { "type": "select",  "id": "theme",  "title": "theme",  "items": [
                   "default",
