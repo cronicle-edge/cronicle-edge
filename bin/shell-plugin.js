@@ -178,6 +178,7 @@ stream.on('json', function (job) {
             // line = '[' + dargs.yyyy_mm_dd + ' ' + dargs.hh_mi_ss + '] ' + line;
             line = `[${new Date().toISOString()}] ${line}`;
           }
+		  if(typeof line !== 'string') line = ''
           fs.appendFileSync(job.log_file, line.endsWith('\n') ? line : line + "\n");
         }
 	});
