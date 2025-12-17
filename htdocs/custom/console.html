@@ -70,8 +70,8 @@
         let qParams = new URLSearchParams(query)
 
     function trimAnimation(line) {
-        let homeMatch =  line.split(/\x1b\[(?:1[;\d]*|)H/).at(-1) // catch "return home" sequence
-		if(homeMatch) line = homeMatch        
+		line = line.split(/\x1b\[(?:1[;\d]*|)H/).at(-1) // check for return home
+		line = line.split(/\x1b8/).at(-1)    // check for return to old location
 		// if(line.indexOf('\x1b[H') > -1) return line.substring(line.lastIndexOf("\x1b[H") + 3); // line has "return to home" character, that should be animation
         if (line.endsWith("\x1B[0K\x1B[0m\x1B[m")) return line; // used by git diff / delta for row highlight
         if (line.indexOf("\x1b[0K") > -1) return line.substring(line.lastIndexOf("\x1b[0K") + 4);
