@@ -25,7 +25,17 @@ Class.subclass( Page.Base, "Page.Login", {
 			this.showRecoverPasswordForm();
 			return true;
 		}
-		
+		else if (app.config.cas_auth) {
+			// redirect to CAS login page
+			// this is used for single sign-on (SSO) with CAS
+
+			app.setWindowTitle('Login');
+			app.showTabBar(false);
+
+			this.doCASauth();
+			return true;
+		}
+
 		app.setWindowTitle('Login');
 		app.showTabBar(false);
 		
@@ -81,6 +91,51 @@ Class.subclass( Page.Base, "Page.Login", {
 		}, 1 );
 
 		return true;
+	},
+
+	doCASauth: function() {
+		// attempt to log user in via CAS authentication
+
+		if(localStorage.session_id) { 
+			// user might be logged aleready in differnt tab, then just refresh the page
+			Nav.go(app.navAfterLogin || config.DefaultPage)
+		}
+		else {
+
+			let orig_location = encodeURIComponent(app.navAfterLogin || config.DefaultPage);
+			if(app.config.cas_login_auto_redirect) {
+				// redirect to CAS login page
+				app.showMessage('success', "Redirecting to CAS Login.");
+				setTimeout(() => {
+					let orig_location = encodeURIComponent(app.navAfterLogin || config.DefaultPage);
+					window.location.href = app.config.base_api_uri + `/user/casauth?orig_location=${orig_location}`;	
+				}, 1000);
+			}
+			else {
+
+				let html = `
+				<div class="inline_dialog_container">
+					<div class="dialog_title shade-light">User Login</div>
+					<div class="dialog_content">
+						<center>
+							<table style="margin:0px;">
+								<tr>
+									<td align="left" class="table_value">
+										<a href="${app.config.base_api_uri}/user/casauth?orig_location=${orig_location}" class="button" style="width:120px; font-weight:normal;">
+											<i class="fa fa-sign-in">&nbsp;&nbsp;</i>Login with CAS
+										</a>						
+									</td>
+								</tr>
+							</table>
+						</center>
+					</div>
+					<div class="dialog_buttons" />
+				</div>
+					`;
+
+				this.div.html( html );
+			}
+		}
 	},
 
 	doOauth: function() {

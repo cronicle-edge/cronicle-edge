@@ -775,7 +775,8 @@ Class.add( Page.Admin, {
 			break;
 			
 			case 'hidden':
-				html += get_form_table_row('Value:', '<input type="text" id="fe_epp_hidden_value" size="35" value="'+escape_text_field_value(param.value)+'" spellcheck="false"/>');
+				//html += get_form_table_row('Value:', '<input type="text" id="fe_epp_hidden_value" size="35" value="'+escape_text_field_value(param.value)+'" spellcheck="false"/>');
+				html += get_form_table_row('Default Text:', '<textarea id="fe_epp_hidden_value" style="width:99%; height:60px;" spellcheck="false">'+escape_text_field_value(param.value)+'</textarea>');
 				html += get_form_table_caption("Enter the value for the hidden field.");
 			break;
 			
