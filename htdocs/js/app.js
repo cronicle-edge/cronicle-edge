@@ -245,6 +245,16 @@ app.extend({
 					else app.doExternalLogout(); 
 				}, 250 );
 			}
+			else if( app.config.cas_auth && app.config.cas_logout ) { 
+						// if CAS auth is enabled, redirect user to CAS logout page
+						let casUrl = app.config.cas_url ;
+						Debug.trace("User session cookie was deleted, redirecting to CAS logout page: " + casUrl);
+						if(casUrl) {
+							let logoutUrl = casUrl + '/logout' + '?service=' + app.config.base_api_uri + '/user/casauth' ;
+							app.showProgress(1.0, "Logging out...");
+							setTimeout( function() { window.location = logoutUrl; }, 250 );
+						}
+			}
 			else {
 				Debug.trace("User session cookie was deleted, redirecting to login page");
 				self.hideProgress();
