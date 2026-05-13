@@ -35,7 +35,7 @@
 		"chart.js": "^2.9.4",
 		"codemirror": "^5.65.16",
 		"diff": "^5.0.0",
-		"dockerode": "^4.0.5",
+		"dockerode": "^5.0.0",
 		"dotenv": "^16.4.5",
 		"esbuild": "^0.25.0",
 		"font-awesome": "4.7.0",
@@ -46,7 +46,7 @@
 		"js-yaml": "^4.1.0",
 		"jsonlint-mod": "^1.7.6",
 		"jstimezonedetect": "1.0.6",
-		"ldapts": "^7.2.0",
+		"ldapts": "^8.1.7",
 		"moment": "2.29.4",
 		"moment-timezone": "0.5.37",
 		"netmask": "^2.0.2",
@@ -75,7 +75,8 @@
 		"tar-stream": "^3.1.7",
 		"uglify-js": "3.14.3",
 		"uncatch": "^1.0.0",
-		"vis-network": "^9.1.2",
+		"uuid": "^13.0.2",
+		"vis-network": "^10.0.2",
 		"xss": "^1.0.8"
 	},
 	"devDependencies": {
