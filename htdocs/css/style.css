@@ -903,8 +903,8 @@ td.table_label {
 
 		.job-details.grid-container {
             display: grid;
-			grid-template-columns: repeat(7, auto);
-			align-items: center; 
+			grid-template-columns: repeat(7, 1fr);
+			align-items: stretch; 
             gap: 0px;
             padding: 0px;
 			margin-top: 12px;
