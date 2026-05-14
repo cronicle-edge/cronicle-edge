@@ -124,6 +124,30 @@
 				{"type":"filelist","id":"files","title":"File List","theme":"default", "value":0}
 			]
 		} ],
+
+		[ "listPush", "global/plugins", {
+			"id": "easypanel_deploy",
+		    "title": "Easypanel Deploy",
+			"enabled": 1,
+			"command": "node bin/easypanel-deploy-plugin.js",
+		    "username": "admin",
+		    "modified": 1434125333,
+		    "created": 1434125333,
+		    "params": [
+				{ "id": "easypanel_url",          "type": "text",     "title": "Easypanel URL",                          "size": 40, "value": "",           "notes": "Base URL of your Easypanel instance, without trailing slash. Example: https://panel.example.com" },
+			    { "id": "easypanel_token",        "type": "password", "title": "Easypanel API Token",                    "size": 40, "value": "",           "notes": "Easypanel API token. Set the default value here so all events share the same token. To use a different token per event, change the field type to text." },
+			    { "id": "project_name",           "type": "text",     "title": "Project Name",                           "size": 30, "value": "",           "notes": "Easypanel project name. Only lowercase letters, numbers, hyphens and underscores are allowed." },
+			    { "id": "service_name",           "type": "text",     "title": "Service Name",                           "size": 30, "value": "",           "notes": "Base name for the ephemeral service. If 'Use service name as prefix' is checked, the job ID will be appended as a suffix to guarantee uniqueness." },
+			    { "id": "service_name_as_prefix", "type": "checkbox", "title": "Use service name as prefix (append job ID)", 		 "value": 1,            "notes": "When checked, the final service name will be: {service_name}-{job_id}. When unchecked, the exact name is used (note: concurrent jobs may conflict)." },
+			    { "id": "github_owner",           "type": "text",     "title": "GitHub Owner",                           "size": 30, "value": "",           "notes": "GitHub user or organization that owns the repository." },
+			    { "id": "github_repo",            "type": "text",     "title": "GitHub Repository",                      "size": 30, "value": "",           "notes": "Repository name (without the owner prefix)." },
+			    { "id": "github_branch",          "type": "text",     "title": "GitHub Branch",                          "size": 20, "value": "main",       "notes": "Branch to build from." },
+			    { "id": "github_build_path",      "type": "text",     "title": "Build Path",                             "size": 20, "value": "/",          "notes": "Path inside the repository where the Dockerfile is located. Use '/' for the root." },
+			    { "id": "dockerfile",             "type": "text",     "title": "Dockerfile Path",                        "size": 20, "value": "Dockerfile", "notes": "Dockerfile path, relative to Build Path. Example: Dockerfile or docker/Dockerfile" },
+			    { "id": "run_command",            "type": "text",     "title": "Runtime Command (optional)",             "size": 50, "value": "",           "notes": "Runtime command to override the Dockerfile CMD. Corresponds to the 'Advanced -> Command' field in Easypanel. Leave empty to use the image default." },
+			    { "id": "env_vars",               "type": "textarea", "title": "Environment Variables (JSON)",           "rows": 5,  "value": "{}",         "notes": "Environment variables as a JSON object. Example: {\"NODE_ENV\": \"production\", \"PORT\": \"3000\"}" }
+		    ]
+	    } ],
 [
 	"listPush",
 	"global/plugins",
