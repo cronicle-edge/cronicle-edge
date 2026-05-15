@@ -252,13 +252,18 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 
 		let timing = summarize_event_timing(event.timing, event.timezone)
 
+		let source = job.source || 'Scheduler'
+		if(job.source_id) {
+			source = `<a href="#JobDetails?id=${job.source_id}">${source}</a>`
+		}
+
 		html += `
 		  <div class="job-details grid-container" style="font-size:1.1em">
 		    
 		    <div class="job-details  grid-item"><div class="info_label">JOB ID:</div><div class="info_value">${job.id}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">PID:</div><div class="info_value">${(job.detached_pid || job.pid || '(Unknown)')}</div></div>
 		    <div class="job-details  grid-item"><div class="info_label">CAT:</div><div class="info_value">${jobCategory}</div></div>
-		    <div class="job-details  grid-item"><div class="info_label">SOURCE:</div><div title="${timing}" class="info_value">${job.source || 'Scheduler'}</div></div>
+		    <div class="job-details  grid-item"><div class="info_label">SOURCE:</div><div title="${timing}" class="info_value">${source}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">TARGET:</div><div class="info_value">${jobTarget}</div></div>
 		    <div class="job-details  grid-item"><div class="info_label">START:</div><div class="info_value">${jobStarted}</div></div>
 			<div class="job-details  grid-item"><div class="info_label">ELAPSED:</div><div class="info_value">${get_text_from_seconds(job.elapsed, false, false)}</div></div>		    
