@@ -56,6 +56,16 @@ if (dh) {
     }
 }
 
+if(process.env.DOCKER_SOCKET) dockerOpts.socketPath = process.env.DOCKER_SOCKET
+
+if(parseInt(process.env['PODMAN'])){
+    dockerOpts.socketPath = (process.env.XDG_RUNTIME_DIR || `/run/user/${process.getuid()}`) + '/podman/podman.sock';
+    if(process.platform == 'win32') dockerOpts.socketPath = '//./pipe/podman-machine-default'    
+    printInfo('Using default podman socket: ' +  dockerOpts.socketPath )
+    printInfo('To set custom socket set DOCKER_SOCKET variable' )
+    printInfo('Make sure podman socket is open (e.g. run [systemctl --user start podman.socket] or [podman system service --time=0 &])')    
+}
+
 
 // DOCKER CLIENT 
 
