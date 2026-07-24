@@ -122,7 +122,7 @@ stream.on('json', function(job) {
 			complete: 1
 		};
 		if (err) {
-			update.code = err.code || 1;
+			update.code = 1;
 			update.description = err.message || err;
 		}
 		else {
