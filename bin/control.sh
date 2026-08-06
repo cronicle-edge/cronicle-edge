@@ -66,7 +66,7 @@ do
 			# make sure process is actually ours
 			PS=`ps -p $PID -o args= | sed 's/[ \t]*$//'`
 			
-			if [ "$PS" = "$NAME" ] ; then
+			if [ "$PS" = "$NAME" ] || [ "$PS" = "node: $NAME (node)" ] ; then
 				STATUS="$NAME running (pid $PID)"
 				RUNNING=1
 			else
