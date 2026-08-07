@@ -117,7 +117,64 @@ The login page can be customized in the `oauth` section of `config.json`:
 `button_label` changes the OAuth button text. `only` hides the username/password form and local account actions, and rejects password login requests at the API. `auto_login` redirects unauthenticated visitors directly to the configured OAuth provider. All options preserve the existing login behavior by default.
 
 Verify the OAuth flow before enabling `only` or `auto_login`, as an unavailable or invalid provider configuration can prevent interactive access.
+#### OpenID Connect logout
 
+OIDC RP-Initiated Logout and Back-Channel Logout are optional and disabled by default. Existing OAuth installations keep their current local-only logout behavior until either feature is enabled.
+
+```json
+{
+  "oauth": {
+    "enabled": true,
+    "client_id": "cronicle-edge",
+    "client_secret": "replace-me",
+    "redirect_uri": "https://cronicle.example/api/user/callback",
+    "authorize_url": "https://idp.example/realms/example/protocol/openid-connect/auth",
+    "token_url": "https://idp.example/realms/example/protocol/openid-connect/token",
+    "user_url": "https://idp.example/realms/example/protocol/openid-connect/userinfo",
+    "user_attribute": "preferred_username",
+    "scope": "openid profile email",
+    "issuer": "https://idp.example/realms/example",
+    "jwks_url": "https://idp.example/realms/example/protocol/openid-connect/certs",
+    "allowed_algs": ["RS256"],
+    "clock_tolerance_seconds": 5,
+    "jwks_cooldown_seconds": 30,
+    "logout": {
+      "enabled": true,
+      "end_session_url": "https://idp.example/realms/example/protocol/openid-connect/logout",
+      "post_logout_redirect_uri": "https://cronicle.example/",
+      "params": {}
+    },
+    "backchannel_logout": {
+      "enabled": true,
+      "max_token_age_seconds": 300,
+      "max_token_size": 16384
+    }
+  }
+}
+```
+
+Provider registration:
+
+- Authorization Code callback: `https://cronicle.example/api/user/callback` (or the equivalent path below `base_path`).
+- Back-channel logout URI: `https://cronicle.example/api/user/oidc_backchannel_logout`.
+- Register `oauth.logout.post_logout_redirect_uri` exactly at the provider.
+- `oauth.issuer` must exactly match the Logout Token and ID Token `iss` claim. `oauth.jwks_url` must expose the provider's signing keys.
+
+`oauth.allowed_algs` is an explicit asymmetric algorithm allowlist and defaults to `RS256`. `clock_tolerance_seconds` defaults to 5 seconds. `jwks_cooldown_seconds` defaults to 30 seconds and controls refresh throttling for remote signing keys. Signing-key rotation is handled through JWKS `kid` selection and refresh. OpenID Connect authorization requests also use a per-login nonce, which is verified against the signed ID Token.
+
+RP-Initiated Logout first clears the cookie and removes the local session and its OIDC indexes. It then returns a same-origin, short-lived backend `logout_location`; the browser never constructs an IdP URL. The backend consumes the encrypted one-time ticket and redirects to the configured `end_session_url`. A network failure at the provider happens only after local logout and cannot restore the deleted Cronicle session. `params` accepts only configured scalar values; reserved `id_token_hint`, `post_logout_redirect_uri`, and `client_id` values cannot be overridden. When login returns an ID Token, Cronicle verifies it and encrypts it inside the server-side session using `secret_key`; logout then uses it automatically as `id_token_hint`. A real OIDC session without a verified ID Token is rejected instead of falling back to `client_id`. The encrypted token is removed with its session, and access and refresh tokens are never persisted. Retaining even an encrypted ID Token increases the impact of simultaneous disclosure of session storage and `secret_key`.
+
+Back-channel logout accepts only `POST application/x-www-form-urlencoded` with a `logout_token`. It verifies the signature through JWKS, the algorithm allowlist, `iss`, `aud`, `iat`, `exp`, `jti`, the back-channel logout event, absence of `nonce`, and the required `sid` or `sub`. A `sid` token removes that provider session; a `sub` token removes all indexed sessions for that provider subject. Valid repeated or unknown-session requests return HTTP 200. Invalid or missing tokens return HTTP 400.
+
+OIDC indexes and the `jti` replay registry are persistent. Index records are maintained when sessions are created, explicitly deleted, or expired by storage maintenance, without scanning the complete session namespace. Sessions created before OIDC metadata was enabled remain usable and locally removable, but require a new login before they can be targeted by back-channel logout.
+
+OIDC authenticates only users which already exist in Cronicle Edge. It does not create accounts, change roles, or grant privileges.
+
+When deploying behind a reverse proxy, publish the callback and back-channel paths over HTTPS and forward the original method, `Content-Type`, and form body unchanged. The back-channel URI must be reachable by the identity provider itself, so do not protect that one path with an interactive browser login challenge. Keep the remainder of Cronicle behind the normal access policy, restrict accepted host names at the proxy, apply the proxy's normal request-rate and body-size limits, and never log request bodies or `Location` response headers for these OIDC paths. Cronicle independently enforces POST, form content type, a configurable Logout Token size, signature validation, and replay protection.
+
+All OIDC URLs require HTTPS. For local development only, HTTP is accepted for `localhost`, `127.0.0.1`, or `::1` when `oauth.insecure` and `oauth.allow_http_localhost` are both true for provider/JWKS URLs, or when `oauth.logout.allow_http_localhost` is true for logout URLs. Do not enable these options for production.
+
+OIDC JWT/JWKS validation uses the pinned `jose` 6.x dependency and requires Node.js 20 or newer. This matches the runtime requirement already imposed by current Cronicle Edge dependencies.
 ### Serve cronicle on custom base path
 Ever wanted to serve cronicle on ```https://myserver/cron``` ? Just set ```base_path = /cron``` in config.json or set ```CRONICLE_base_path=/cron``` variable 
 Refer to [1.10.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.10.1) for more details.
@@ -132,7 +189,7 @@ You can now set any config right from GUI and without restarting cronicle. You c
 On Config Tab you can also specify environment variables using "KEY = VALUE" syntax (dotenv style). Those variables will be available while executing shellplug events. You can also encrypt this data turning this feature into "secret management". Data is encrypted using AES256 and cronicle secret key. For the best result set `secret_key` as docker secret, use https proxy between clients and manager nodes, and set log level config to be <= 6.
 
 ### Config Viewer
-Config tab also contains a link to a config viewer. It will list all actual config values (besides `secret_key`).
+Config tab also contains a link to a config viewer. It lists actual config values while recursively masking passwords, secrets, API keys and token values, including in debug mode.
 
 ### Import/Export (Backup) API
 You now can import/export cronicle metadata from UI (under schedule tab). It's basically same this as "storage-cli import/export", so you can export your jobs from classic cronicle using CLI, and import it to the new version using GUI.  There is also a sample backup file (under sample_conf/backup). It contain plenty of demo jobs describing cronicle-edge features and showing some extra tricks (e.g. running Java/PySpark snippets). Please note - the Import API will ignore server and plugin info to prevent state change (you need to set up servers and custom plugins separately).
@@ -212,4 +269,3 @@ There are several other UI improvements. E.g. tooltips or extra filters. Some in
 ![image](https://user-images.githubusercontent.com/31977106/109408939-4e260a00-795c-11eb-9fcc-7d0a7d18e758.png)
 ## Extra ticks & job token:
 ![image](https://user-images.githubusercontent.com/31977106/109409018-0489ef00-795d-11eb-800b-1b83b57d9863.png)
-
