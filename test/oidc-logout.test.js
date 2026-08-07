@@ -394,6 +394,55 @@ test('Back-channel replay and unknown target are idempotent HTTP 200', async () 
 	assert.equal((await invokeBackchannel(user, await logoutToken({ sid: 'unknown-sid', sub: undefined }))).status, 200);
 });
 
+test('Back-channel logout blocks a delayed callback from recreating the revoked session', async () => {
+	OIDC._resetCachesForTests();
+	const { user, storage } = makeUser(oauth);
+	const token = await logoutToken({ sid: 'sid-delayed', sub: 'subject-delayed', jti: 'delayed-callback-jti' });
+	const response = await invokeBackchannel(user, token);
+	assert.equal(response.status, 200);
+
+	const markerKey = OIDC.revocationKey(oauth.issuer, oauth.client_id, 'sid', 'sid-delayed');
+	assert.equal(recordExists(storage, markerKey), true);
+	assert.ok(storage.expirations.get(markerKey) > Math.floor(Date.now() / 1000));
+
+	const session = makeSession('delayed-session', oauth.issuer, 'subject-delayed', 'sid-delayed');
+	await assert.rejects(call(user, 'storeOidcSession', session), /revoked before it could be stored/);
+	assert.equal(recordExists(storage, 'sessions/' + session.id), false);
+	assert.equal(recordExists(storage, OIDC.indexKey(oauth.issuer, 'sid', session.oidc_sid)), false);
+	assert.equal(recordExists(storage, OIDC.indexKey(oauth.issuer, 'sub', session.oidc_subject)), false);
+});
+
+test('Concurrent callback and back-channel logout cannot leave an active session', async () => {
+	OIDC._resetCachesForTests();
+	const { user, storage } = makeUser(oauth);
+	const session = makeSession('callback-race-session', oauth.issuer, 'subject-race', 'sid-race');
+	const token = await logoutToken({ sid: 'sid-race', sub: 'subject-race', jti: 'callback-race-jti' });
+	const results = await Promise.allSettled([
+		call(user, 'storeOidcSession', session),
+		invokeBackchannel(user, token)
+	]);
+	assert.equal(results[1].status, 'fulfilled');
+	assert.equal(results[1].value.status, 200);
+	assert.equal(recordExists(storage, 'sessions/' + session.id), false);
+	assert.equal(recordExists(storage, OIDC.indexKey(oauth.issuer, 'sid', session.oidc_sid)), false);
+	assert.equal(recordExists(storage, OIDC.indexKey(oauth.issuer, 'sub', session.oidc_subject)), false);
+	assert.equal(recordExists(storage,
+		OIDC.revocationKey(oauth.issuer, oauth.client_id, 'sid', session.oidc_sid)), true);
+});
+
+test('Expired logout revocation markers do not block a later valid session', async () => {
+	const { user, storage } = makeUser(oauth);
+	const session = makeSession('post-expiry-session', oauth.issuer, 'subject-expiry', 'sid-expiry');
+	const markerKey = OIDC.revocationKey(oauth.issuer, oauth.client_id, 'sid', session.oidc_sid);
+	await new Promise((resolve, reject) => storage.put(markerKey, {
+		created: Math.floor(Date.now() / 1000) - 600,
+		expires: Math.floor(Date.now() / 1000) - 1
+	}, (err) => err ? reject(err) : resolve()));
+	await call(user, 'storeOidcSession', session);
+	assert.equal(recordExists(storage, markerKey), false);
+	assert.equal(recordExists(storage, 'sessions/' + session.id), true);
+});
+
 test('Back-channel endpoint returns 400 for invalid input and 405 for non-POST', async () => {
 	OIDC._resetCachesForTests();
 	const { user } = makeUser(oauth);
