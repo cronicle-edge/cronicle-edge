@@ -103,6 +103,21 @@ Run your script in actual terminal emulator (using node-pty) in order to capture
 Can verify user via common oauth providers (github, google, authentik, microsof, keyclock, etc)
 Refer to [1.11.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.11.1) for more details.
 
+The login page can be customized in the `oauth` section of `config.json`:
+
+```json
+"oauth": {
+  "enabled": true,
+  "button_label": "Login with Keycloak",
+  "only": true,
+  "auto_login": false
+}
+```
+
+`button_label` changes the OAuth button text. `only` hides the username/password form and local account actions, and rejects password login requests at the API. `auto_login` redirects unauthenticated visitors directly to the configured OAuth provider. All options preserve the existing login behavior by default.
+
+Verify the OAuth flow before enabling `only` or `auto_login`, as an unavailable or invalid provider configuration can prevent interactive access.
+
 ### Serve cronicle on custom base path
 Ever wanted to serve cronicle on ```https://myserver/cron``` ? Just set ```base_path = /cron``` in config.json or set ```CRONICLE_base_path=/cron``` variable 
 Refer to [1.10.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.10.1) for more details.

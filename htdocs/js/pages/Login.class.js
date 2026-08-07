@@ -25,41 +25,51 @@ Class.subclass( Page.Base, "Page.Login", {
 			this.showRecoverPasswordForm();
 			return true;
 		}
+		else if (config.oauth && config.oauth_auto_login) {
+			this.doOauth();
+			return true;
+		}
 		
 		app.setWindowTitle('Login');
 		app.showTabBar(false);
 		
 		this.div.css({ 'padding-top':'75px', 'padding-bottom':'75px' });
 		var html = '';
+		var hide_local_login = config.oauth && config.oauth_only;
+		var oauth_button_label = escape_text_field_value(config.oauth_button_label || 'SSO');
 		
 		html += '<div class="inline_dialog_container">';
 			html += '<div class="dialog_title shade-light">User Login</div>';
-			html += '<div class="dialog_content">';
-				html += '<center><table style="margin:0px;">';
-					html += '<tr>';
-						html += '<td align="right" class="table_label">Username:</td>';
-						html += '<td align="left" class="table_value"><div><input type="text" name="username" id="fe_login_username" size="30" spellcheck="false" value="'+(app.getPref('username') || '')+'"/></div></td>';
-					html += '</tr>';
-					html += '<tr><td colspan="2"><div class="table_spacer"></div></td></tr>';
-					html += '<tr>';
-						html += '<td align="right" class="table_label">Password:</td>';
-						html += '<td align="left" class="table_value"><div><input type="' + app.get_password_type() + '" name="password" id="fe_login_password" size="30" spellcheck="false" value=""/>' + app.get_password_toggle_html() + '</div></td>';
-					html += '</tr>';
-					html += '<tr><td colspan="2"><div class="table_spacer"></div></td></tr>';
-				html += '</table></center>';
-			html += '</div>';
+			if (!hide_local_login) {
+				html += '<div class="dialog_content">';
+					html += '<center><table style="margin:0px;">';
+						html += '<tr>';
+							html += '<td align="right" class="table_label">Username:</td>';
+							html += '<td align="left" class="table_value"><div><input type="text" name="username" id="fe_login_username" size="30" spellcheck="false" value="'+(app.getPref('username') || '')+'"/></div></td>';
+						html += '</tr>';
+						html += '<tr><td colspan="2"><div class="table_spacer"></div></td></tr>';
+						html += '<tr>';
+							html += '<td align="right" class="table_label">Password:</td>';
+							html += '<td align="left" class="table_value"><div><input type="' + app.get_password_type() + '" name="password" id="fe_login_password" size="30" spellcheck="false" value=""/>' + app.get_password_toggle_html() + '</div></td>';
+						html += '</tr>';
+						html += '<tr><td colspan="2"><div class="table_spacer"></div></td></tr>';
+					html += '</table></center>';
+				html += '</div>';
+			}
 			
 			html += '<div class="dialog_buttons"><center><table><tr>';
-				if (config.free_accounts) {
-					html += '<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().navCreateAccount()">Create Account...</div></td>';
+				if (!hide_local_login) {
+					if (config.free_accounts) {
+						html += '<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().navCreateAccount()">Create Account...</div></td>';
+						html += '<td width="20">&nbsp;</td>';
+					}
+					html += '<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().navPasswordRecovery()">Forgot Password...</div></td>';
 					html += '<td width="20">&nbsp;</td>';
+					html += '<td><div class="button" style="width:120px;" onMouseUp="$P().doLogin()"><i class="fa fa-sign-in">&nbsp;&nbsp;</i>Login</div></td>';
 				}
-				html += '<td><div class="button" style="width:120px; font-weight:normal;" onMouseUp="$P().navPasswordRecovery()">Forgot Password...</div></td>';
-				html += '<td width="20">&nbsp;</td>';
-				html += '<td><div class="button" style="width:120px;" onMouseUp="$P().doLogin()"><i class="fa fa-sign-in">&nbsp;&nbsp;</i>Login</div></td>';
 				if (config.oauth) {
-					html += '<td width="20">&nbsp;</td>';
-					html += '<td><div class="button" style="width:120px;" onMouseUp="$P().doOauth()"><i class="fa fa-sign-in">&nbsp;&nbsp;</i>SSO</div></td>';
+					if (!hide_local_login) html += '<td width="20">&nbsp;</td>';
+					html += '<td><div class="button" style="min-width:120px;" onMouseUp="$P().doOauth()"><i class="fa fa-sign-in">&nbsp;&nbsp;</i>' + oauth_button_label + '</div></td>';
 				}
 			html += '</tr></table></center></div>';
 		html += '</div>';
@@ -68,17 +78,19 @@ Class.subclass( Page.Base, "Page.Login", {
 		html += '</form>';
 		this.div.html( html );
 		
-		setTimeout( function() {
-			$( app.getPref('username') ? '#fe_login_password' : '#fe_login_username' ).focus();
-			
-			 $('#fe_login_username, #fe_login_password').keypress( function(event) {
-				if (event.keyCode == '13') { // enter key
-					event.preventDefault();
-					$P().doLogin();
-				}
-			} ); 
-			
-		}, 1 );
+		if (!hide_local_login) {
+			setTimeout( function() {
+				$( app.getPref('username') ? '#fe_login_password' : '#fe_login_username' ).focus();
+
+				 $('#fe_login_username, #fe_login_password').keypress( function(event) {
+					if (event.keyCode == '13') { // enter key
+						event.preventDefault();
+						$P().doLogin();
+					}
+				} );
+
+			}, 1 );
+		}
 
 		return true;
 	},
