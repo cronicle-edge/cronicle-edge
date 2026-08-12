@@ -76,6 +76,9 @@
 
 	"oauth": {
 		"enabled": false,
+		"button_label": "SSO",
+		"only": false,
+		"auto_login": false,
 		"insecure": false,
 		"client_id": "XXXXXXXXXX",
 		"client_secret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
