@@ -103,7 +103,7 @@ stream.on('json', function(job) {
 		// HTTP code out of success range = error
 		if (!err && ((resp.statusCode < 200) || (resp.statusCode >= 400))) {
 			err = new Error("HTTP " + resp.statusCode + " " + resp.statusMessage);
-			err.code = resp.statusCode;
+			err.code = parseInt(resp.statusCode) || 1;
 		}
 		
 		// successmatch?  errormatch?
