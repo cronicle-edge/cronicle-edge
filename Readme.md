@@ -117,64 +117,13 @@ The login page can be customized in the `oauth` section of `config.json`:
 `button_label` changes the OAuth button text. `only` hides the username/password form and local account actions, and rejects password login requests at the API. `auto_login` redirects unauthenticated visitors directly to the configured OAuth provider. All options preserve the existing login behavior by default.
 
 Verify the OAuth flow before enabling `only` or `auto_login`, as an unavailable or invalid provider configuration can prevent interactive access.
+
 #### OpenID Connect logout
 
-OIDC RP-Initiated Logout and Back-Channel Logout are optional and disabled by default. Existing OAuth installations keep their current local-only logout behavior until either feature is enabled.
+OIDC RP-Initiated Logout and Back-Channel Logout are optional and disabled by default. Existing OAuth installations retain local-only logout until either feature is enabled.
 
-```json
-{
-  "oauth": {
-    "enabled": true,
-    "client_id": "cronicle-edge",
-    "client_secret": "replace-me",
-    "redirect_uri": "https://cronicle.example/api/user/callback",
-    "authorize_url": "https://idp.example/realms/example/protocol/openid-connect/auth",
-    "token_url": "https://idp.example/realms/example/protocol/openid-connect/token",
-    "user_url": "https://idp.example/realms/example/protocol/openid-connect/userinfo",
-    "user_attribute": "preferred_username",
-    "scope": "openid profile email",
-    "issuer": "https://idp.example/realms/example",
-    "jwks_url": "https://idp.example/realms/example/protocol/openid-connect/certs",
-    "allowed_algs": ["RS256"],
-    "clock_tolerance_seconds": 5,
-    "jwks_cooldown_seconds": 30,
-    "logout": {
-      "enabled": true,
-      "end_session_url": "https://idp.example/realms/example/protocol/openid-connect/logout",
-      "post_logout_redirect_uri": "https://cronicle.example/",
-      "params": {}
-    },
-    "backchannel_logout": {
-      "enabled": true,
-      "max_token_age_seconds": 300,
-      "max_token_size": 16384
-    }
-  }
-}
-```
+See [OpenID Connect configuration and logout](docs/oidc.md) for a complete configuration reference, provider registration, Authentik localhost setup, and deployment notes.
 
-Provider registration:
-
-- Authorization Code callback: `https://cronicle.example/api/user/callback` (or the equivalent path below `base_path`).
-- Back-channel logout URI: `https://cronicle.example/api/user/oidc_backchannel_logout`.
-- Register `oauth.logout.post_logout_redirect_uri` exactly at the provider.
-- `oauth.issuer` must exactly match the Logout Token and ID Token `iss` claim. `oauth.jwks_url` must expose the provider's signing keys.
-
-`oauth.allowed_algs` is an explicit asymmetric algorithm allowlist and defaults to `RS256`. `clock_tolerance_seconds` defaults to 5 seconds. `jwks_cooldown_seconds` defaults to 30 seconds and controls refresh throttling for remote signing keys. Signing-key rotation is handled through JWKS `kid` selection and refresh. OpenID Connect authorization requests also use a per-login nonce, which is verified against the signed ID Token.
-
-RP-Initiated Logout first clears the cookie and removes the local session and its OIDC indexes. It then returns a same-origin, short-lived backend `logout_location`; the browser never constructs an IdP URL. The backend consumes the encrypted one-time ticket and redirects to the configured `end_session_url`. A network failure at the provider happens only after local logout and cannot restore the deleted Cronicle session. `params` accepts only configured scalar values; reserved `id_token_hint`, `post_logout_redirect_uri`, and `client_id` values cannot be overridden. When login returns an ID Token, Cronicle verifies it and encrypts it inside the server-side session using `secret_key`; logout then uses it automatically as `id_token_hint`. A real OIDC session without a verified ID Token is rejected instead of falling back to `client_id`. The encrypted token is removed with its session, and access and refresh tokens are never persisted. Retaining even an encrypted ID Token increases the impact of simultaneous disclosure of session storage and `secret_key`.
-
-Back-channel logout accepts only `POST application/x-www-form-urlencoded` with a `logout_token`. It verifies the signature through JWKS, the algorithm allowlist, `iss`, `aud`, `iat`, `exp`, `jti`, the back-channel logout event, absence of `nonce`, and the required `sid` or `sub`. A `sid` token removes that provider session; a `sub` token removes all indexed sessions for that provider subject. Valid repeated or unknown-session requests return HTTP 200. Invalid or missing tokens return HTTP 400.
-
-OIDC indexes, the `jti` replay registry, and short-lived logout revocation markers are persistent. Index records are maintained when sessions are created, explicitly deleted, or expired by storage maintenance, without scanning the complete session namespace. A marker is keyed by `issuer`, client ID, and `sid` or `sub`, expires with the Logout Token, and is checked under the same storage lock used to create a session. This prevents an in-flight authorization callback from recreating a session after back-channel logout has already completed. Sessions created before OIDC metadata was enabled remain usable and locally removable, but require a new login before they can be targeted by back-channel logout.
-
-OIDC authenticates only users which already exist in Cronicle Edge. It does not create accounts, change roles, or grant privileges.
-
-When deploying behind a reverse proxy, publish the callback and back-channel paths over HTTPS and forward the original method, `Content-Type`, and form body unchanged. The back-channel URI must be reachable by the identity provider itself, so do not protect that one path with an interactive browser login challenge. Keep the remainder of Cronicle behind the normal access policy, restrict accepted host names at the proxy, apply the proxy's normal request-rate and body-size limits, and never log request bodies or `Location` response headers for these OIDC paths. Cronicle independently enforces POST, form content type, a configurable Logout Token size, signature validation, and replay protection.
-
-All OIDC URLs require HTTPS. For local development only, HTTP is accepted for `localhost`, `127.0.0.1`, or `::1` when `oauth.insecure` and `oauth.allow_http_localhost` are both true for provider/JWKS URLs, or when `oauth.logout.allow_http_localhost` is true for logout URLs. Do not enable these options for production.
-
-OIDC JWT/JWKS validation uses the pinned `jose` 6.x dependency and requires Node.js 20 or newer. This matches the runtime requirement already imposed by current Cronicle Edge dependencies.
 ### Serve cronicle on custom base path
 Ever wanted to serve cronicle on ```https://myserver/cron``` ? Just set ```base_path = /cron``` in config.json or set ```CRONICLE_base_path=/cron``` variable 
 Refer to [1.10.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.10.1) for more details.
