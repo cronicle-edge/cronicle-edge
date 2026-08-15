@@ -7,10 +7,15 @@ DEFAULT_VERSION="20.16.0"
 NODEJS_VERSION="${1:-$DEFAULT_VERSION}"
 
 get_arch () {
-	local arch
+	local arch os os_name
 	arch=$(uname -m)
-    os="linux"
-    if [[ "$(uname)" == "Darwin" ]]; then os="darwin"; fi 
+	os_name=$(uname -s)
+	if [[ "$os_name" == "FreeBSD" ]]; then
+		echo "Error: Node.js does not publish FreeBSD binaries. Install Node.js using the FreeBSD package manager." >&2
+		return 2
+	fi
+	os="linux"
+	if [[ "$os_name" == "Darwin" ]]; then os="darwin"; fi
 
 	[[ ! $arch ]] && return 1
 	case $arch in 
@@ -21,13 +26,14 @@ get_arch () {
 		ppc64el|ppc64le) binArch='ppc64le' ;; 
 		s390x)   binArch='s390x' ;; 
 		# .*386.*) binArch='amd32' ;;
-		*) return 2 ;;\
+		*) return 2 ;;
 	esac; 
-    echo "$os-$binArch"
+	echo "$os-$binArch"
 }
 
 # Define the download URL for the specified version of Node.js
-NODEJS_URL="https://nodejs.org/dist/v$NODEJS_VERSION/node-v$NODEJS_VERSION-$(get_arch).tar.xz"
+NODEJS_PLATFORM="$(get_arch)" || exit $?
+NODEJS_URL="https://nodejs.org/dist/v$NODEJS_VERSION/node-v$NODEJS_VERSION-$NODEJS_PLATFORM.tar.xz"
 
 # Specify the directory to store the downloaded Node.js archive
 TARGET_DIR="$HOMEDIR/nodejs"
