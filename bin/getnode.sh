@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 HOMEDIR="$(dirname "$(cd -- "$(dirname "$(readlink -f "$0")")" && (pwd -P 2>/dev/null || pwd))")"
 
 DEFAULT_VERSION="20.16.0"
