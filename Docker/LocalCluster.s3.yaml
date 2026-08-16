@@ -26,6 +26,9 @@ services:
     deploy:
       replicas: 1
     user: root
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     entrypoint: bash
     command: -c 'mkdir -p /data/cronicle && minio server /data --console-address ":9001"'
     environment:
@@ -43,6 +46,9 @@ services:
       - cron
     deploy:
       replicas: 1
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     entrypoint: bash
     command: -c 'curl -I http://minio:9000/minio/health/live && manager'
     environment:
@@ -60,6 +66,9 @@ services:
       - cron
     deploy:
       replicas: 1
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     entrypoint: worker
     environment:
       - CRONICLE_secret_key = cronicle_secret_key
@@ -76,6 +85,9 @@ services:
       - cron
     deploy:
       replicas: 1
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     entrypoint: worker
     environment:
       - CRONICLE_secret_key = cronicle_secret_key
