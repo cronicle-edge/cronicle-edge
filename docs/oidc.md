@@ -72,6 +72,20 @@ Use the exact URLs published by the provider. In particular, `issuer` is compare
 | `params` | Additional fields merged into the token request body. A duplicate key overrides Cronicle's default request value. |
 | `headers` | Additional token endpoint request headers. Cronicle always requests a JSON response. |
 
+### Transport security boundaries
+
+The three transport settings are intentionally independent; none of them implies another.
+
+| Setting | Exact scope |
+| --- | --- |
+| `oauth.insecure` | Disables TLS certificate verification for token and UserInfo requests. It does not permit HTTP for `issuer`, `jwks_url`, or logout URLs, and it does not disable TLS verification for JWKS retrieval. |
+| `oauth.allow_http_localhost` | Permits HTTP only for loopback `issuer` and `jwks_url` values. |
+| `oauth.logout.allow_http_localhost` | Permits HTTP only for loopback end-session and post-logout URLs. |
+
+A reverse proxy or tunnel is a separate TLS boundary. Its connection to the Cronicle origin is configured at the proxy and does not require `oauth.insecure`; that setting matters only when Cronicle itself connects to the provider's token or UserInfo endpoint over HTTPS with an untrusted certificate.
+
+The existing `insecure` name is retained for configuration compatibility and must not be treated as a combined development mode. A future clearer name such as `skip_tls_verification` should keep `insecure` as a backward-compatible alias rather than changing its scope.
+
 ### OIDC token validation
 
 | Property | Meaning |
