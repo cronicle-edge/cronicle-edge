@@ -773,49 +773,56 @@
 			"id": "web_hook_text_templates_job_complete", 
 			"title": "web_hook_text_templates.job_complete",
 			"key": "✔️ *[event_title]* completed successfully on [hostname] <[job_details_url] | More details>",
-			"description": "Success notification (slack markdown by default)"
+			"description": "Success notification (slack markdown by default)",
+			"optional": true
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "web_hook_text_templates_job_failure", 
 			"title": "web_hook_text_templates.job_failure",
 			"key": "❌ *[event_title]* failed on [hostname]: Error: _*[description]*_ <[job_details_url] | More details>",
-			"description": "Error notification (slack markdown by default)"
+			"description": "Error notification (slack markdown by default)",
+			"optional": true
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "web_hook_text_templates_job_start", 
 			"title": "web_hook_text_templates.job_start",
 			"key": "🚀 *[event_title]* started on [hostname] <[job_details_url] | More details>",
-			"description": "Start notification (slack markdown by default)"
+			"description": "Start notification (slack markdown by default)",
+			"optional": true
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "web_hook_text_templates_job_warning", 
 			"title": "web_hook_text_templates.job_warning",
 			"key": "⚠️ *[event_title]* completed with warning on [hostname]: Warning: _*[description]*_ <[job_details_url] | More details>",
-			"description": "Warning notification. Warning is exit code 255 (-1) and it's treaded as success"
+			"description": "Warning notification. Warning is exit code 255 (-1) and it's treaded as success",
+			"optional": true
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "web_hooks_slack_general", 
 			"title": "web_hooks.slack_general",
 			"key": "https://hooks.slack.com/services/yourIncomingWebHook",
-			"description": "You can add webhook info under web_hooks object and then use property name (e.g. slack_general) to specify that webhook in notification options, instead of using full url. Use either url string (like this example) or object to specify custom data/options/headers and some other items (see example below)"
+			"description": "You can add webhook info under web_hooks object and then use property name (e.g. slack_general) to specify that webhook in notification options, instead of using full url. Use either url string (like this example) or object to specify custom data/options/headers and some other items (see example below)",
+			"optional": true
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "web_hooks_slack_info_data_channel", 
 			"title": "web_hooks.slack_info.data.channel",
 			"key": "cronicle",
-			"description": "Add custom key to request body (e.g. to specify channel)"
+			"description": "Add custom key to request body (e.g. to specify channel)",
+			"optional": true
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "web_hooks_slack_info_textkey", 
 			"title": "web_hooks.slack_info.textkey",
 			"key": "markdown",
-			"description": "By default cronicle message is added as <b>text</b> key on webhook request body. Use this config if you need to use something else (e.g. markdown, html, etc). You can specify nested key too using dot notation e.g. 'data.mytextkey'"
+			"description": "By default cronicle message is added as <b>text</b> key on webhook request body. Use this config if you need to use something else (e.g. markdown, html, etc). You can specify nested key too using dot notation e.g. 'data.mytextkey'",
+			"optional": true
 		}]
 
 		,[ "listPush", "global/conf_keys", {
@@ -823,21 +830,24 @@
 			"title": "web_hooks.slack_info.compact",
 			"type": "bool",
 			"key": false,
-			"description": "(Notification webhooks only) Include only basic info in payload (id, title, action) and your custom data. Useful in case of key conflicts"
+			"description": "(Notification webhooks only) Include only basic info in payload (id, title, action) and your custom data. Useful in case of key conflicts",
+			"optional": true
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "web_hooks_slack_info_token", 
 			"title": "web_hooks.slack_info.token",
 			"key": "xoxp-xxxxxxxxx-xxxx",
-			"description": "This is a shortcut for web_hooks.slack_info.headers.Authorization = Bearer xoxp-xxxxxxxxx-xxxx"
+			"description": "This is a shortcut for web_hooks.slack_info.headers.Authorization = Bearer xoxp-xxxxxxxxx-xxxx",
+			"optional": true
 		}]
 		
 		,[ "listPush", "global/conf_keys", {
 			"id": "web_hooks_slack_info_url", 
 			"title": "web_hooks.slack_info.url",
 			"key": "https://slack.com/api/chat.postMessage",
-			"description": "Specify webhook url (for object). If using incoming webhooks then just specify it as string (see slack_general example above)"
+			"description": "Specify webhook url (for object). If using incoming webhooks then just specify it as string (see slack_general example above)",
+			"optional": true
 		}]
 
 		,[ "listPush", "global/conf_keys", {
@@ -878,14 +888,16 @@
 			"title": "params.sql.demo",
 			"key": "SELECT * FROM\nSOMETABLE s \nWHERE s.col = 30",
 			"type": "text/x-sql",
-			"description": " params config (object) can be used to set placeholders in shell scripts. You need to check 'resolve parameters' box in event parameters. To set placeholder use square braket syntax, e.g. for this parameter you should use [/sql/demo]"
+			"description": " params config (object) can be used to set placeholders in shell scripts. You need to check 'resolve parameters' box in event parameters. To set placeholder use square braket syntax, e.g. for this parameter you should use [/sql/demo]",
+			"optional": true
 		}]
 
 		,[ "listPush", "global/conf_keys", {
 			"id": "_read_me_", 
 			"title": "_read_me_",
 			"key": "please read",
-			"description": "Those keys are applied right after storage and webserver init, and then can be updated at runtime (no need to restart cronicle). Please note that you cannot override storage/webserver parameters.\nTo add nested config (object) use dot syntax, e.g. servers.host1. If you convert some nested key into string it would erase related subkeys from config object. In this case just remove that string key and click reload button . To check actual config state use <b>Config Viewer</b> link"
+			"description": "Those keys are applied right after storage and webserver init, and then can be updated at runtime (no need to restart cronicle). Please note that you cannot override storage/webserver parameters.\nTo add nested config (object) use dot syntax, e.g. servers.host1. If you convert some nested key into string it would erase related subkeys from config object. In this case just remove that string key and click reload button . To check actual config state use <b>Config Viewer</b> link",
+			"optional": true
 		}]
 
 
