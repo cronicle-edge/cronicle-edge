@@ -46,7 +46,6 @@ services:
       - cron
     deploy:
       replicas: 1
-    read_only: true
     security_opt:
       - no-new-privileges:true
     entrypoint: bash
@@ -66,7 +65,6 @@ services:
       - cron
     deploy:
       replicas: 1
-    read_only: true
     security_opt:
       - no-new-privileges:true
     entrypoint: worker
@@ -85,7 +83,6 @@ services:
       - cron
     deploy:
       replicas: 1
-    read_only: true
     security_opt:
       - no-new-privileges:true
     entrypoint: worker
