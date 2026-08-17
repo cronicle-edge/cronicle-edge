@@ -48,6 +48,8 @@ services:
       replicas: 1
     security_opt:
       - no-new-privileges:true
+    tmpfs:
+      - /tmp
     entrypoint: bash
     command: -c 'curl -I http://minio:9000/minio/health/live && manager'
     environment:
@@ -67,6 +69,8 @@ services:
       replicas: 1
     security_opt:
       - no-new-privileges:true
+    tmpfs:
+      - /tmp
     entrypoint: worker
     environment:
       - CRONICLE_secret_key = cronicle_secret_key
@@ -85,6 +89,8 @@ services:
       replicas: 1
     security_opt:
       - no-new-privileges:true
+    tmpfs:
+      - /tmp
     entrypoint: worker
     environment:
       - CRONICLE_secret_key = cronicle_secret_key
