@@ -2918,7 +2918,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 		if (lang == 'props') { lang = 'text/x-properties' }
 
-		let theme = app.getPref('theme') == 'dark' && params.theme == 'default' ? 'gruvbox-dark' : params.theme;
+		// a plugin without a "theme" param leaves params.theme unset - treat that as 'default'
+		let theme = app.getPref('theme') == 'dark' && (!params.theme || params.theme == 'default') ? 'gruvbox-dark' : params.theme;
 		if (params.theme == 'light') theme = 'default'
 
 		let editor = CodeMirror.fromTextArea(el, {
@@ -2941,8 +2942,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		editor.on('change', (cm) => { el.value = cm.getValue() })
 
-		// syntax selector
-		document.getElementById("fe_ee_pp_lang").addEventListener("change", function () {
+		// syntax selector - only rendered if the plugin declares a "lang" param
+		let langSelect = document.getElementById("fe_ee_pp_lang")
+		if (langSelect) langSelect.addEventListener("change", function () {
 			let ln = this.options[this.selectedIndex].value;
 
 			editor.setOption("gutters", ['']);
@@ -2967,8 +2969,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			editor.setOption("mode", ln);
 		});
 
-		// theme 
-		document.getElementById("fe_ee_pp_theme").addEventListener("change", function () {
+		// theme - only rendered if the plugin declares a "theme" param
+		let themeSelect = document.getElementById("fe_ee_pp_theme")
+		if (themeSelect) themeSelect.addEventListener("change", function () {
 			var thm = this.options[this.selectedIndex].value;
 			if (thm === 'default' && app.getPref('theme') === 'dark') thm = 'gruvbox-dark';
 			if (thm === 'light') thm = 'default';
