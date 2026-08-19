@@ -7,14 +7,14 @@ services:
 # docker stack deploy --compose-file  Docker/LocalCluster.s3.yaml cron_stack_s3
 
 # debug:
-# docker stack ps cron_stack_s3 
+# docker stack ps cron_stack_s3
 # docker service logs cron_stack_s3_manager1
 
 # remove
-# docker stack rm cron_stack_s3 
+# docker stack rm cron_stack_s3
 
   minio:
-    image: bitnami/minio
+    image: minio/minio
     hostname: minio
     ports:
       - "9000:9000"
@@ -25,41 +25,30 @@ services:
       - cron
     deploy:
       replicas: 1
-    user: root
-    read_only: true
-    security_opt:
-      - no-new-privileges:true
-    entrypoint: bash
-    command: -c 'mkdir -p /data/cronicle && minio server /data --console-address ":9001"'
+    command: server /data --console-address ":9001"
     environment:
-      - "MINIO_ROOT_PASSWORD=minioadmin"
-      - "MINIO_ROOT_USER=minioadmin"
-     
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+
   manager1:
-    image: cronicle:bundle
+    image: cronicle/edge:latest
     hostname: manager1
-    depends_on:
-      - minio
     ports:
       - "3012:3012"
     networks:
       - cron
     deploy:
       replicas: 1
-    security_opt:
-      - no-new-privileges:true
-    tmpfs:
-      - /tmp
     entrypoint: bash
-    command: -c 'curl -I http://minio:9000/minio/health/live && manager'
+    command: -c 'until curl -sf http://minio:9000/minio/health/live; do echo waiting for minio; sleep 3; done && manager'
     environment:
-      - CRONICLE_secret_key = cronicle_secret_key
+      - CRONICLE_secret_key=cronicle_secret_key
     configs:
      - source: cron_s3
-       target: /opt/cronicle/conf/storage.json  
+       target: /opt/cronicle/conf/storage.json
 
   manager2:
-    image: cronicle:bundle
+    image: cronicle/edge:latest
     hostname: manager2
     ports:
       - "3013:3012"
@@ -67,19 +56,15 @@ services:
       - cron
     deploy:
       replicas: 1
-    security_opt:
-      - no-new-privileges:true
-    tmpfs:
-      - /tmp
     entrypoint: worker
     environment:
-      - CRONICLE_secret_key = cronicle_secret_key
+      - CRONICLE_secret_key=cronicle_secret_key
     configs:
      - source: cron_s3
        target: /opt/cronicle/conf/storage.json
 
   manager3:
-    image: cronicle:bundle
+    image: cronicle/edge:latest
     hostname: manager3
     ports:
       - "3014:3012"
@@ -87,13 +72,9 @@ services:
       - cron
     deploy:
       replicas: 1
-    security_opt:
-      - no-new-privileges:true
-    tmpfs:
-      - /tmp
     entrypoint: worker
     environment:
-      - CRONICLE_secret_key = cronicle_secret_key
+      - CRONICLE_secret_key=cronicle_secret_key
     configs:
      - source: cron_s3
        target: /opt/cronicle/conf/storage.json
@@ -104,7 +85,7 @@ networks:
   cron:
     driver: overlay
     attachable: true
-      
+
 configs:
   cron_s3:
     file: ../sample_conf/examples/storage.s3.json
