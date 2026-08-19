@@ -121,7 +121,7 @@ config.Storage.debug = args.debug;
 // indicate that you want to enable engine level transaction
 // to pack multiple crud operation in one transaction
 // this is default for setup/migration, to avoid use --notrx argument
-if(cmd == 'install' || cmd == 'setup' || cmd == 'backfill') config.Storage.trans = true
+if(cmd == 'install' || cmd == 'setup') config.Storage.trans = true
 if(args.notrx) config.Storage.trans = false
 
 // disable storage transactions for CLI (this is storage level transaction)
@@ -260,6 +260,8 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 			// setup new manager server
 			var setup = require('../conf/setup.json');
 
+			let minimal = (process.env['CRONICLE_setup'] === 'minimal')
+
 			// make sure this is only run once
 			// changing exit code to 0, so it won't break docker entry point
 			storage.get('global/users', async function (err) {
@@ -268,9 +270,44 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 					process.exit(0);
 				}
 
-				await add_cluster_records(setup.storage);
+				if(process.env['CRONICLE_cluster']) {
+					let servers = await getIPsForHostnames(process.env['CRONICLE_cluster'].split(','))
+					servers.forEach(server =>{
+						setup.storage.push(["listPush", "global/servers", server])
+					})
+				}
 
-				apply_setup_records(setup.storage,
+				async.eachSeries(setup.storage,
+					function (params, callback) {
+						verbose("Executing: " + JSON.stringify(params) + "\n");
+						// [ "listCreate", "global/users", { "page_size": 100 } ]
+						var func = params.shift();
+						params.push(callback);
+
+						let obj = {}
+
+						// massage a few params
+						if (typeof (params[1]) == 'object') {
+							 obj = params[1];
+							if (obj.created) obj.created = Tools.timeNow(true);
+							if (obj.modified) obj.modified = Tools.timeNow(true);
+							if (obj.regexp && (obj.regexp == '_HOSTNAME_')) obj.regexp = '^(' + Tools.escapeRegExp(hostname) + ')$';
+							if (obj.hostname && (obj.hostname == '_HOSTNAME_')) obj.hostname = hostname;
+							if (obj.ip && (obj.ip == '_IP_')) obj.ip = ip;
+							//if (obj.optional) { verbose("skipping " + params[0]); return callback(); }
+						}
+
+						
+						if(minimal && obj.optional) {
+							// skip optional objects 
+							callback()
+						}
+						else {
+							// call storage directly
+							storage[func].apply(storage, params);
+						}
+
+					},
 					function (err) {
 						if (err) throw err;
 						print("\n");
@@ -280,72 +317,6 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 						print("You should now be able to start the service by typing: '/opt/cronicle/bin/control.sh start'\n");
 						print("Then, the web interface should be available at: http://" + hostname + ":" + config.WebServer.http_port + "/\n");
 						print("Please allow for up to 60 seconds for the server to become manager.\n\n");
-
-						storage.shutdown(function () { process.exit(0); });
-					}
-				);
-			});
-			break;
-
-		case 'backfill':
-			// create global records that are missing from an already initialized storage,
-			// e.g. data migrated from an older release which never had global/secrets.
-			// records that are already there are left untouched, so this is safe to re-run.
-			var setup = require('../conf/setup.json');
-
-			storage.get('global/users', async function (err) {
-				if (err && (err.code == 'NoSuchKey')) {
-					print("Storage has not been set up yet.  Please run the 'setup' command instead.\n\n");
-					process.exit(1);
-				}
-				if (err) {
-					// storage is there but cannot be read - do not advise a setup, it would
-					// treat this storage as empty and seed over the records that are still fine
-					warn("Failed to fetch key: global/users: " + err + "\n\n");
-					process.exit(1);
-				}
-
-				await add_cluster_records(setup.storage);
-
-				// group setup records by key, keeping setup.json order
-				var records = [];
-				setup.storage.forEach(function (params) {
-					// user records are never seeded here, that would recreate the default
-					// admin account (admin/admin) behind the back of an existing install
-					if (!params[1].match(/^global\//)) return;
-
-					var record = Tools.findObject(records, { key: params[1] });
-					if (!record) { record = { key: params[1], ops: [] }; records.push(record); }
-					record.ops.push(params);
-				});
-
-				print("Checking " + records.length + " global records:\n");
-				var num_created = 0;
-
-				async.eachSeries(records,
-					function (record, callback) {
-						storage.get(record.key, function (err) {
-							if (!err) {
-								// leave existing records alone (a list push would modify them)
-								print("  exists : " + record.key + "\n");
-								return callback();
-							}
-							// only a missing key may be seeded, anything else (e.g. a record
-							// that is there but cannot be decoded) has to stop the command
-							if (err.code != 'NoSuchKey') return callback(err);
-
-							apply_setup_records(record.ops, function (err) {
-								if (err) return callback(err);
-								num_created++;
-								print("  created: " + record.key + "\n");
-								callback();
-							});
-						});
-					},
-					function (err) {
-						if (err) throw err;
-						print("\n");
-						print("Created " + num_created + " of " + records.length + " records, the rest were already present.\n\n");
 
 						storage.shutdown(function () { process.exit(0); });
 					}
@@ -659,55 +630,6 @@ var storage = new StandaloneStorage(config.Storage, function (err) {
 
 	} // switch
 });
-
-async function add_cluster_records(ops) {
-	// add the nodes from CRONICLE_cluster to the server list (setup and backfill)
-	if (!process.env['CRONICLE_cluster']) return;
-
-	let servers = await getIPsForHostnames(process.env['CRONICLE_cluster'].split(','))
-	servers.forEach(server => {
-		ops.push(["listPush", "global/servers", server])
-	})
-};
-
-function apply_setup_records(ops, callback) {
-	// write records from setup.json to storage (used by setup and backfill)
-	let minimal = (process.env['CRONICLE_setup'] === 'minimal')
-
-	async.eachSeries(ops,
-		function (params, callback) {
-			verbose("Executing: " + JSON.stringify(params) + "\n");
-			// [ "listCreate", "global/users", { "page_size": 100 } ]
-			var func = params.shift();
-			params.push(callback);
-
-			let obj = {}
-
-			// massage a few params
-			if (typeof (params[1]) == 'object') {
-				 obj = params[1];
-				if (obj.created) obj.created = Tools.timeNow(true);
-				if (obj.modified) obj.modified = Tools.timeNow(true);
-				if (obj.regexp && (obj.regexp == '_HOSTNAME_')) obj.regexp = '^(' + Tools.escapeRegExp(hostname) + ')$';
-				if (obj.hostname && (obj.hostname == '_HOSTNAME_')) obj.hostname = hostname;
-				if (obj.ip && (obj.ip == '_IP_')) obj.ip = ip;
-				//if (obj.optional) { verbose("skipping " + params[0]); return callback(); }
-			}
-
-
-			if(minimal && obj.optional) {
-				// skip optional objects
-				callback()
-			}
-			else {
-				// call storage directly
-				storage[func].apply(storage, params);
-			}
-
-		},
-		callback
-	);
-};
 
 function export_data(file) {
 	// export data to file or stdout (except for completed jobs, logs, and sessions)
