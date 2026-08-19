@@ -2896,7 +2896,10 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let privs = app.user.privileges;
 		let canEdit = privs.admin || privs.edit_events || privs.create_events;
 
-		let lang = params.lang || params.default_lang || 'shell';
+		// the param grid renders before this runs and always pairs a script control with both
+		// selects, so they hold the fallback for an event that stored no syntax/theme of its own.
+		// a plugin may declare lang/theme as some other input type - ignore those and fall through
+		let lang = params.lang || params.default_lang || (document.querySelector('select#fe_ee_pp_lang') || {}).value || 'shell';
 		// gutter for yaml linting
 		let gutter = ''
 		let lint = 'false'
@@ -2918,9 +2921,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 		if (lang == 'props') { lang = 'text/x-properties' }
 
-		// a plugin without a "theme" param leaves params.theme unset - treat that as 'default'
-		let theme = app.getPref('theme') == 'dark' && (!params.theme || params.theme == 'default') ? 'gruvbox-dark' : params.theme;
-		if (params.theme == 'light') theme = 'default'
+		let theme = params.theme || (document.querySelector('select#fe_ee_pp_theme') || {}).value || 'default';
+		if (app.getPref('theme') == 'dark' && theme == 'default') theme = 'gruvbox-dark';
+		if (theme == 'light') theme = 'default'
 
 		let editor = CodeMirror.fromTextArea(el, {
 			mode: lang,
@@ -2942,9 +2945,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		editor.on('change', (cm) => { el.value = cm.getValue() })
 
-		// syntax selector - only rendered if the plugin declares a "lang" param
-		let langSelect = document.getElementById("fe_ee_pp_lang")
-		if (langSelect) langSelect.addEventListener("change", function () {
+		// syntax selector
+		document.getElementById("fe_ee_pp_lang").addEventListener("change", function () {
 			let ln = this.options[this.selectedIndex].value;
 
 			editor.setOption("gutters", ['']);
@@ -2969,9 +2971,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			editor.setOption("mode", ln);
 		});
 
-		// theme - only rendered if the plugin declares a "theme" param
-		let themeSelect = document.getElementById("fe_ee_pp_theme")
-		if (themeSelect) themeSelect.addEventListener("change", function () {
+		// theme 
+		document.getElementById("fe_ee_pp_theme").addEventListener("change", function () {
 			var thm = this.options[this.selectedIndex].value;
 			if (thm === 'default' && app.getPref('theme') === 'dark') thm = 'gruvbox-dark';
 			if (thm === 'light') thm = 'default';
@@ -2989,11 +2990,31 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			var plugin = find_object(app.plugins, { id: event.plugin });
 			if (plugin && plugin.params && plugin.params.length) {
 
+				// setScriptEditor() binds to the syntax/theme selects whenever a script control is
+				// rendered, so supply them - defaulted like the stock plugins - for a plugin that
+				// renders neither. only the types below emit an id="fe_ee_pp_<id>" element, so a
+				// hidden lang/theme param pins the value without leaving anything to bind to
+				var pp_rendered = ['text', 'textarea', 'checkbox', 'select'];
+				var plugin_params = plugin.params;
+				var pp_script = find_object(plugin_params, { id: 'script' }) || {};
+				if (pp_rendered.indexOf(pp_script.type) > -1) {
+					var pp_lang = find_object(plugin_params, { id: 'lang' }) || {};
+					var pp_theme = find_object(plugin_params, { id: 'theme' }) || {};
+					if (pp_rendered.indexOf(pp_lang.type) == -1) plugin_params = plugin_params.concat({
+						type: 'select', id: 'lang', title: 'syntax', value: pp_lang.value || params.default_lang || 'shell',
+						items: ["shell", "powershell", "javascript", "python", "perl", "groovy", "java", "csharp", "scala", "sql", "yaml", "toml", "dockerfile", "json", "props"]
+					});
+					if (pp_rendered.indexOf(pp_theme.type) == -1) plugin_params = plugin_params.concat({
+						type: 'select', id: 'theme', title: 'theme', value: pp_theme.value || 'default',
+						items: ["default", "light", "gruvbox-dark", "solarized light", "solarized dark", "darcula", "ambiance", "base16-dark", "nord"]
+					});
+				}
+
 				html += '<div style="font-size:13px; margin-top:7px; display:none;"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Plugin Parameters</span></div>';
 				html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px; width: 55rem;"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Plugin Parameters</legend>';
 
-				for (var idx = 0, len = plugin.params.length; idx < len; idx++) {
-					var param = plugin.params[idx];
+				for (var idx = 0, len = plugin_params.length; idx < len; idx++) {
+					var param = plugin_params[idx];
 					var value = (param.id in params) ? params[param.id] : param.value;
 					switch (param.type) {
 
