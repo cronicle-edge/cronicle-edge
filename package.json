@@ -7,7 +7,7 @@
 	"license": "MIT",
 	"main": "lib/main.js",
 	"scripts": {
-		"test": "pixl-unit lib/test.js",
+		"test": "pixl-unit lib/test.js test/oidc-logout.test.js",
 		"boot": "pixl-boot install",
 		"unboot": "pixl-boot uninstall"
 	},
@@ -44,6 +44,7 @@
 		"jquery": "^3.7.1",
 		"jquery-datetimepicker": "^2.5.21",
 		"jquery-ui-dist": "^1.13.2",
+		"jose": "6.2.8",
 		"js-yaml": "^4.1.0",
 		"jsonlint-mod": "^1.7.6",
 		"jstimezonedetect": "1.0.6",

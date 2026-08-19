@@ -118,6 +118,12 @@ The login page can be customized in the `oauth` section of `config.json`:
 
 Verify the OAuth flow before enabling `only` or `auto_login`, as an unavailable or invalid provider configuration can prevent interactive access.
 
+#### OpenID Connect logout
+
+OIDC RP-Initiated Logout and Back-Channel Logout are optional and disabled by default. Existing OAuth installations retain local-only logout until either feature is enabled.
+
+See [OpenID Connect configuration and logout](docs/oidc.md) for a complete configuration reference, provider registration, Authentik localhost setup, and deployment notes.
+
 ### Serve cronicle on custom base path
 Ever wanted to serve cronicle on ```https://myserver/cron``` ? Just set ```base_path = /cron``` in config.json or set ```CRONICLE_base_path=/cron``` variable 
 Refer to [1.10.1 release notes](https://github.com/cronicle-edge/cronicle-edge/releases/tag/v1.10.1) for more details.
@@ -132,7 +138,7 @@ You can now set any config right from GUI and without restarting cronicle. You c
 On Config Tab you can also specify environment variables using "KEY = VALUE" syntax (dotenv style). Those variables will be available while executing shellplug events. You can also encrypt this data turning this feature into "secret management". Data is encrypted using AES256 and cronicle secret key. For the best result set `secret_key` as docker secret, use https proxy between clients and manager nodes, and set log level config to be <= 6.
 
 ### Config Viewer
-Config tab also contains a link to a config viewer. It will list all actual config values (besides `secret_key`).
+Config tab also contains a link to a config viewer. It lists actual config values while recursively masking passwords, secrets, API keys and token values, including in debug mode.
 
 ### Import/Export (Backup) API
 You now can import/export cronicle metadata from UI (under schedule tab). It's basically same this as "storage-cli import/export", so you can export your jobs from classic cronicle using CLI, and import it to the new version using GUI.  There is also a sample backup file (under sample_conf/backup). It contain plenty of demo jobs describing cronicle-edge features and showing some extra tricks (e.g. running Java/PySpark snippets). Please note - the Import API will ignore server and plugin info to prevent state change (you need to set up servers and custom plugins separately).
@@ -212,4 +218,3 @@ There are several other UI improvements. E.g. tooltips or extra filters. Some in
 ![image](https://user-images.githubusercontent.com/31977106/109408939-4e260a00-795c-11eb-9fcc-7d0a7d18e758.png)
 ## Extra ticks & job token:
 ![image](https://user-images.githubusercontent.com/31977106/109409018-0489ef00-795d-11eb-800b-1b83b57d9863.png)
-
