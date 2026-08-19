@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 cd "$(dirname "$0")"
 
@@ -305,8 +305,18 @@ if [ "$level" = 1 ]; then
    printf "      - bundling Level Engine\n"
    npm i level --no-save --loglevel silent 
    esbuild --bundle --log-level=$ESBuildLogLevel $minify --platform=node --outdir=$dist/bin/engines engines/Level.js
-   mkdir -p $dist/bin/engines/prebuilds/
-   cp -r node_modules/classic-level/prebuilds/linux-x64 $dist/bin/engines/prebuilds/
+   level_prebuild="node_modules/classic-level/prebuilds/$(node -p 'process.platform + "-" + process.arch')"
+   if [ -d "$level_prebuild" ]; then
+      mkdir -p "$dist/bin/engines/prebuilds/"
+      cp -r "$level_prebuild" "$dist/bin/engines/prebuilds/"
+   elif [ -d node_modules/classic-level/build/Release ]; then
+      # node-gyp-build uses this directory when no platform prebuild is available.
+      mkdir -p "$dist/bin/engines/build/"
+      cp -r node_modules/classic-level/build/Release "$dist/bin/engines/build/"
+   else
+      echo "classic-level native build not found"
+      exit 1
+   fi
 fi
 
 if [ "$lmdb" = 1 ]; then
@@ -518,4 +528,3 @@ if [ "$test" = 1 ]; then
   # remove test files
   rm $dist/bin/test.js
 fi
-
