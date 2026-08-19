@@ -98,7 +98,6 @@ function makeUser(oauth) {
 	user.hooks = {};
 	user.getOauthConfig = () => oauth;
 	user.getBaseLocation = (path) => path || '/';
-	user.oidc_logout_ticket_secret = 'test-ticket-secret';
 	user.oidc_logout_ticket_replay = new Set();
 	user.server = { config: { get: (key) => key === 'secret_key' ? 'test-ticket-secret' : undefined } };
 	user.logDebug = (...args) => logs.push(JSON.stringify(args));
