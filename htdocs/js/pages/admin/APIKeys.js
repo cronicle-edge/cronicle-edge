@@ -56,7 +56,7 @@ Class.add( Page.Admin, {
 			];
 			return [
 				'<div class="td_big">' + self.getNiceAPIKey(item, true, col_width) + '</div>',
-				'<div style="">' + encode_entities(item.key) + '</div>',
+				'<div style="">' + encode_entities(item.key.substring(0, 4) + '********************************') + '</div>',
 				item.active ? '<span class="color_label green"><i class="fa fa-check">&nbsp;</i>Active</span>' : '<span class="color_label red"><i class="fa fa-warning">&nbsp;</i>Suspended</span>',
 				self.getNiceUsername(item.username, true, col_width),
 				'<span title="'+get_nice_date_time(item.created, true)+'">'+get_nice_date(item.created, true)+'</span>',
