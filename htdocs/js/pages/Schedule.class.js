@@ -144,9 +144,18 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	},
 
+	get_safe_text_value: function (value) {
+		// Rendering fallback for records persisted before API validation existed.
+		// Structured values are never stringified because hostile or malformed
+		// objects may not implement a safe toString() method.
+		if (typeof value === 'string') return value;
+		if ((typeof value === 'number') || (typeof value === 'boolean')) return String(value);
+		return '';
+	},
+
 	render_file_list: function () {
 		let cols = ['File Name', ' '];
-		let files = this.event.files || []
+		let files = Array.isArray(this.event.files) ? this.event.files : []
 
 		if (files.length === 0) {
 			document.getElementById('fe_ee_pp_file_list').innerHTML = ''
@@ -156,11 +165,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let table = '<table id="wf_event_list_table" class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
 
 		for (var idx = 0, len = files.length; idx < len; idx++) {
+			let file = files[idx] || {}
+			let fileName = this.get_safe_text_value(file.name)
 			let actions = ` 
 			   <span class="link" onMouseUp = "$P().file_edit(${idx})" > <b>Edit</b></span> | 
 			   <span class="link" onMouseUp = "$P().file_delete(${idx})" > <b>Delete</b></span>
 			   `
-			table += `<tr><td id><b>${encode_entities(files[idx].name)}</b></td><td>${actions}</td> </tr>`
+			table += `<tr><td id><b>${encode_entities(fileName)}</b></td><td>${actions}</td> </tr>`
 
 		}
 
@@ -172,7 +183,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	file_add: function () {
 
 		let self = this;
-		if (!self.event.files) self.event.files = []
+		if (!Array.isArray(self.event.files)) self.event.files = []
 		let files = self.event.files
 
 		// FILE EDITOR ON SHELLPLUG'
@@ -192,7 +203,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 				let name = $("#fe_ee_pp_file_name").val()
 
-				if (!name || files.map(e => e.name).indexOf(name) > -1) {
+				let existingNames = files.map(file => self.get_safe_text_value(file && file.name))
+				if (!name || existingNames.indexOf(name) > -1) {
 					app.showMessage('error', "Invalid Name")
 				}
 				else {
@@ -219,14 +231,16 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		if (!Array.isArray(self.event.files)) return // sanity check
 		let file = self.event.files[i]
 		if (!file) return // sanity check
+		let fileName = self.get_safe_text_value(file.name)
+		let fileContent = self.get_safe_text_value(file.content)
 
 		let html = '<table>' +
-			get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="${file.name}" spellcheck="false">`) +
+			get_form_table_row('Name', `<input type="text" id="fe_ee_pp_file_name" size="40" value="${escape_text_field_value(fileName)}" spellcheck="false">`) +
 			get_form_table_spacer() +
-			get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110">${file.content}</textarea>`)
+			get_form_table_row('Content', `<textarea style="padding-right:20px"  id="fe_ee_pp_file_content" rows="36" cols="110">${escape_text_field_value(fileContent)}</textarea>`)
 		html += '</table>'
 
-		setTimeout(() => self.setFileEditor(file.name), 30) // editor needs to wait for a bit for modal window to render
+		setTimeout(() => self.setFileEditor(fileName), 30) // editor needs to wait for a bit for modal window to render
 
 		app.confirm(html, '', "Save", function (result) {
 			app.clearError();
@@ -264,14 +278,23 @@ Class.subclass(Page.Base, "Page.Schedule", {
 	 * @typedef {Object} WFEvent
 	 * @property {string} id
 	 * @property {string} title
-	 * @property {string} arg
-	 * @property {boolean} wait
-	 * @property {boolean} disabled
+	 * @property {string|number|boolean|null} arg
+	 * @property {boolean|number} wait Boolean or numeric 0/1
+	 * @property {boolean|number} disabled Boolean or numeric 0/1
 	 */
+	render_wf_event_options: function (events, selected_id) {
+		let self = this;
+		return (Array.isArray(events) ? events : []).map(function (event) {
+			let id = self.get_safe_text_value(event && event.id);
+			let title = (event && event.title != null) ? self.get_safe_text_value(event.title) : id;
+			let selected = (id == selected_id) ? ' selected="selected"' : '';
+			return `<option value="${escape_text_field_value(id)}"${selected}>${encode_entities(title)}</option>`;
+		}).join('');
+	},
 
 	render_wf_event_list: function () {
 		let cols = ['#', "Run", '@', 'Id', 'Title', 'Argument', ' '];
-		let wf_events = this.event.workflow || []
+		let wf_events = Array.isArray(this.event.workflow) ? this.event.workflow : []
 
 		let table = '<table id="wf_event_list_table" class="data_table"><tr><th>' + cols.join('</th><th>').replace(/\s+/g, '&nbsp;') + '</th></tr>';
 
@@ -279,9 +302,9 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			table += '<tr><td></td><td></td><td></td><td></td><td><b>No event found</b></td><td></td></tr>'
 		}
 		// '<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ')" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
-		let schedTitles = {};
+		let schedTitles = Object.create(null);
 		(app.schedule || []).forEach(e => {
-			schedTitles[e.id] = e.title
+			schedTitles[this.get_safe_text_value(e.id)] = e.title
 		});
 
 		let startFrom = parseInt($("#wf_start_from_step :selected").val());
@@ -293,12 +316,14 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		   <span class="link" onMouseUp = "$P().wf_event_delete(${idx})" > <b>Delete</b></span>
 		   `
 
-			let wfe = wf_events[idx]
-			let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;"><a href="#Schedule?sub=edit_event&id=${wfe.id}" target="_blank">${wfe.id}</a></span>`
-			let title = `${schedTitles[wfe.id] || '<span style="color:red">[Unknown]</span>'}`.substring(0, 40)
-			let arg = wfe.arg || ''
-			if (arg.length > 40) arg = arg.substring(0, 37) + '...'
-			let argInfo = wfe.arg ? `<span title="refer to JOB_ARG env variable"><u>${encode_entities(arg)}<u></span>` : '-'
+			let wfe = wf_events[idx] || {}
+			let rawId = this.get_safe_text_value(wfe.id)
+			let eventId = `<span class="link" style="font-weight:bold; white-space:nowrap;"><a href="#Schedule?sub=edit_event&id=${encodeURIComponent(rawId)}" target="_blank">${encode_entities(rawId)}</a></span>`
+			let hasTitle = Object.prototype.hasOwnProperty.call(schedTitles, rawId)
+			let title = hasTitle ? encode_entities(this.get_safe_text_value(schedTitles[rawId]).substring(0, 40)) : '<span style="color:red">[Unknown]</span>'
+			let rawArg = this.get_safe_text_value(wfe.arg)
+			let arg = rawArg.length > 40 ? rawArg.substring(0, 37) + '...' : rawArg
+			let argInfo = rawArg ? `<span title="refer to JOB_ARG env variable"><u>${encode_entities(arg)}<u></span>` : '-'
 
 			table += `<tr class="${wfe.disabled ? 'disabled' : ''}">
 	     <td>${idx + 1}</td>
@@ -390,7 +415,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		if (!self.event.workflow) self.event.workflow = []
 		let wf = self.event.workflow
 		let opts = self.event.options || {}
-		let event_menu = render_menu_options(all_events, wf.length > 0 ? wf[wf.length - 1].id : all_events[0].id)
+		let selected_id = wf.length > 0 ? wf[wf.length - 1].id : (all_events[0] ? all_events[0].id : '')
+		let event_menu = self.render_wf_event_options(all_events, selected_id)
 
 		let el_style = 'width: 240px; font-size:16px;'
 		let html = '<table>' +  //<option value="">(Select Event)</option>
@@ -428,12 +454,12 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// show dialog to edit or add wf event
 		let self = this;
 		let evt = self.event.workflow[idx] //self.wf.event_list[idx]
-		let event_list = render_menu_options([evt], evt.id)
+		let event_list = self.render_wf_event_options([evt], evt.id)
 		let el_style = 'width: 240px;  font-size:16px;'
 		let html = '<table>' +
 			get_form_table_row('Event', `<select id="fe_ee_pp_wf_select_event" style="${el_style}" disabled>${event_list}</select>`) +
 			get_form_table_spacer() +
-			get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="${evt.arg}" spellcheck="false"/>`) +
+			get_form_table_row('Job Argument', `<input type="text" id="fe_ee_pp_wf_evt_arg" size="30" value="${escape_text_field_value(evt.arg)}" spellcheck="false"/>`) +
 			'</table>'
 
 		app.confirm('<i class="fa fa-clock-o">&nbsp;&nbsp;</i>Edit Event Options', html, "OK", function (result) {
@@ -862,6 +888,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		var htmlTab = this.getBasicTable2(events, cols, 'event', function (item, idx) {
 
 			let actions;
+			let extraTicks = self.get_safe_text_value(item.ticks)
 
 			if (isGrid) {
 				actions = [
@@ -933,7 +960,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			}
 
 			// for timing     
-			let niceTiming = summarize_event_timing(item.timing, item.timezone, (inactiveTitle || isGrid) ? null : item.ticks)
+			let niceTiming = summarize_event_timing(item.timing, item.timezone, (inactiveTitle || isGrid) ? null : extraTicks)
 			let gridTiming = niceTiming.length > 20 ? summarize_event_timing_short(item.timing) : niceTiming
 			let gridTimingTitle = niceTiming;
 
@@ -959,8 +986,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			if (inactiveTitle) {
 				gridTiming = `<s>${gridTiming}</s>`
 				gridTimingTitle = `${inactiveTitle}<br><s>${niceTiming}</s>`
-				niceTiming = `<span title="${inactiveTitle}"><s>${niceTiming}</s>`
-				if (item.ticks) niceTiming += `<span title="Extra Ticks: ${item.ticks}"> <b>+</b> </>`
+				niceTiming = `<span title="${encode_attrib_entities(inactiveTitle)}"><s>${niceTiming}</s>`
+				if (extraTicks) niceTiming += `<span title="Extra Ticks: ${encode_attrib_entities(extraTicks)}"> <b>+</b> </>`
 
 
 			}
@@ -1032,8 +1059,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			// timing title in grid view
 
-			if (item.ticks) {
-				gridTimingTitle += `<br><br>Extra ticks: ${item.ticks}`
+			if (extraTicks) {
+				gridTimingTitle += `<br><br>Extra ticks: ${extraTicks}`
 				gridTiming += "+"
 			}
 
@@ -1076,7 +1103,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			<div class="flex-container">
 			  <div style="padding-left:5px">${actions.join(' ')}</div>	
 			  <div style="text-overflow:ellipsis;overflow:hidden;white-space: nowrap;">		 
-			  <span title="${gridTimingTitle}" style="overflow:hidden;text-overflow: ellipsis;white-space:nowrap">${gridTiming}</span> 
+			  <span title="${encode_attrib_entities(gridTimingTitle)}" style="overflow:hidden;text-overflow: ellipsis;white-space:nowrap">${gridTiming}</span>
 			  </div>		 
 		    </div>
 			</div>
@@ -1778,6 +1805,17 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		$('#fe_ee_secret').attr('placeholder', '')
 	},
 
+	render_event_ticks_input: function (event) {
+		let ticks = this.get_safe_text_value(event.ticks);
+		return `<input type="text" id="fe_ee_ticks" size="50" value="${escape_text_field_value(ticks)}" autocomplete="one-time-code" placeholder="e.g. 3PM|16:45|2020-01-01 09:30" spellcheck="false" onchange="$P().parseTicks()"/>`;
+	},
+
+	render_event_secret_input: function (event) {
+		let preview = this.get_safe_text_value(event.secret_preview);
+		let placeholder = preview ? '[' + preview + ']' : '';
+		return `<textarea  style="width:620px; height:45px;resize:vertical;" id="fe_ee_secret" oninput="$P().set_event_secret(this.value)" placeholder="${escape_text_field_value(placeholder)}" spellcheck="false"></textarea>`;
+	},
+
 	get_event_edit_html: function () {
 		// get html for editing a event (or creating a new one)
 		var html = '';
@@ -1950,7 +1988,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			<fieldset style="padding:10px 10px 0 10px; margin-bottom:5px;${time_options_exp ? '' : 'display:none;'}"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Timing Options</legend>
 		     <div class="plugin_params_label">Extra Ticks: </div>
 		     <div class="plugin_params_content">
-		      <input type="text" id="fe_ee_ticks" size="50" value="${event.ticks || ''}" autocomplete="one-time-code" placeholder="e.g. 3PM|16:45|2020-01-01 09:30" spellcheck="false" onchange="$P().parseTicks()"/>
+		      ${this.render_event_ticks_input(event)}
 		      <span class="link addme" style="padding-left:4px; font-size:13px;" onMouseUp="$P().parseTicks()"> check &nbsp;&nbsp;|</span>
 		      <span class="link addme" style="padding-left:0px; font-size:13px;" onMouseUp="$P().ticks_add_now()">add timestamp</span>		   
 		      <div class="caption" style="margin-top:6px;">Optional extra minute ticks (extends regular schedule). Separate by comma or pipe.<br> Use HH:mm fromat for daily recurring or YYYY-MM-DD HH:mm for onetime ticks</div>
@@ -1981,8 +2019,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 
 		// Secret
-		let sph = event.secret_preview ? '[' + event.secret_preview + ']' : '';
-		html += get_form_table_row('Secret', `<textarea  style="width:620px; height:45px;resize:vertical;" id="fe_ee_secret" oninput="$P().set_event_secret(this.value)" placeholder="${sph}" spellcheck="false"></textarea>`);
+		html += get_form_table_row('Secret', this.render_event_secret_input(event));
 		html += get_form_table_caption("Specify KEY=VALUE pairs to set ENV variables. Some plugins require KEY prefix (e.g. DOCKER_ or SSH_ ) to pass it to job runtime.");
 		html += get_form_table_spacer();
 
