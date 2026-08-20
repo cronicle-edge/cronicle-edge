@@ -19,17 +19,27 @@ For actual use:
 - for persistant volume you only need to map *data* folder
 - to run cronicle "as a service" use *restart=always* option
 - you may optionally use *--net=host* parameter if interacting with cronicle nodes on other machines (in this case don't use hostname parameter, it should be the same as your host)
-- you can specify secret_key via env variable. CRONICLE_manager=1 will start up cronicle right away (only use on single manager node/cluster)
+- `CRONICLE_manager=1` starts Cronicle immediately (only use it on a single-manager node/cluster)
 
 ```bash
-export CRONICLE_SECRET_KEY="$(openssl rand -hex 32)" # generate once, store securely, and reuse
+install -d -m 0700 "$HOME/.config/cronicle" "$HOME/data"
+if [ ! -s "$HOME/.config/cronicle/secret_key" ]; then
+  (umask 077; openssl rand -hex 32 > "$HOME/.config/cronicle/secret_key")
+fi
+chmod 0600 "$HOME/.config/cronicle/secret_key"
 docker run -d --hostname manager1 --restart=always \
   -e CRONICLE_manager=1 \
-  -e CRONICLE_secret_key="$CRONICLE_SECRET_KEY" \
+  -e CRONICLE_secret_key_file=/run/secrets/cronicle_secret_key \
   -p 3012:3012 \
-  -v $HOME/data:/opt/cronicle/data \
+  -v "$HOME/data:/opt/cronicle/data" \
+  --mount type=bind,source="$HOME/.config/cronicle/secret_key",target=/run/secrets/cronicle_secret_key,readonly \
   cronicle/cronicle:edge manager
 ```
+
+The key file must be reused by every node that belongs to the cluster.  Keep a
+protected backup: replacing it after data has been written makes encrypted
+values unreadable.  A file mount keeps the key value out of `docker inspect`
+environment output.
 
 # Running cronicle in swarm mode (as service)
 If you have multiple machines it's a good idea to set up a swarm cluster. It's still could be useful on a single node too, since you'll get access to secret management, and will be able easily update/roll back cronicle version.
@@ -38,16 +48,18 @@ If you have multiple machines it's a good idea to set up a swarm cluster. It's s
 
  ```bash
  docker network create --driver overlay cron
- mkdir -p /var/data/cronicle/v1/data # could be anything, but should be in line with step 3 (--mount arg)
+ sudo install -d -m 0700 /var/data/cronicle/v1/data # run on the manager node; keep this in line with step 3 (--mount arg)
  ```
  
 
-## step 2 - create secrets (optional)
+## step 2 - create secrets
 
 ```bash
-echo -n "MyCronSecretKey" | docker secret create secret_key -
+openssl rand -hex 32 | docker secret create secret_key -
 docker secret create cronicle.key /path/to/key.pem
 ```
+Create `secret_key` only once and reuse that external Docker secret for every
+node.  Do not pass its value through a service environment variable.
 The key is used for data encryption. Use bin/cms (openssl wrapper) to generate one:
  ```
   bin/cms new cronicle > /path/to/key.pem
@@ -62,6 +74,7 @@ The key is used for data encryption. Use bin/cms (openssl wrapper) to generate o
    --mount  type=bind,source=/var/data/cronicle/v1/data,destination=/opt/cronicle/data \
    --network cron  \
    -e CRONICLE_manager=1  \
+   -e CRONICLE_secret_key_file=/run/secrets/secret_key  \
    cronicle/cronicle:edge-1.0.0 manager
 ```
 
@@ -90,6 +103,7 @@ If secret is meant to be accessed by non-root user then just specify it as ```--
    --secret  source=secret_key,target=secret_key,uid=0,mode=0400  \
    --secret  source=cronicle.key,target=cronicle.key,uid=0,mode=0400  \
    --network cron  \
+   -e CRONICLE_secret_key_file=/run/secrets/secret_key  \
    cronicle/cronicle:edge-1.0.0 worker
 ```
 
