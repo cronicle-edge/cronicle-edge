@@ -420,9 +420,6 @@ if (!(Test-Path $Path/conf)) {
 
   Remove-Item -Recurse -Force $Path/conf/examples 
 
-  # generate sample secret_key. Please change, or use CRONICLE_secret_key variable to overwrite
-  -join ((48..57) + (97..122) | Get-Random -Count 32 | ForEach-Object { [char]$_ }) > $Path/conf/secret_key
-
 }
 
 if(Test-Path "sample_conf\examples\storage.$Engine.json") {
