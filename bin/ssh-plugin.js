@@ -6,20 +6,17 @@ const conn = new Client();
 const {EOL} = require('os')
 const JSONStream = require('pixl-json-stream');
 const { spawn } = require('child_process')
+const { buildConnectionOptions, resolveSshTarget } = require('../lib/ssh-host-policy')
 
 const print = (text) => {
 	process.stdout.write(text + EOL);
 }
-
-let hostInfo = process.env['JOB_ARG'] || process.env['SSH_HOST'] || ''
 
 let json = parseInt(process.env['JSON'] || '')
 
 let command = process.env['SSH_CMD'] ?? 'ls -lah /'
 
 let script = process.env['SCRIPT']
-
-hostInfo = process.env[hostInfo] || hostInfo
 
 let kill_timer = null
 
@@ -31,14 +28,22 @@ let trapCmd = ""
 
 const stream = new JSONStream(process.stdin, process.stdout);
 
-function printJSONmessage(complete, code, desc) {
-    stream.write({ complete: complete, code: code || 0, description: desc || "" })
+function printJSONmessage(complete, code, desc, callback) {
+    stream.write({ complete: complete, code: code || 0, description: desc || "" }, callback)
 }
 
-    // ================  Run Locally if no host info provided ====================================== //
+let target = null
+try {
+    target = resolveSshTarget(process.env, { allowConfiguredLocal: true, defaultProtocol: 'sftp' })
+}
+catch (err) {
+    printJSONmessage(1, 1, err.message, () => process.exit(1))
+}
+
+    // ================  Run locally only after explicit operator configuration =================== //
     // ================ this would emulate: echo "some command" | sh - =============================//
 
-    if (!hostInfo || hostInfo.toLowerCase() === 'localhost') {
+    if (target && target.mode === 'local') {
 
         // ----------- START 
 
@@ -114,18 +119,13 @@ function printJSONmessage(complete, code, desc) {
 
     // ================  RUN OVER SSH ====================================== //
 
-    else {
+    else if (target) {
 
-        if (!hostInfo.startsWith('sftp://')) hostInfo = 'sftp://' + hostInfo
+        try {
+        let uri = target.uri
+        let conf = buildConnectionOptions(target)
 
-        let uri = new URL(hostInfo)
-
-        let conf = {
-            host: uri.hostname,
-            port: parseInt(uri.port) || 22,
-            username: uri.username,
-            pty: true
-        }
+        if (target.warning) print(`[WARN] \x1b[33m${target.warning}\x1b[0m`)
 
         if (uri.password) conf.password = decodeURIComponent(uri.password)
         if (process.env['SSH_KEY']) conf.privateKey = Buffer.from(process.env['SSH_KEY'])
@@ -233,4 +233,8 @@ function printJSONmessage(complete, code, desc) {
                 conn.end()
             }
         })
+        }
+        catch (err) {
+            printJSONmessage(1, 1, err.message, () => process.exit(1))
+        }
     } /// run remote

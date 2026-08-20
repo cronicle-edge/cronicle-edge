@@ -5,6 +5,7 @@ const { Client } = require('ssh2');
 const conn = new Client();
 const { EOL } = require('os')
 const fs = require('fs')
+const { buildConnectionOptions, resolveSshTarget } = require('../lib/ssh-host-policy')
 
 // read job info from stdin (sent by Cronicle engine)
 const job = JSON.parse(fs.readFileSync(process.stdin.fd))
@@ -18,24 +19,27 @@ const printInfo = (text) => { if(debug) process.stdout.write(`[INFO] \x1b[32m${t
 const printWarning = (text) => { if(debug) process.stdout.write(`[WARN] \x1b[33m${text}\x1b[0m` + EOL) }
 const printError = (text) => process.stdout.write(`\x1b[31m${text}\x1b[0m` + EOL)
 
-const printComplete = (complete, code, desc) => {
-    process.stdout.write(JSON.stringify({ complete: complete, code: code || 0, description: desc || "" }) + EOL)
+const printComplete = (complete, code, desc, callback) => {
+    process.stdout.write(JSON.stringify({ complete: complete, code: code || 0, description: desc || "" }) + EOL, callback)
 }
+
+const printCompleteAndExit = (code, desc) => printComplete(1, code, desc, () => process.exit(code ? 1 : 0))
 
 const printJson = (json) => { process.stdout.write(JSON.stringify(json) + EOL) }
 
 let shuttingDown = false
 
-let hostInfo = process.env['SSH_HOST'] || process.env['JOB_ARG']
-
-if (!hostInfo) {
-    printComplete(1, 1, "Host info is not provided. Specify SSH_HOST parameter or pass it via Workflow argument")
-    process.exit(1)
+function main() {
+let target
+try {
+    target = resolveSshTarget(process.env, { allowConfiguredLocal: false, defaultProtocol: 'ssh' })
+}
+catch (err) {
+    printCompleteAndExit(1, err.message)
+    return
 }
 
 let killCmd = (process.env['KILL_CMD'] || '').trim() || 'pkill -s $$' // $$ will be resolved in bootstrap script
-
-hostInfo = process.env[hostInfo] || hostInfo // host info might be passed as name of env variable
 
 let json = parseInt(process.env['JSON'])
 
@@ -53,7 +57,12 @@ let SCRIPT_BASE64 = Buffer.from(process.env['SCRIPT'] ?? '#!/usr/bin/env sh\nech
 let prefix = process.env['PREFIX'] || ''
 
 // generate stdin script to pass variables and user script in base64 format
-let exclude = ['SSH_HOST', 'SSH_KEY', 'SSH_PASSWORD']
+let exclude = [
+    'SSH_HOST', 'SSH_KEY', 'SSH_PASSWORD', 'SSH_PASSPHRASE',
+    'SSH_HOST_FINGERPRINT', 'SSH_HOST_FINGERPRINT_MAP', 'SSH_HOST_KEY_STRICT'
+]
+if (target.source === 'job_arg') exclude.push('JOB_ARG')
+if (Object.prototype.hasOwnProperty.call(process.env, target.selected)) exclude.push(target.selected)
 let include = ['BASE_URL', 'BASE_APP_URL']
 process.env['JOB_CHAIN_DATA'] = JSON.stringify(job.chain_data) || 'has no data'
 
@@ -97,16 +106,11 @@ let trapCmd = ""
 // -------------------------- MAIN --------------------------------------------------------------//
 
 
-if (!hostInfo.startsWith('ssh://')) hostInfo = 'ssh://' + hostInfo
+try {
+let uri = target.uri
+let conf = buildConnectionOptions(target)
 
-let uri = new URL(hostInfo)
-
-let conf = {
-    host: uri.hostname,
-    port: parseInt(uri.port) || 22,
-    username: uri.username,
-    pty: true
-}
+if (target.warning) process.stdout.write(`[WARN] ${target.warning}` + EOL)
 
 // Resolve credential
 // can be passed via secret
@@ -119,11 +123,10 @@ if (uri.searchParams.get('privateKey')) conf.privateKey = readFileSync(String(ur
 if (uri.searchParams.get('passphrase')) conf.passphrase = uri.searchParams.get('passphrase')
 
 if (!conf.password && !conf.privateKey ) {
-    printComplete(1, 1, "No password or key specified. Use SSH_PASSWORD/SSH_KEY env vars, or set via URI (ssh://user:[pass]@host?privateKey=/path/to/key")
-    process.exit(1)
+    printCompleteAndExit(1, "No password or key specified. Use SSH_PASSWORD/SSH_KEY env vars, or set via URI (ssh://user:[pass]@host?privateKey=/path/to/key")
+    return
 }
 
-try {
     conn.on('error', (err) => {  // handle configuration errors
         printJson({
             complete: 1,
@@ -200,18 +203,6 @@ try {
 
         }) // ------- exec
     }).connect(conf)
-}
-catch (err) {
-    printJson({
-        complete: 1,
-        code: 1,
-        description: err.message
-    });
-    if (process.connected) process.disconnect()
-    process.exit(1)
-}
-
-
 // process should be connected for Windows compat
 let sig = process.connected ? 'disconnect' : 'SIGTERM'
 
@@ -245,4 +236,12 @@ process.on(sig, (signal) => {
         if (process.connected) process.disconnect()
     }
 })
+}
+catch (err) {
+    if (process.connected) process.disconnect()
+    printCompleteAndExit(1, err.message)
+}
 
+}
+
+main()

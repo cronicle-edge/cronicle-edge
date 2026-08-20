@@ -77,7 +77,7 @@ You can import some demo jobs from **sample_conf/backup** file. This can be done
 Use this plugin to run multiple jobs in parallel, or invoke same event multiple times with different parameters. You can run group of jobs based on category or event title prefix. To run same event multiple times you can specify comma separated argument list (argument value will be available as `JOB_ARG` env variable).
 
 - ### SSH Plugin
-Run your code snippets on remote machines over SSH. No cronicle agent or openssh installation needed! Can even run on Windows hosts (if openssh is configured). Use with WF plugin to run on multiple hosts.
+Run your code snippets on remote machines over SSH. No cronicle agent or openssh installation needed! Can even run on Windows hosts (if openssh is configured). Use with WF plugin to run on multiple hosts. See [SSH target selection, host-key pinning, and migration](docs/ssh.md).
 
 - ### Docker Plugin
 Run your code snippet in docker. Cronicle will set up container with your script and optionally some other files. Can use local or remote (over ssh) docker engine.
