@@ -22,9 +22,10 @@ For actual use:
 - you can specify secret_key via env variable. CRONICLE_manager=1 will start up cronicle right away (only use on single manager node/cluster)
 
 ```bash
+export CRONICLE_SECRET_KEY="$(openssl rand -hex 32)" # generate once, store securely, and reuse
 docker run -d --hostname manager1 --restart=always \
   -e CRONICLE_manager=1 \
-  -e CRONICLE_secret_key=123456 \
+  -e CRONICLE_secret_key="$CRONICLE_SECRET_KEY" \
   -p 3012:3012 \
   -v $HOME/data:/opt/cronicle/data \
   cronicle/cronicle:edge manager
