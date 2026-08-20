@@ -3,9 +3,9 @@
 // const rl = require('readline').createInterface({ input: process.stdin });
 const PixlRequest = require('pixl-request');
 const request = new PixlRequest();
-const he = require('he');
 const {EOL} = require('os')
 const JSONStream = require('pixl-json-stream');
+const { buildWorkflowReportTable } = require('../lib/workflow_report');
 
 let bullet = '>' // '⬤'
 
@@ -409,40 +409,7 @@ stream.on('json', function (job) {
 			perf[perf_key] = jobStatus[key].elapsed || 0
 		})
 
-		function getNiceTitle(job, id) {
-			if(!job) return ''
-			let title = '<b> ' + job.seq + ' :: ' + (job.title || 'Unknown') + '</b>'
-			// if(id) title = `${id} :: ${title} `
-			// if(job.arg) title = title + ' :: ' + job.arg
-			if(job.arg) title = title + '@' + job.arg
-			return he.encode(title)
-		}
-
-		function getNiceStatus(job) {
-			return job.code ? (job.code == 255 ? '<span style="color:orange"><b>⚠️</b></span>' : '<span style="color:red"><b>✗</b></span>') : '<span style="color:green"><b>✔</b></span>'
-		}
-
-		var table = {
-			title: "Workflow Events",
-			header: [
-				"#", "title", "arg", "job", "started at", "elapsed", "status", "view log",  "description"
-			],
-			rows: Object.keys(jobStatus).map(key => [
-				jobStatus[key].seq,
-				
-				`<span style="${jobStatus[key].code % 255 ? 'color:red' : ''}"><b>${he.encode(jobStatus[key].title) || '[Unknown]'}</b></span>`,  //title
-				(jobStatus[key].arg ? he.encode(jobStatus[key].arg) : ''),  // arg			
-				key === jobStatus[key].event ? '' : `<a href="#JobDetails?id=${key}" target="_blank">${key}</a>`,  // joblink
-				jobStatus[key].start,
-				niceInterval(jobStatus[key].elapsed),
-				getNiceStatus(jobStatus[key]), // status
-				key === jobStatus[key].event ? '' : `<i id="view_${key}" onclick="this.className = this.className == 'fa fa-eye' ? 'fa fa-eye-slash' : 'fa fa-eye'; $P().get_log_to_grid(filterXSS(\`${getNiceTitle(jobStatus[key], key)}\`), '${key}')" style="cursor:pointer" class="fa fa-eye"></i>`,
-				//jobStatus[key].code ? `${he.encode(jobStatus[key].description)}`.substring(0,120) : ''
-				`${he.encode(jobStatus[key].description)}`.substring(0, 120)
-
-			]),
-			caption: ""
-		};
+		var table = buildWorkflowReportTable(jobStatus, niceInterval);
 
 		stream.write({ perf: perf, table: table })
 

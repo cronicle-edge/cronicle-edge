@@ -16,6 +16,8 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		// var html = '';
 		// this.div.html( html );
 		this.charts = {};
+		this.workflow_log_generation = 0;
+		this.workflow_log_requests = new Map();
 	},
 
 	live_log_is_up: false,
@@ -472,6 +474,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
     }
 
 		this.div.html(html);
+		this.bind_workflow_log_controls();
 
 		// arch perf chart
 		var suffix = ' sec';
@@ -739,28 +742,203 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 
 	},
 
-	unsetLogIcon(id) {
-		let el = document.getElementById('view_' + id)
-		if(el) el.className = 'fa fa-eye'
+	bind_workflow_log_controls: function(root) {
+		this.unbind_workflow_log_controls();
+		root = root || (this.div && this.div[0]);
+		if (!root || !root.addEventListener) return;
+
+		var self = this;
+		this.workflow_log_root = root;
+		this.workflow_log_click_handler = function(event) {
+			var target = event.target;
+			var control = target && target.closest ? target.closest('.workflow-log-toggle') : null;
+			if (!control || !root.contains(control)) return;
+
+			event.preventDefault();
+			var id = control.getAttribute('data-job-id') || '';
+			var title = control.getAttribute('data-log-title') || id;
+			if (id) self.get_log_to_grid(title, id);
+		};
+		root.addEventListener('click', this.workflow_log_click_handler);
+	},
+
+	invalidate_workflow_log_requests: function() {
+		var requests = this.workflow_log_requests;
+		this.workflow_log_requests = new Map();
+		this.workflow_log_generation = (this.workflow_log_generation || 0) + 1;
+
+		if (!requests || !requests.forEach) return;
+		requests.forEach(function(record) {
+			record.cancelled = true;
+			if (record.request && record.request.abort) {
+				try { record.request.abort(); }
+				catch (err) { /* request is already complete */ }
+			}
+		});
+	},
+
+	unbind_workflow_log_controls: function() {
+		if (this.workflow_log_root && this.workflow_log_click_handler) {
+			this.workflow_log_root.removeEventListener('click', this.workflow_log_click_handler);
+		}
+		this.invalidate_workflow_log_requests();
+		delete this.workflow_log_root;
+		delete this.workflow_log_click_handler;
+	},
+
+	is_current_workflow_log_request: function(record) {
+		return !!record && !record.cancelled &&
+			(record.generation === this.workflow_log_generation) &&
+			(record.root === this.workflow_log_root) &&
+			this.workflow_log_requests &&
+			(this.workflow_log_requests.get(record.id) === record);
+	},
+
+	set_workflow_log_icon: function(id, isOpen, root) {
+		var normalizedId = this.toWellFormedString(id);
+		root = root || this.workflow_log_root || document;
+		var controls = root.getElementsByClassName ? root.getElementsByClassName('workflow-log-toggle') : [];
+		for (var idx = 0; idx < controls.length; idx++) {
+			var control = controls[idx];
+			if (control.getAttribute('data-job-id') !== normalizedId) continue;
+			var icon = control.querySelector('.workflow-log-icon');
+			if (icon) icon.className = 'fa ' + (isOpen ? 'fa-eye-slash' : 'fa-eye') + ' workflow-log-icon';
+			control.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+		}
+	},
+
+	unsetLogIcon: function(id, root) {
+		this.set_workflow_log_icon(id, false, root);
+	},
+
+	get_workflow_log_grid: function(root) {
+		root = root || this.workflow_log_root || document;
+		if (root.id === 'log_grid') return root;
+		return root.querySelector ? root.querySelector('#log_grid') : null;
+	},
+
+	get_workflow_log_item: function(id, root) {
+		var grid = this.get_workflow_log_grid(root);
+		if (!grid) return null;
+		var normalizedId = this.toWellFormedString(id);
+		var items = grid.getElementsByClassName('workflow-log-preview');
+		for (var idx = 0; idx < items.length; idx++) {
+			if (items[idx].getAttribute('data-job-id') === normalizedId) return items[idx];
+		}
+		return null;
+	},
+
+	sanitize_ansi_log_html: function(logText) {
+		var ansiUp = new AnsiUp();
+		ansiUp.escape_html = true;
+		var ansiHtml = ansiUp.ansi_to_html(this.toWellFormedString(logText));
+
+		// Keep only markup emitted by ansi_up, while retaining terminal colors and safe links.
+		return filterXSS(ansiHtml, {
+			whiteList: { span: ['style'], a: ['href'] },
+			css: { whiteList: {
+				color: true,
+				'background-color': true,
+				'font-weight': true,
+				'font-style': true,
+				'text-decoration': true
+			} }
+		});
 	},
 
 	get_log_to_grid: function(title, id) {
 		if(!title) return
-		if(!id) id = title 
-		let curr = document.getElementById('log_' + id)
-		if(curr) { curr.remove(); return }
+		if(!id) id = title
+		title = this.toWellFormedString(title)
+		id = this.toWellFormedString(id)
+		var root = this.workflow_log_root || (this.div && this.div[0])
+		if (!root) return
 
-		$.get(`./api/app/get_job_log?id=${id}&session_id=${localStorage.session_id}`, (resp)=>{
-			let size = this.args.tail || 25
-			data = new AnsiUp().ansi_to_html(resp.split("\n").slice(-1*size - 4, -4).join("\n"))
-			const newItem = document.createElement('div');
-			newItem.setAttribute('id', 'log_' + id)
-            newItem.className = 'wflog grid-item'; // Apply any necessary classes
-            newItem.innerHTML = `<div class="wflog grid-title">${title}<i class="fa fa-window-close" style="float:right; cursor: pointer" onclick="$P().unsetLogIcon('${id}');this.parentNode.parentNode.remove()"></i></div> <pre>${data}</pre>`;
-            const gridContainer = document.getElementById('log_grid');
-            gridContainer.appendChild(newItem);
-			
-		})
+		let curr = this.get_workflow_log_item(id, root)
+		if(curr) {
+			curr.remove()
+			this.unsetLogIcon(id, root)
+			return
+		}
+
+		if (!this.workflow_log_requests) this.workflow_log_requests = new Map()
+		var pending = this.workflow_log_requests.get(id)
+		if (pending && this.is_current_workflow_log_request(pending)) return
+		if (pending) this.workflow_log_requests.delete(id)
+
+		this.set_workflow_log_icon(id, true, root)
+		var record = {
+			id: id,
+			root: root,
+			generation: this.workflow_log_generation || 0,
+			request: null,
+			cancelled: false
+		}
+		this.workflow_log_requests.set(id, record)
+
+		var handleSuccess = (resp)=>{
+			if (!this.is_current_workflow_log_request(record)) return
+			let size = (this.args && this.args.tail) || 25
+			let logTail = this.toWellFormedString(resp).split("\n").slice(-1*size - 4, -4).join("\n")
+			let ansiHtml = this.sanitize_ansi_log_html(logTail)
+			const gridContainer = this.get_workflow_log_grid(record.root)
+			if (!gridContainer) {
+				this.workflow_log_requests.delete(id)
+				this.unsetLogIcon(id, record.root)
+				return
+			}
+			if (this.get_workflow_log_item(id, record.root)) {
+				this.workflow_log_requests.delete(id)
+				return
+			}
+
+			const newItem = document.createElement('div')
+			newItem.className = 'wflog grid-item workflow-log-preview'
+			newItem.setAttribute('data-job-id', id)
+
+			const titleBar = document.createElement('div')
+			titleBar.className = 'wflog grid-title'
+			const titleLabel = document.createElement('b')
+			titleLabel.textContent = title
+			titleBar.appendChild(titleLabel)
+
+			const closeButton = document.createElement('button')
+			closeButton.type = 'button'
+			closeButton.className = 'fa fa-window-close workflow-log-close'
+			closeButton.setAttribute('aria-label', 'Close log preview')
+			closeButton.style.cssText = 'float:right;cursor:pointer;border:0;background:transparent;color:inherit'
+			closeButton.addEventListener('click', ()=>{
+				this.unsetLogIcon(id, record.root)
+				newItem.remove()
+			})
+			titleBar.appendChild(closeButton)
+
+			const output = document.createElement('pre')
+			// ansiHtml is the allowlisted output of sanitize_ansi_log_html above.
+			output.innerHTML = ansiHtml
+
+			newItem.appendChild(titleBar)
+			newItem.appendChild(output)
+			gridContainer.appendChild(newItem)
+			this.workflow_log_requests.delete(id)
+		}
+
+		var handleFailure = ()=>{
+			if (!this.is_current_workflow_log_request(record)) return
+			this.workflow_log_requests.delete(id)
+			this.unsetLogIcon(id, record.root)
+		}
+
+		try {
+			record.request = $.get('./api/app/get_job_log?id=' + this.encodeQueryComponent(id) +
+				'&session_id=' + this.encodeQueryComponent(localStorage.session_id || ''), handleSuccess)
+			if (record.request && record.request.fail) record.request.fail(handleFailure)
+			if (record.cancelled && record.request && record.request.abort) record.request.abort()
+		}
+		catch (err) {
+			handleFailure()
+			throw err
+		}
 	},
 
 	do_view_inline_log: function () {
@@ -1558,6 +1736,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 
 	onDeactivate: function () {
 		// called when page is deactivated
+		this.unbind_workflow_log_controls();
 		for (var key in this.charts) {
 			this.charts[key].destroy();
 		}
