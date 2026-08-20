@@ -8,6 +8,7 @@
 	"main": "lib/main.js",
 	"scripts": {
 		"test": "pixl-unit lib/test.js test/oidc-logout.test.js",
+		"test:workflow-security": "node test/workflow-security.test.js",
 		"boot": "pixl-boot install",
 		"unboot": "pixl-boot uninstall"
 	},
