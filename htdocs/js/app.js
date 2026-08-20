@@ -221,6 +221,19 @@ app.extend({
 			session_id: this.getPref('session_id')
 		}, 
 		function(resp, tx) {
+			var oidc_logout_url = '';
+			if (resp.logout_location) {
+				try {
+					var parsed_logout_url = new URL(resp.logout_location, window.location.origin);
+					var same_origin = (parsed_logout_url.origin == window.location.origin);
+					if (!same_origin) throw new Error('Unsafe logout URL');
+					oidc_logout_url = parsed_logout_url.toString();
+				}
+				catch (err) {
+					resp.logout_warning = 'The server returned an invalid OIDC logout URL.';
+				}
+			}
+
 			delete self.user;
 			delete self.username;
 			delete self.user_info;
@@ -237,7 +250,11 @@ app.extend({
 			self.clock_visible = false;
 			self.checkScrollTime();
 			
-			if (app.config.external_users) {
+			if (oidc_logout_url) {
+				Debug.trace("Redirecting to the configured OIDC logout endpoint");
+				window.location.assign(oidc_logout_url);
+			}
+			else if (app.config.external_users) {
 				// external user api
 				Debug.trace("User session cookie was deleted, querying external user API");
 				setTimeout( function() {
@@ -252,11 +269,12 @@ app.extend({
 			}
 			
 			setTimeout( function() {
+				if (oidc_logout_url) return;
 				if (!app.config.external_users) {
 					if (bad_cookie) {
 						self.showMessage('error', "Your session has expired.  Please log in again.");
-						console.log('bad cookieee', bad_cookie)
 					}
+					else if (resp.logout_warning) self.showMessage('warning', resp.logout_warning);
 					else self.showMessage('success', "You were logged out successfully.");
 				}
 				
