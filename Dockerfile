@@ -3,17 +3,13 @@
 # test run: docker run --rm -it  -p 3019:3012 -e CRONICLE_manager=1 cronicle:bundle bash
 # then type manager or worker
 
-# cronicle/base-alpine: 
-# FROM alpine:3.19.1
-# RUN apk add --no-cache bash nodejs tini util-linux bash openssl procps coreutils curl tar jq
-
-FROM cronicle/base-alpine AS build
+FROM cronicle/base-alpine:latest@sha256:75751298e3f56e7500f5be42cc4469ebc2b23b9f8eba801e1c3761fe9c9ee489 AS build
 RUN apk add --no-cache npm python3 alpine-sdk
 COPY . /build
 WORKDIR /build
 RUN ./bundle /dist --mysql --pgsql --s3 --sqlite --tools
 
-FROM cronicle/base-alpine 
+FROM cronicle/base-alpine:latest@sha256:75751298e3f56e7500f5be42cc4469ebc2b23b9f8eba801e1c3761fe9c9ee489
 
 # non root user for shell plugin
 ARG CRONICLE_UID=1000
