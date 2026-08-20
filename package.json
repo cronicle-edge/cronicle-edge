@@ -7,7 +7,7 @@
 	"license": "MIT",
 	"main": "lib/main.js",
 	"scripts": {
-		"test": "pixl-unit lib/test.js test/oidc-logout.test.js",
+		"test": "pixl-unit lib/test.js test/oidc-logout.test.js test/bootstrap-entrypoints.test.js",
 		"boot": "pixl-boot install",
 		"unboot": "pixl-boot uninstall"
 	},

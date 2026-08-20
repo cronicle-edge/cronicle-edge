@@ -12,7 +12,8 @@
 #	8 - configuration syntax error
 #
 # When multiple arguments are given, only the error from the _last_
-# one is reported.  Run "*ctl help" for usage info
+# one is reported, except a failed setup stops immediately so a later
+# start cannot run against incomplete storage.  Run "*ctl help" for usage info
 #
 #
 # |||||||||||||||||||| START CONFIGURATION SECTION  ||||||||||||||||||||
@@ -122,8 +123,8 @@ do
 		echo "$ARG: $STATUS"
 	;;
 	setup)
-		node $HOMEDIR/bin/storage-cli.js setup
-		#exit # do not exit to run setup and start in one shot
+		node "$HOMEDIR/bin/storage-cli.js" setup || exit $?
+		# continue on success to allow setup and start in one invocation
 	;;
 	maint)
 		node $HOMEDIR/bin/storage-cli.js maint $2

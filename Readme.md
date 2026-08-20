@@ -183,8 +183,8 @@ You can generate a token to run specific event instead of creating global API ke
 ### Git integration
  - Github - HMAC signature check is supported. You can set `git_hub_key` config to verify signature. If not set cronicle will use `secret_key` (if x-signature-header is included in the request).
  - Gitlab - you can use cronicle API key as web hook secret key, but you can always bake API key or token in web hook url.
- - You can also automatically execute "git add / git commit / git push remote branch" on clicking backup button or even on each metadata update. First you need to set git repo (with auth) in your data folder. Then use related configs (there is an example in demo configs).
- - Before starting new Docker container you can also set `GIT_REPO` variable, so manager entrypoint will attempt to use this repo to setup data folder instead of running standard set up.
+ - Automatic metadata git add/commit/push sync is deprecated and unavailable.
+ - Startup restore through `GIT_REPO` was also deprecated and is not supported. Manager entrypoints refuse to start when this variable is set. Initialize storage explicitly, then restore reviewed metadata with `storage-cli.js import` before manager startup or with the authenticated Import API after normal startup.
 
 ### Hybrid schedule
 You can extend cron schedule by specifying extra minute ticks. This is helpful for uneven/one-time schedules. If you just specify hours/minutes without the date (e.g. 16:45 or 3PM), it will trigger job to run every day at that time. You can use full timestamp to run the job at specific time just once (e.g. 2021-01-01  16:45).
