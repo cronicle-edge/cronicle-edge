@@ -225,6 +225,31 @@ addTest('history argument encodes context id and round-trips query values', func
 	dom.window.close();
 });
 
+addTest('job source link encodes URL and text contexts independently', function() {
+	const { dom, window } = loadBrowserClasses();
+	const id = 'parent\" onmouseover="globalThis.pwned=1"><svg onload="globalThis.pwned=2">/😀';
+	const source = 'API Key </a><img src=x onerror="globalThis.pwned=3"><script>globalThis.pwned=4</script>';
+	const details = window.Page.JobDetails.prototype;
+	const host = window.document.createElement('div');
+	host.innerHTML = details.getNiceJobSource({ source: source, source_id: id });
+	const link = host.querySelector('a');
+
+	assert.ok(link);
+	assert.equal(host.querySelectorAll('[onmouseover],[onload],[onerror],svg,img,script').length, 0);
+	assert.equal(parseHashParams(link.getAttribute('href')).get('id'), id);
+	assert.equal(link.textContent, source);
+	assert.equal(window.globalThis.pwned, undefined);
+
+	assert.doesNotThrow(function() {
+		const malformed = window.document.createElement('div');
+		malformed.innerHTML = details.getNiceJobSource({ source: 'source\uDFFF', source_id: 'id\uD800' });
+		const malformedLink = malformed.querySelector('a');
+		assert.equal(parseHashParams(malformedLink.getAttribute('href')).get('id'), 'id\uFFFD');
+		assert.equal(malformedLink.textContent, 'source\uFFFD');
+	});
+	dom.window.close();
+});
+
 addTest('workflow view-log click and close use DOM-safe title id and ANSI output', function() {
 	const { dom, window } = loadBrowserClasses();
 	const id = 'child\'\"><img src=x onerror="globalThis.pwned=1">/😀';
