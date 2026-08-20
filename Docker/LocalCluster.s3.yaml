@@ -25,7 +25,8 @@ services:
       - cron
     deploy:
       replicas: 1
-    command: server /data --console-address ":9001"
+    entrypoint: bash
+    command: -c 'mkdir -p /data/cronicle && minio server /data --console-address ":9001"'
     environment:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
@@ -40,16 +41,17 @@ services:
     deploy:
       replicas: 1
     entrypoint: bash
-    command: -c 'until curl -sf http://minio:9000/minio/health/live; do echo waiting for minio; sleep 3; done && manager'
+    command: -c 'curl -I http://minio:9000/minio/health/live && manager'
     environment:
       - CRONICLE_secret_key=cronicle_secret_key
+      - CRONICLE_cluster=worker1,worker2
     configs:
      - source: cron_s3
        target: /opt/cronicle/conf/storage.json
 
-  manager2:
+  worker1:
     image: cronicle/edge:latest
-    hostname: manager2
+    hostname: worker1
     ports:
       - "3013:3012"
     networks:
@@ -63,9 +65,9 @@ services:
      - source: cron_s3
        target: /opt/cronicle/conf/storage.json
 
-  manager3:
+  worker2:
     image: cronicle/edge:latest
-    hostname: manager3
+    hostname: worker2
     ports:
       - "3014:3012"
     networks:

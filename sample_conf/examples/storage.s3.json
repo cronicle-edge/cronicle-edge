@@ -1,7 +1,7 @@
 {
     "engine": "S3",
     "AWS": {
-        "endpoint": "http://localhost:9000",
+        "endpoint": "http://minio:9000",
         "endpointPrefix": false,
         "forcePathStyle": true,
         "region": "us-east-1",
