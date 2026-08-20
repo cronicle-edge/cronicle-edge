@@ -54,9 +54,10 @@ Class.add( Page.Admin, {
 				'<span class="link" onMouseUp="$P().edit_api_key('+idx+')"><b>Edit</b></span>',
 				'<span class="link" onMouseUp="$P().delete_api_key('+idx+')"><b>Delete</b></span>'
 			];
+			var api_key = String(item.key || '');
 			return [
 				'<div class="td_big">' + self.getNiceAPIKey(item, true, col_width) + '</div>',
-				'<div style="">' + encode_entities(item.key) + '</div>',
+				'<div style="">' + encode_entities(api_key.substring(0, 4) + '********************************') + '</div>',
 				item.active ? '<span class="color_label green"><i class="fa fa-check">&nbsp;</i>Active</span>' : '<span class="color_label red"><i class="fa fa-warning">&nbsp;</i>Suspended</span>',
 				self.getNiceUsername(item.username, true, col_width),
 				'<span title="'+get_nice_date_time(item.created, true)+'">'+get_nice_date(item.created, true)+'</span>',
