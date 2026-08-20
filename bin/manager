@@ -31,6 +31,11 @@ while (( "$#" )); do
 shift
 done
 
+if [[ -n "${GIT_REPO:-}" ]]; then
+  echo "Error: GIT_REPO bootstrap is unsupported and was deprecated; restore data explicitly before starting the manager." >&2
+  exit 1
+fi
+
 if [[ $port ]]; then
   export CRONICLE_WebServer__http_port="$port"
   echo "Custom port set: $port"
@@ -64,11 +69,6 @@ if [[ $cluster ]]; then
   echo "Following nodes will be added on setup: $cluster"
 fi
 
-# pull data from git if needed
-# if [ ! -d data/global ] && [ -v GIT_REPO ]; then
-#         git clone $GIT_REPO $HOMEDIR/data
-# fi
-
 # check for custom nodejs binary
 if [ -f $HOMEDIR/nodejs/bin/node ]; then
       export PATH="$HOMEDIR/nodejs/bin:$PATH"
@@ -78,8 +78,9 @@ fi
 
 # setup storage OR make current host the primary manager if needed
 if [ "$reset" = 1 ]; then
-  node $HOMEDIR/bin/storage-cli.js reset || $HOMEDIR/bin/control.sh setup
-else $HOMEDIR/bin/control.sh setup
+  node "$HOMEDIR/bin/storage-cli.js" reset || "$HOMEDIR/bin/control.sh" setup || exit $?
+else
+  "$HOMEDIR/bin/control.sh" setup || exit $?
 fi
 
 
@@ -104,5 +105,4 @@ fi
 
 #$HOMEDIR/bin/control.sh start
 exec $BINARY --echo --foreground --manager --color $color --debug $debug
-
 

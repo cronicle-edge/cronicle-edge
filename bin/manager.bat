@@ -83,6 +83,11 @@ goto parseArgs
 
 :endArgs
 
+if defined GIT_REPO (
+  echo Error: GIT_REPO bootstrap is unsupported and was deprecated; restore data explicitly before starting the manager. 1>&2
+  exit /b 1
+)
+
 cd /D %SCRIPT_LOC%
 
 REM check for custom node version
@@ -93,9 +98,15 @@ IF EXIST "%~dp0..\nodejs\node.exe" (
 REM setup or reset manager
 if "%CRONICLE_RESET%"=="1" (
   node .\storage-cli.js reset || node .\storage-cli.js setup
+  if errorlevel 1 goto setup_failed
   echo Croncile manager was reset to current host
 ) else (
   node .\storage-cli.js setup
+  if errorlevel 1 goto setup_failed
 )
 
 node .\cronicle.js --manager --echo --foreground --color --debug %DEBUG%
+exit /b
+
+:setup_failed
+exit /b 1
