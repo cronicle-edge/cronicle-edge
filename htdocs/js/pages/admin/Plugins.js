@@ -187,8 +187,8 @@ Class.add( Page.Admin, {
 				newPlugin.ipc = !!plugin.ipc
 				newPlugin.wf = !!plugin.wf
 				newPlugin.stdin = !!plugin.stdin
-				if(typeof plugin.uid === 'string' || parseInt(plugin.uid)) newPlugin.uid = plugin.uid
-				if(typeof plugin.gid === 'string' || parseInt(plugin.gid)) newPlugin.gid = plugin.gid
+				if(typeof plugin.uid === 'string' || typeof plugin.uid === 'number') newPlugin.uid = plugin.uid
+				if(typeof plugin.gid === 'string' || typeof plugin.gid === 'number') newPlugin.gid = plugin.gid
 				if(typeof plugin.cwd === 'string') newPlugin.cwd = plugin.cwd
 				if(typeof plugin.script === 'string') newPlugin.script = plugin.script 
 
@@ -564,7 +564,7 @@ Class.add( Page.Admin, {
 		html += get_form_table_spacer();
 		
 		// advanced options
-		var adv_expanded = !!(plugin.cwd || plugin.uid);
+		var adv_expanded = !!(plugin.cwd || plugin.uid || plugin.gid || (plugin.uid === 0) || (plugin.gid === 0));
 		html += get_form_table_row( 'Advanced', 
 		`<div autocomplete="off" style="font-size:13px;${adv_expanded ? 'display:none;' : ''}"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Advanced Options</span></div>
 		<fieldset style="padding:10px 10px 0 10px; margin-bottom:5px;${adv_expanded ? '' : 'display:none;'}"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Advanced Options</legend>
