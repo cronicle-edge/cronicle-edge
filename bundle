@@ -334,8 +334,8 @@ fi
 # ----- SQL Storage Engine
 sqlDrivers=()
 sqlArgs=("--bundle" "--minify" "--platform=node" "--outdir=$dist/bin/engines")
-# exclude unused drivers
-sqlArgs+=("--external:better-sqlite3" "--external:mysql")
+# Knex references optional dialect drivers even when they are not selected.
+sqlArgs+=("--external:better-sqlite3" "--external:mysql" "--external:mariadb")
 
 if [ "$sql" = 1 ]; then
   oracle=1
@@ -384,8 +384,14 @@ if [[ ${#sqlDrivers[@]} -gt 0 ]]; then
   sqlArgs+=("engines/SQL.js")
 
   echo "      - bundling SQL Engine [${sqlDrivers[@]}]"
-  npm "${sqlInstall[@]}"
-  esbuild "${sqlArgs[@]}"
+  if ! npm "${sqlInstall[@]}"; then
+    echo "Failed to install SQL bundle dependencies" >&2
+    exit 1
+  fi
+  if ! esbuild "${sqlArgs[@]}"; then
+    echo "Failed to bundle SQL Engine" >&2
+    exit 1
+  fi
   if [ "$sqlite" = 1 ]; then
     cp -r node_modules/sqlite3/build $dist/bin/
   fi
