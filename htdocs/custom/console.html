@@ -81,7 +81,7 @@
       }
 
         function refresh() {
-            fetch('./api/app/get_live_console' + query + '&session_id=' + localStorage.session_id)
+            fetch('./api/app/get_live_console' + query, { headers: { 'X-Session-ID': localStorage.session_id } })
                 .then(response => {
                     response.json().then(data => {
                         if (data.data) {
@@ -100,7 +100,7 @@
                         }
                         else {
                             // if no live log data check history and return
-                            fetch('./api/app/get_job_log' + query + '&session_id=' + localStorage.session_id).then(
+                            fetch('./api/app/get_job_log' + query, { headers: { 'X-Session-ID': localStorage.session_id } }).then(
                                 //if( response.status == 200) { }
                                 response => response.text().then(data => {
                                     if (response.status == 200) {
