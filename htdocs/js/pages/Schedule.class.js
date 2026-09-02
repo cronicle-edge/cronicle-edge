@@ -1,3 +1,46 @@
+// The syntax modes and theme stylesheets are chosen by the build (see index.html), not by
+// individual plugin records, so the event editor owns these lists and synthesizes the two
+// selects for any plugin with a script textarea.
+const SCRIPT_LANG_ITEMS = ['shell', 'powershell', 'javascript', 'python', 'perl', 'groovy', 'java', 'csharp', 'scala', 'sql', 'yaml', 'toml', 'dockerfile', 'json', 'props'];
+const SCRIPT_THEME_ITEMS = ['default', 'light', 'gruvbox-dark', 'solarized light', 'solarized dark', 'darcula', 'ambiance', 'base16-dark', 'nord'];
+// marks the params the editor synthesizes itself; a Symbol key so a stored plugin record can never carry it
+const SCRIPT_PSEUDO = Symbol('script_pseudo');
+
+function script_pinned_param(plugin_params, id) {
+	// a plugin that declares `lang` or `theme` as a hidden param pins it for every event: the
+	// script box carries fixed-format content such as sql or yaml, so no select is rendered
+	return find_object(plugin_params, { id: id, type: 'hidden' }) || null;
+}
+
+function script_pseudo_param_value(param, event_params) {
+	// an event value that is not on the build's list falls back to the default, so a plugin
+	// record written by another install cannot pin the editor to a mode this build lacks;
+	// `default_lang` is honored for legacy events that carry no `lang` of their own
+	var candidates = [event_params[param.id]];
+	if (param.id == 'lang') candidates.push(event_params.default_lang);
+
+	for (var idx = 0; idx < candidates.length; idx++) {
+		if (param.items.indexOf(candidates[idx]) > -1) return candidates[idx];
+	}
+	return param.value;
+}
+
+function script_pseudo_params_html(plugin_params, event_params) {
+	// these selects drive the script box, so they ride in one compact row directly under it
+	// rather than taking a grid row each at the far end of the plugin params
+	var row = '';
+
+	for (var idx = 0, len = plugin_params.length; idx < len; idx++) {
+		var param = plugin_params[idx];
+		if (!param[SCRIPT_PSEUDO]) continue;
+		row += '<div class="plugin_params_label">' + param.title + ':</div>';
+		row += '<select id="fe_ee_pp_' + param.id + '">' + render_menu_options(param.items, script_pseudo_param_value(param, event_params), true) + '</select>';
+	}
+	if (!row) return '';
+
+	return '<div class="plugin_params_content" style="width: 54rem"><div style="display: flex; gap: 8px; align-items: center">' + row + '</div></div>';
+}
+
 Class.subclass(Page.Base, "Page.Schedule", {
 
 	default_sub: 'events',
@@ -2875,15 +2918,48 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		if (plugin_id) {
 			var plugin = find_object(app.plugins, { id: plugin_id });
-			if (plugin && plugin.params && plugin.params.length) {
-				for (var idx = 0, len = plugin.params.length; idx < len; idx++) {
-					var param = plugin.params[idx];
-					event.params[param.id] = param.value;
-				}
+			var plugin_params = this.get_plugin_editor_params(plugin);
+			for (var idx = 0, len = plugin_params.length; idx < len; idx++) {
+				var param = plugin_params[idx];
+				event.params[param.id] = param.value;
 			}
 		}
 
 		this.refresh_plugin_params();
+	},
+
+	get_plugin_editor_params: function (plugin) {
+		// the editor's view of a plugin's params: a plugin that edits a script gets the
+		// build-defined syntax and theme selects in place of whatever it declares for them,
+		// unless it pins one as a hidden param (see script_pinned_param).
+		// The plugin record itself is never rewritten, and plugins without a script textarea
+		// (the only shape CodeMirror binds to) are returned untouched.
+		var params = (plugin && Array.isArray(plugin.params)) ? plugin.params : [];
+		if (!find_object(params, { id: 'script', type: 'textarea' })) return params;
+
+		var declared_lang = find_object(params, { id: 'lang' });
+		var declared_default_lang = find_object(params, { id: 'default_lang' });
+		var declared_theme = find_object(params, { id: 'theme' });
+		var pinned_lang = script_pinned_param(params, 'lang');
+		var pinned_theme = script_pinned_param(params, 'theme');
+
+		var lang = (declared_lang && declared_lang.value) || (declared_default_lang && declared_default_lang.value) || 'shell';
+		if (SCRIPT_LANG_ITEMS.indexOf(lang) == -1) lang = 'shell';
+
+		var theme = (declared_theme && declared_theme.value) || 'default';
+		if (SCRIPT_THEME_ITEMS.indexOf(theme) == -1) theme = 'default';
+
+		var pseudo = [];
+		if (!pinned_lang) pseudo.push({ id: 'lang', type: 'select', title: 'Syntax', items: SCRIPT_LANG_ITEMS, value: lang, [SCRIPT_PSEUDO]: true });
+		if (!pinned_theme) pseudo.push({ id: 'theme', type: 'select', title: 'Theme', items: SCRIPT_THEME_ITEMS, value: theme, [SCRIPT_PSEUDO]: true });
+
+		// a pinned param stays where it is: the hidden case renders nothing and saves the
+		// plugin's value on every event, as for any hidden param
+		return params.filter(function (param) {
+			if (param.id == 'lang') return !!pinned_lang;
+			if (param.id == 'theme') return !!pinned_theme;
+			return true;
+		}).concat(pseudo);
 	},
 
 	setScriptEditor: function () {
@@ -2896,7 +2972,22 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let privs = app.user.privileges;
 		let canEdit = privs.admin || privs.edit_events || privs.create_events;
 
-		let lang = params.lang || params.default_lang || 'shell';
+		let lang_el = document.getElementById("fe_ee_pp_lang")
+		let theme_el = document.getElementById("fe_ee_pp_theme")
+
+		let plugin = find_object(app.plugins, { id: this.event.plugin });
+		let plugin_params = (plugin && Array.isArray(plugin.params)) ? plugin.params : [];
+		let pinned_lang = script_pinned_param(plugin_params, 'lang');
+		let pinned_theme = script_pinned_param(plugin_params, 'theme');
+
+		// the selects are the source of truth once rendered; a pinned value renders no select and
+		// applies ahead of whatever the event stored (off the build's list the editor mode falls
+		// back while the event still saves the pinned value); the params fall back covers a
+		// plugin whose script param is not the textarea shape these selects accompany
+		let lang = (lang_el && lang_el.value) || params.lang || params.default_lang || 'shell';
+		if (pinned_lang) lang = (SCRIPT_LANG_ITEMS.indexOf(pinned_lang.value) > -1) ? pinned_lang.value : 'shell';
+		let sel_theme = (theme_el && theme_el.value) || params.theme || 'default';
+		if (pinned_theme) sel_theme = (SCRIPT_THEME_ITEMS.indexOf(pinned_theme.value) > -1) ? pinned_theme.value : 'default';
 		// gutter for yaml linting
 		let gutter = ''
 		let lint = 'false'
@@ -2918,8 +3009,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 		if (lang == 'props') { lang = 'text/x-properties' }
 
-		let theme = app.getPref('theme') == 'dark' && params.theme == 'default' ? 'gruvbox-dark' : params.theme;
-		if (params.theme == 'light') theme = 'default'
+		let theme = app.getPref('theme') == 'dark' && sel_theme == 'default' ? 'gruvbox-dark' : sel_theme;
+		if (sel_theme == 'light') theme = 'default'
 
 		let editor = CodeMirror.fromTextArea(el, {
 			mode: lang,
@@ -2942,7 +3033,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		editor.on('change', (cm) => { el.value = cm.getValue() })
 
 		// syntax selector
-		document.getElementById("fe_ee_pp_lang").addEventListener("change", function () {
+		if (lang_el) lang_el.addEventListener("change", function () {
 			let ln = this.options[this.selectedIndex].value;
 
 			editor.setOption("gutters", ['']);
@@ -2968,7 +3059,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		});
 
 		// theme 
-		document.getElementById("fe_ee_pp_theme").addEventListener("change", function () {
+		if (theme_el) theme_el.addEventListener("change", function () {
 			var thm = this.options[this.selectedIndex].value;
 			if (thm === 'default' && app.getPref('theme') === 'dark') thm = 'gruvbox-dark';
 			if (thm === 'light') thm = 'default';
@@ -2984,13 +3075,16 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		if (event.plugin) {
 			var plugin = find_object(app.plugins, { id: event.plugin });
-			if (plugin && plugin.params && plugin.params.length) {
+			var plugin_params = this.get_plugin_editor_params(plugin);
+			if (plugin_params.length) {
 
 				html += '<div style="font-size:13px; margin-top:7px; display:none;"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Plugin Parameters</span></div>';
 				html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px; width: 55rem;"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Plugin Parameters</legend>';
 
-				for (var idx = 0, len = plugin.params.length; idx < len; idx++) {
-					var param = plugin.params[idx];
+				for (var idx = 0, len = plugin_params.length; idx < len; idx++) {
+					var param = plugin_params[idx];
+					// rendered under the script box instead, by the textarea case below
+					if (param[SCRIPT_PSEUDO]) continue;
 					var value = (param.id in params) ? params[param.id] : param.value;
 					switch (param.type) {
 
@@ -3004,6 +3098,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 							let ta_height = parseInt(param.rows) * 15;
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
 							html += '<div class="plugin_params_content" style="width: 54rem"><textarea id="fe_ee_pp_' + param.id + '" style="width:99%; height:' + ta_height + 'px; resize:vertical;" spellcheck="false" onkeydown="return catchTab(this,event)">' + escape_text_field_value(value) + '</textarea></div>';
+							if (param.id == 'script') html += script_pseudo_params_html(plugin_params, params);
 							break;
 
 						case 'checkbox':
@@ -3184,9 +3279,10 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// plugin params
 		event.params = {};
 		var plugin = find_object(app.plugins, { id: event.plugin });
-		if (plugin && plugin.params && plugin.params.length) {
-			for (var idx = 0, len = plugin.params.length; idx < len; idx++) {
-				var param = plugin.params[idx];
+		var plugin_params = this.get_plugin_editor_params(plugin);
+		if (plugin_params.length) {
+			for (var idx = 0, len = plugin_params.length; idx < len; idx++) {
+				var param = plugin_params[idx];
 				switch (param.type) {
 					case 'text':
 					case 'textarea':

@@ -46,8 +46,6 @@
 				{ "id":"annotate", "type":"checkbox", "title":"Add Date/Time Stamps to Log", "value": 0 },
 				{ "id":"classic_stamp", "type":"hidden", "title":"Use Classic (Local) Date/Time Stamps", "value": 0 },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
-				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","toml","dockerfile"],"value":"shell"},
-				{"type":"select","id":"theme","title":"theme","items":["default","light","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"},
 				{"type":"checkbox","id":"sub_params","title":"Resolve parameters","value":0},
 				{"type":"filelist","id":"files","title":"File List","theme":"default", "value":0}	
 			]
@@ -66,8 +64,6 @@
 				{ "id":"ssh_host", "type":"text", "size":40, "title":"HOST/URI", "value": "sftp://cronicle:Password@localhost:22" },
 				{ "id":"ssh_cmd", "type":"text", "size":40, "title":"Command", "value": "bash -" },
 				{ "id":"script", "type":"textarea", "rows":10, "title":"STDIN Script", "value": "\n\necho \"STARTED\"\n\n# set trap command for proper termination handling\necho \"trap: kill $$\"\n\nsleep 15\necho \"COMPLETED\"\n\n# to specify host use full URI (sftp://user:Password@host:port)\n# or keep that URI as env variable and specify variable name\n# keep blank or localhost to run command locally (without ssh)\n# if using ssh key\n# sftp://user@host:port?privateKey=/path/to/file&passphrase=Password)\n# you can also keep ssh key in SSH Key parameter\n# if password contains special character use URI escape characters (e.g. @ => %40)\n\n# if using with WF plugin host could be specified via Job Argument parameter\n\n# many interpreters (besides sh/bash) will support execution from stdin\n# node -\n# python -\n# pwsh -c -\n# some will need a file to be created, if so try smth like\n# cat - > /tmp/myfile && groovy myfile\n\n# This should work the same way on Windows machines too (if openssh installed)\n# powershell -\n\n# Please note that aborting SSH job won't terminate you remote command\n# You can specify termination command by printing it out with \"trap:\" prefix, e.g.\n# echo \"trap: kill $$\" or \"trap: kill -9 -$$\"" },
-				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
-				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"},
 				{ "id":"ssh_key", "type":"textarea", "rows":5, "title":"SSH Key", "value": "" },
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 }		
 			]
@@ -90,9 +86,7 @@
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{ "id":"trunc_var", "type":"checkbox", "title":"Truncate Environment Variable Prefix", "value": 0 },
 				{ "type": "checkbox", "id": "annotate", "title": "Add Date/Time Stamps to Log",	"value": 0 },
-				{ "type":"select","id":"target_os","title":"Target OS","items":["linux","darwin","windows"],"value":"linux"},
-				{ "type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
-				{ "type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"}
+				{ "type":"select","id":"target_os","title":"Target OS","items":["linux","darwin","windows"],"value":"linux"}
 			]
 		} ],
 		
@@ -121,8 +115,6 @@
 				{ "id":"json", "type":"checkbox", "title":"Interpret JSON in Output", "value": 0 },
 				{ "id":"trunc_var", "type":"checkbox", "title":"Truncate Environment Variable Prefix", "value": 0 },
 				{ "id":"podman", "type":"checkbox", "title":"Use podman socket", "value": 0 },
-				{"type":"select","id":"lang","title":"syntax","items":["shell","powershell","javascript","python","perl","groovy","java","csharp","scala","sql","yaml","dockerfile","json","props"],"value":"shell"},
-				{"type":"select","id":"theme","title":"theme","items":["default","gruvbox-dark","solarized light","solarized dark","darcula","ambiance","base16-dark","nord"],"value":"default"},
 				{"type":"filelist","id":"files","title":"File List","theme":"default", "value":0}
 			]
 		} ],
@@ -158,44 +150,6 @@
 				"title": "Script",
 				"rows": 15,
 				"value": "#!/bin/sh\n\necho '| '\necho -e '| \\e[1mHello from Kubernetes!\\e[0m' \necho '| '; sleep 2\necho \"| This script is executing in temporary Pod [$HOSTNAME] using [$IMAGE] image\" ; \necho '| Pod will be deleted upon job completion (unless [Keep Pod] option used)'\nsleep 1; echo '| '\necho '| To include Kubernetes debug logs use [Debug] checkbox'\nsleep 1; echo '| '\necho '| Like in a shell plugin, you can use memo, progress and json messages'\necho \"| \"\necho '#kubernetes memo#'\necho '20%'\nsleep 2\necho '| To pass env variables/secrets to Pod, add prefix KUBE_ to it'\necho '| This prefix can be truncated in pod runtime by checking [Truncate variable prefix] option'\nsleep 1; echo '| '\necho '| If not provided, default kube config will be used (from .kube/config file or pod svc account)'\necho '| To specify custom config, add multiline KUBE_CONFIG secret with your configuraiton yaml'\necho '| For test purposes you can use [Kube Config] parameter'\nsleep 1; echo '| '; echo '70%'\necho '| You can execute this script as kubernetes job (vs Pod) by checking [Run as Job] parameter'\necho '| In this case cronicle will just watch for job status updates, and optionally print log tail at the end'\necho '| Such job will be removed after TTL expiration by Kubernetes, cronicle will only delete job if it gets aborted'\nsleep 1; echo '| '; echo '80%'\necho '| If you want cronicle just to trigger Pod/Job and exit - use [Detach] checkbox'\necho '| To mount pvc as data directory you can set parameter [PVC mount] as pvc_name:/data/dir, or just pvc_name (will be mounted as /data)'\nsleep 1; echo '| '; echo '90%'\necho '| If you want to use custom YAML configuraiton for your pod/job use Kube-Yaml plugin'\nsleep 1; echo '| '; echo '95%'\necho '| Cronicle will attach app=cronicle-job label to pods/jobs it creates'\necho '| It will also add event, event_title and category labels'\necho '|  which can be used later to examine cronicle related objects using kubectl, e.g.'\necho '| kubectl get pods -l app=cronicle-job'\necho '| kubectl delete jobs -l event_title=myTestJob'\necho '| kubectl get pods -l category=General'\necho '| '\nsleep 1"
-			},
-			{
-				"type": "select",
-				"id": "theme",
-				"title": "theme",
-				"items": [
-					"default",
-					"gruvbox-dark",
-					"solarized light",
-					"solarized dark",
-					"darcula",
-					"ambiance",
-					"base16-dark",
-					"nord"
-				],
-				"value": "default"
-			},
-			{
-				"type": "select",
-				"id": "lang",
-				"title": "Syntax",
-				"items": [
-					"shell",
-					"powershell",
-					"javascript",
-					"python",
-					"perl",
-					"groovy",
-					"java",
-					"csharp",
-					"scala",
-					"sql",
-					"yaml",
-					"dockerfile",
-					"json",
-					"props"
-				],
-				"value": "shell"
 			},
 			{
 				"type": "checkbox",
@@ -378,44 +332,6 @@
 				"title": "Script",
 				"rows": 15,
 				"value": "#!/bin/sh\n\necho \"|\"\necho \"| Hello from Kubernetes!\"\nsleep 1\n\necho \"| This plugin works the same way as Kube-Run plugin,\"\necho \"| just let you use custom Pod or Job manifest\"\necho \"| Cronicle will add custom command, some extra variables/labels and prefixes jobId to pod name\"\nsleep 1\n\necho \"|\"\necho \"| Event script will be used to generate container command\"\necho \"| To keep command from manifest, check [Allow custom command] box\"\necho \"|\"\nsleep 1"
-			},
-			{
-				"type": "select",
-				"id": "theme",
-				"title": "theme",
-				"items": [
-					"default",
-					"gruvbox-dark",
-					"solarized light",
-					"solarized dark",
-					"darcula",
-					"ambiance",
-					"base16-dark",
-					"nord"
-				],
-				"value": "default"
-			},
-			{
-				"type": "select",
-				"id": "lang",
-				"title": "Syntax",
-				"items": [
-					"shell",
-					"powershell",
-					"javascript",
-					"python",
-					"perl",
-					"groovy",
-					"java",
-					"csharp",
-					"scala",
-					"sql",
-					"yaml",
-					"dockerfile",
-					"json",
-					"props"
-				],
-				"value": "shell"
 			},
 			{
 				"type": "checkbox",
@@ -630,36 +546,7 @@
               { "type": "textarea", "id": "script", "title": "Script Source", "rows": 10,
                 "value": "#!/usr/bin/env node\n\nconsole.log(\"|\")\nconsole.log('| Hello from terminal emulator (node-pty)!')\nconsole.log('| This plugin will capture raw script output with all the colors and animations')\nconsole.log('| This may lead to bloated log file size, consider using Shell Plugin instead')\nconsole.log('| Please note that it may stuck on interactive prompts')\nconsole.log(\"|\")\nconsole.log(\"| Prinitng data with console.table:\")\nconsole.table(Object.entries(process.env)\n  .filter(([key, val]) => key.startsWith('JOB_') && val.length < 100)\n  .slice(0,25)\n  .map(([key, val]) => ({ key, val }))\n);"
               },
-              { "type": "select", "id": "lang", "title": "syntax",  "items": [
-                  "shell",
-                  "powershell",
-                  "javascript",
-                  "python",
-                  "perl",
-                  "groovy",
-                  "java",
-                  "csharp",
-                  "scala",
-                  "sql",
-                  "yaml",
-                  "toml",
-                  "dockerfile"
-                ],
-                "value": "javascript"
-              },
-              { "type": "select",  "id": "theme",  "title": "theme",  "items": [
-                  "default",
-                  "light",
-                  "gruvbox-dark",
-                  "solarized light",
-                  "solarized dark",
-                  "darcula",
-                  "ambiance",
-                  "base16-dark",
-                  "nord"
-                ],
-                "value": "default"
-              },
+              { "type": "hidden", "id": "default_lang", "title": "Default Syntax", "value": "javascript" },
               { "type": "filelist", "id": "files", "title": "File List", "theme": "default", "value": 0 }
             ],
             "ipc": 1,
