@@ -24,7 +24,7 @@ For actual use:
 ```bash
 docker run -d --hostname manager1 --restart=always \
   -e CRONICLE_manager=1 \
-  -e CRONICLE_secret_key=123456 \
+  -e CRONICLE_secret_key=abcdefg \
   -p 3012:3012 \
   -v $HOME/data:/opt/cronicle/data \
   cronicle/cronicle:edge manager
