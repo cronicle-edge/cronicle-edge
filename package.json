@@ -7,7 +7,7 @@
 	"license": "MIT",
 	"main": "lib/main.js",
 	"scripts": {
-		"test": "pixl-unit lib/test.js test/oidc-logout.test.js",
+		"test": "pixl-unit lib/test.js test/oidc-logout.test.js test/ui-output-encoding.test.js",
 		"boot": "pixl-boot install",
 		"unboot": "pixl-boot uninstall"
 	},
@@ -84,6 +84,7 @@
 		"xss": "^1.0.8"
 	},
 	"devDependencies": {
+		"jsdom": "26.1.0",
 		"pixl-unit": "^2.0.1"
 	}
 }
