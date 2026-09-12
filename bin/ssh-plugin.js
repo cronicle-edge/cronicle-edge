@@ -6,6 +6,7 @@ const conn = new Client();
 const {EOL} = require('os')
 const JSONStream = require('pixl-json-stream');
 const { spawn } = require('child_process')
+const PluginEnv = require('../lib/plugin-env.js')
 
 const print = (text) => {
 	process.stdout.write(text + EOL);
@@ -44,7 +45,10 @@ function printJSONmessage(complete, code, desc) {
 
         let json = parseInt(process.env['JSON'] || '')
 
-        const child = process.platform == 'win32' ?  spawn('cmd', ['/c', command]) : spawn('sh', ['-c', command])
+		const childEnv = PluginEnv.sanitizeSSHLocalEnv(process.env);
+		const child = process.platform == 'win32' ?
+			spawn('cmd', ['/c', command], { env: childEnv }) :
+			spawn('sh', ['-c', command], { env: childEnv })
 
         child.on('error', (err) => printJSONmessage(1, 1, `Script failed: ${err.message}`))
 

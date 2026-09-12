@@ -6,6 +6,7 @@ const { Writable } = require('stream');
 const { EOL } = require('os');
 const path = require('path')
 const fs = require('fs')
+const PluginEnv = require('../lib/plugin-env.js')
 
 // cronicle should send job json to stdin
 let job = {}
@@ -144,11 +145,8 @@ const stderr = new Writable({
 let truncVar = parseInt(process.env['TRUNC_VAR']) // optionally remove DOCKER_ prefix from passed vars
 
 // env variables
-let exclude = ['SSH_HOST', 'SSH_KEY', 'SSH_PASSWORD', 'DOCKER_PASSWORD']
-let include = ['BASE_URL', 'BASE_APP_URL', 'DOCKER_HOST', 'PULL_IMAGE', 'KEEP_CONTAINER', 'IMAGE', 'ENTRYPOINT_PATH']
-let vars = Object.entries(process.env)
-    .filter(([k, v]) => ((k.startsWith('JOB_') || k.startsWith('DOCKER_') || k.startsWith('ARG') || include.indexOf(k) > -1) && exclude.indexOf(k) === -1))
-    .map(([k, v]) => `${truncVar ? k.replace(/^DOCKER_/, '') : k}=${v}`)
+let vars = PluginEnv.buildDockerPluginEnv(process.env, truncVar)
+    .map(([k, v]) => `${k}=${v}`)
 
 // CONTAINER SETTING
 const createOptions = {
