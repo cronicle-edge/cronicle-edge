@@ -265,3 +265,35 @@ docker run -d -p 1521:1521 --name ora -e APP_USER=cronicle -e APP_USER_PASSWORD=
 	},
 	
 ```
+
+### MongoDB:
+```bash
+# install driver
+npm i mongo 
+npm i keyv 
+```
+
+```json
+{
+  "Storage": {
+    "engine": "MongoDB",
+    "list_page_size": 50,
+    "concurrency": 4,
+    "log_event_types": {
+      "get": 1,
+      "put": 1,
+      "head": 1,
+      "delete": 1,
+      "expire_set": 1
+    },
+    "MongoDB": {
+      "host": "mongodb://localhost:27017/mydb",
+      "mongoDB": null,
+      "password": "mongoPassword",
+      "serialize": true,
+      "keyPrefix": "app_",
+      "keyTemplate": "####_###"
+    }
+  }
+}
+```
