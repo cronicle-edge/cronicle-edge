@@ -937,8 +937,11 @@ function summarize_event_timing_short(timing) {
 
 function summarize_event_timing(timing, timezone, extra) {
 	// summarize event timing into human-readable string
+	// Fail safe for records persisted before ticks became API-validated.
+	if (typeof extra !== 'string') extra = '';
 	if (!timing && extra) {
-		return `<span title="${'Extra Ticks: ' + extra.toString().split(/[\,\;\|]/).filter(e => e).join(', ')}">On Demand +</span>`
+		let xtitle = 'Extra Ticks: ' + extra.split(/[\,\;\|]/).filter(e => e).join(', ')
+		return `<span title="${encode_attrib_entities(xtitle)}">On Demand +</span>`
 	}
 	if (!timing) { return "On demand" };	
 	
@@ -1069,8 +1072,8 @@ function summarize_event_timing(timing, timezone, extra) {
 	}
 	
 	if(extra) {
-		let xtitle = extra.toString().split(/[\,\;\|]/).filter(e=>e).join(', ')
-		return `<span title="Extra Ticks: ${xtitle}">${output} +</span>`
+		let xtitle = extra.split(/[\,\;\|]/).filter(e=>e).join(', ')
+		return `<span title="Extra Ticks: ${encode_attrib_entities(xtitle)}">${output} +</span>`
 	}
 	
 	return output

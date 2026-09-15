@@ -118,7 +118,7 @@ onmessage = function (e) {
 
 		// -------  EXTRA TICKS ---------
 
-		if (item.ticks) { // this should be in line with checkEventTicks function on scheduler.js
+		if (typeof item.ticks === 'string' && item.ticks) { // this should be in line with checkEventTicks function on scheduler.js
 			let currDate = getFMT(tz).format(Date.now()).substring(0, 10) // yyyy-mm-dd @ tz
 			let ticks = []
 			item.ticks.split(/[\,\|]/).map(e => e.trim()).filter(e => e).forEach(t => {
