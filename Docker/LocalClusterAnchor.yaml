@@ -11,8 +11,10 @@ x-node: &node
     resources:
       limits:
         memory: 8g
+  environment:
+    - "CRONICLE_secret_key_file=/run/secrets/secret_key"
   secrets:
-    - source: "cron_secret_key"
+    - source: "secret_key"
       target: "secret_key"
       uid: "0"
       gid: "0"
@@ -35,6 +37,7 @@ services:
         - "traefik.http.services.crond.loadbalancer.sticky.cookie=true"
     environment:
     - "CRONICLE_manager=1"
+    - "CRONICLE_secret_key_file=/run/secrets/secret_key"
 
 # ---------- workers --------------
 
@@ -67,5 +70,5 @@ networks:
       name: cron
 
 secrets:
-  cron_secret_key:
+  secret_key:
     external: true

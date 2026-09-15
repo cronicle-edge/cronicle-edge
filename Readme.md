@@ -17,11 +17,18 @@ Images:
  docker run -it --rm -p 3012:3012 ghcr.io/cronicle-edge/cronicle-edge:main manager
 
 # typical local setup
- mkdir -p $HOME/cron && docker run -d --name cron \
+ # Create the directory and key file once.  Never replace secret_key after Cronicle has stored data.
+ install -d -m 0700 "$HOME/.config/cronicle" "$HOME/cron"
+ if [ ! -s "$HOME/.config/cronicle/secret_key" ]; then
+   (umask 077; openssl rand -hex 32 > "$HOME/.config/cronicle/secret_key")
+ fi
+ chmod 0600 "$HOME/.config/cronicle/secret_key"
+ docker run -d --name cron \
  --hostname manager1 \
  -p 3012:3012 --restart always  \
- -v $HOME/cron:/opt/cronicle/data  \
- -e CRONICLE_secret_key=mysecretKey  \
+ -v "$HOME/cron:/opt/cronicle/data"  \
+ --mount type=bind,source="$HOME/.config/cronicle/secret_key",target=/run/secrets/cronicle_secret_key,readonly \
+ -e CRONICLE_secret_key_file=/run/secrets/cronicle_secret_key  \
  cronicle/edge:v1.13.3 manager 
 ```
 
@@ -55,8 +62,8 @@ bundle script will also print instruction how to setup cronicle as service.
 
 ## Try multinode setup with Docker swarm
 ```bash
-# before deploying stack, set up a secret_key as docker secret, e.g.:
-# echo 123456 | docker secret create secret_key -
+# Before deploying the stack, create this external secret once and keep it:
+openssl rand -hex 32 | docker secret create secret_key -
 docker stack deploy --compose-file  Docker/LocalCluster.yaml cron_stack
 # then go to admin/servers and add nodes called worker1 and worker2 manually
 ```
