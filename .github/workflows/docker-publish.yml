@@ -63,6 +63,9 @@ jobs:
       - name: downcase REPO
         run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v3
 
@@ -85,27 +88,9 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Build and push Docker image (dockerhub)
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DHUB_USER }}
-          DOCKERHUB_TOKEN: ${{ secrets.DHUB_TOKEN }}
-        run: |
-          echo "building for $DOCKERHUB_USERNAME"
-          echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
-          if [ "${{ github.event_name }}" == "push" ]; then
-            TAG="latest"
-          elif [ "${{ github.event_name }}" == "release" ]; then
-            TAG="${{ github.event.release.tag_name }}"
-          else
-            echo "Unsupported event: ${{ github.event_name }}"
-            exit 1
-          fi
-          echo "publishing tag $TAG"
-          docker build -t cronicle/edge:$TAG -f Dockerfile .
-          docker push cronicle/edge:$TAG
