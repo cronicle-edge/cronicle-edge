@@ -72,10 +72,14 @@ jobs:
       - name: Set release tag as image tag
         id: set-tag
         run: |
-          if [ "${{ github.event_name }}" == "push" ]; then
-            echo "TAG=latest" >> $GITHUB_ENV
-          elif [ "${{ github.event_name }}" == "release" ]; then
-            echo "TAG=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+          if [ "${{ github.event_name }}" == "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+            echo "TAGS=docker.io/cronicle/edge:${TAG},docker.io/cronicle/edge:latest" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            echo "TAGS=docker.io/cronicle/edge:${TAG},docker.io/cronicle/edge:latest" >> $GITHUB_ENV
+          else
+            echo "TAGS=docker.io/cronicle/edge:latest" >> $GITHUB_ENV
           fi
 
       - name: Build and push Docker image
@@ -88,4 +92,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            docker.io/cronicle/edge:${{ env.TAG }}
+            ${{ env.TAGS }}
