@@ -341,6 +341,51 @@ test('OIDC session metadata is minimal and validates subject consistency', () =>
 		'session-secret'), /requires a verified ID Token/);
 });
 
+test('OAuth callback exposes the authenticated user to before_login hooks', async () => {
+	const oauth = {
+		client_id: 'cronicle-edge',
+		client_secret: 'test-secret',
+		redirect_uri: 'https://cron.example/api/user/callback',
+		token_url: 'https://idp.example/token',
+		user_url: 'https://idp.example/userinfo'
+	};
+	const { user } = makeUser(oauth);
+	const authenticatedUser = {
+		username: 'alice',
+		email: 'alice@example.test',
+		full_name: 'Alice',
+		active: 1,
+		privileges: { admin: 1 }
+	};
+	let beforeLoginUser;
+
+	user.oauth_state = { 'state.Home': {} };
+	user.config = { get: (key) => key === 'session_expire_days' ? 30 : undefined };
+	user.requireParams = User.prototype.requireParams;
+	user.postJsonAsync = async () => ({ access_token: 'access-token', token_type: 'Bearer' });
+	user.getJsonAsync = async () => ({ login: 'alice' });
+	user.getUserAsync = async () => authenticatedUser;
+	user.doError = (code, description, callback) => callback({ code, description });
+	user.fireHook = function(name, args, callback) {
+		if (name === 'before_login') {
+			beforeLoginUser = args.user;
+			return callback('stop after before_login');
+		}
+		if (callback) callback();
+	};
+
+	await new Promise((resolve) => user.api_callback({
+		request: { headers: { 'user-agent': 'test' } },
+		response: { setHeader: function() {}, writeHead: function() {}, end: function() {} },
+		params: { code: 'auth-code', state: 'state.Home' },
+		query: {},
+		cookies: {},
+		ip: '127.0.0.1'
+	}, resolve));
+
+	assert.equal(beforeLoginUser, authenticatedUser);
+});
+
 let jose;
 let key1;
 let key2;
