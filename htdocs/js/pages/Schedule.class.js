@@ -686,6 +686,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	gosub_events: function (args) {
 		// render table of events with filters and search
+		if (this.finish_schedule_resize) this.finish_schedule_resize();
 		this.div.removeClass('loading');
 		app.setWindowTitle("Scheduled Events");
 		const self = this
@@ -904,6 +905,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		var htmlTab = this.getBasicTable2(events, cols, 'event', function (item, idx) {
 
 			let actions;
+			var edit_url = '#Schedule?sub=edit_event&id=' + encodeURIComponent(item.id);
 
 			if (isGrid) {
 				actions = [
@@ -917,7 +919,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				actions = [
 					'<span class="link" onMouseUp="$P().run_event(' + idx + ',event, true)"><b>Start</b></span>',
 					'<span class="link" onMouseUp="$P().run_event(' + idx + ',event)"><b>Run</b></span>',
-					'<span class="link" onMouseUp="$P().edit_event(' + idx + ')"><b>Edit</b></span>',
+					'<a href="' + edit_url + '"><b>Edit</b></a>',
 					'<a href="#History?sub=event_stats&id=' + item.id + '"><b>Stats</b></a>',
 					'<a href="#History?sub=event_history&id=' + item.id + '"><b>History</b></a>',
 					'<span class="link" onMouseUp="$P().delete_event(' + idx + ')"><b>Delete</b></span>',
@@ -1011,7 +1013,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ', this)" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
-				`<div class="td_big"><span class="link" onMouseUp="$P().edit_event(` + idx + ')">' + evt_name + '</span></div>',
+				'<div class="td_big"><a class="schedule_event_link" href="' + edit_url + '">' + evt_name + '</a></div>',
 				self.getNiceCategory(cat, col_width),
 				self.getNicePlugin(plugin, col_width),
 				self.getNiceGroup(group, item.target, col_width),
@@ -1158,6 +1160,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		html += '<td><div class="button" style="width:130px;" onMouseUp="$P().show_graph()"><i class="fa fa-pie-chart">&nbsp;&nbsp;</i>Show Graph</div></td><td width="40">&nbsp;</td>';
 		this.div.html(html);
+		if (!isGrid) this.init_schedule_columns();
 		this.update_job_last_runs();
 
 		setTimeout(function () {
@@ -1168,6 +1171,93 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				}
 			});
 		}, 1);
+	},
+
+	init_schedule_columns: function () {
+		// Keep this preference local to the browser, including across restarts.
+		var self = this;
+		var table = this.div.find('#schedule_table table.data_table')[0];
+		if (!table) return;
+		var headers = Array.from(table.rows[0].cells);
+		var keys = ['enabled', 'title', 'category', 'plugin', 'target', 'timing', 'status', 'modified', 'actions'];
+		var pref = 'schedule_column_widths_v1';
+		var widths = {};
+		try { widths = JSON.parse(localStorage.getItem(pref)) || {}; }
+		catch (err) { /* Storage may be unavailable or contain an old invalid value. */ }
+		if (!keys.every(function (key) { return Number.isFinite(widths[key]) && widths[key] >= 40 && widths[key] <= 2000; })) widths = {};
+
+		table.parentNode.classList.add('schedule_table_scroll');
+		table.classList.add('schedule_resizable');
+		var colgroup = document.createElement('colgroup');
+		keys.forEach(function () { colgroup.appendChild(document.createElement('col')); });
+		table.insertBefore(colgroup, table.firstChild);
+
+		function apply_widths() {
+			table.classList.add('schedule_fixed_columns');
+			table.style.width = keys.reduce(function (total, key, idx) {
+				colgroup.children[idx].style.width = widths[key] + 'px';
+				return total + widths[key];
+			}, 0) + 'px';
+		}
+		function save_widths() {
+			try { localStorage.setItem(pref, JSON.stringify(widths)); }
+			catch (err) { /* Resizing still works when browser storage is blocked. */ }
+		}
+		if (widths.title) apply_widths();
+
+		headers.forEach(function (header, idx) {
+			var handle = document.createElement('span');
+			handle.className = 'schedule_column_resize';
+			handle.tabIndex = 0;
+			handle.setAttribute('role', 'separator');
+			handle.setAttribute('aria-orientation', 'vertical');
+			handle.setAttribute('aria-label', 'Resize ' + (idx ? header.textContent : 'Enabled') + ' column');
+			handle.title = 'Drag or use arrow keys to resize. Double-click to reset all column widths.';
+			header.appendChild(handle);
+
+			function measure_widths() {
+				if (widths.title) return;
+				headers.forEach(function (cell, index) {
+					widths[keys[index]] = Math.max(40, Math.min(2000, cell.getBoundingClientRect().width));
+				});
+			}
+			function resize(width) {
+				widths[keys[idx]] = Math.max(40, Math.min(2000, width));
+				apply_widths();
+			}
+			handle.onpointerdown = function (event) {
+				if (event.button !== 0) return;
+				event.preventDefault();
+				measure_widths();
+				var start_x = event.clientX;
+				var start_width = widths[keys[idx]];
+				handle.setPointerCapture(event.pointerId);
+				handle.onpointermove = function (event) { resize(start_width + event.clientX - start_x); };
+				self.finish_schedule_resize = function () {
+					handle.onpointermove = null;
+					handle.onpointerup = handle.onpointercancel = handle.onlostpointercapture = null;
+					if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+					self.finish_schedule_resize = null;
+					save_widths();
+				};
+				handle.onpointerup = handle.onpointercancel = handle.onlostpointercapture = self.finish_schedule_resize;
+			};
+			handle.onkeydown = function (event) {
+				if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+				event.preventDefault();
+				measure_widths();
+				resize(widths[keys[idx]] + (event.key === 'ArrowRight' ? 10 : -10));
+				save_widths();
+			};
+			handle.ondblclick = function () {
+				try { localStorage.removeItem(pref); }
+				catch (err) { /* Reset the current table even without browser storage. */ }
+				widths = {};
+				table.classList.remove('schedule_fixed_columns');
+				table.style.width = '';
+				Array.from(colgroup.children).forEach(function (col) { col.style.width = ''; });
+			};
+		});
 	},
 
 	update_job_last_runs: function () {
@@ -3469,6 +3559,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	onDeactivate: function () {
 		// called when page is deactivated
+		if (this.finish_schedule_resize) this.finish_schedule_resize();
 		// this.div.html( '' );
 		if (app.network) app.network.unselectAll();
 
