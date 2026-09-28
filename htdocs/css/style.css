@@ -331,6 +331,50 @@ pre.log_chunk {
 
 /* Data Table Row Colors */
 
+.schedule_event_link {
+	display: flow-root;
+}
+
+.schedule_table_scroll {
+	overflow-x: auto;
+}
+
+.schedule_resizable th {
+	position: relative;
+}
+
+.schedule_column_resize {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 8px;
+	height: 100%;
+	cursor: col-resize;
+	touch-action: none;
+	user-select: none;
+	border-right: 2px solid transparent;
+	box-sizing: border-box;
+}
+
+.schedule_column_resize:hover, .schedule_column_resize:focus {
+	border-right-color: currentColor;
+	outline: none;
+}
+
+.schedule_fixed_columns {
+	table-layout: fixed;
+}
+
+.schedule_fixed_columns th, .schedule_fixed_columns td {
+	box-sizing: border-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.schedule_fixed_columns td .ellip {
+	max-width: 100% !important;
+}
+
 .data_table tr.plain td, .swatch.plain {
 	background-color: #efefef;
 	/* background-image: linear-gradient(to top, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 100%); */
