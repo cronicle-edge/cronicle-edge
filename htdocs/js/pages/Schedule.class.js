@@ -832,7 +832,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let isGrid = eventView === 'grid' || eventView === 'gridall'
 
 		html += `
-		 <div class="subtitle flex-container" style="height:auto;padding:8px">
+		 <div class="subtitle flex-container" style="height:auto">
 		 <div style="width: calc(45%)">Scheduled Events ${cycleWarning}</div>
 		 <div class="flex-container" style="width:calc(10%)">${miniButtons}</div>
 		 <div style="width: calc(45%);padding-right:10px">
@@ -887,7 +887,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		</div>
 		`
 		// searchBar
-		cols.headerCenter = `<div style="padding-bottom:8px;padding-right:12px"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="25" onfocus="this.placeholder=''" placeholder="Find events..." class="event-search" autocomplete="one-time-code" value="${escape_text_field_value(args.keywords)}"/></div>`
+		cols.headerCenter = `<div class="schedule_search"><span><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="25" onfocus="this.placeholder=''" placeholder="Find events..." class="event-search" autocomplete="one-time-code" value="${escape_text_field_value(args.keywords)}"/></span></div>`
 
 		// render table
 		let last_group = '';
@@ -1159,7 +1159,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 
 		html += '<td><div class="button" style="width:130px;" onMouseUp="$P().show_graph()"><i class="fa fa-pie-chart">&nbsp;&nbsp;</i>Show Graph</div></td><td width="40">&nbsp;</td>';
-		this.div.html(html);
+		this.div.html('<div style="padding:20px 20px 30px 20px">' + html + '</div>');
 		if (!isGrid) this.init_schedule_columns();
 		this.update_job_last_runs();
 
