@@ -1,8 +1,14 @@
 /* Styles for Cronicle */
 /* Theme colors: #3f7ed5, #5890db, #7cafda, #9ccffa */
 
+html {
+	scrollbar-gutter: stable;
+}
+
 div.container {
 	min-width: 750px;
+	width: auto;
+	margin: 0 0 0 12px;
 }
 
 #d_header_logo {
@@ -333,6 +339,19 @@ pre.log_chunk {
 
 .schedule_event_link {
 	display: flow-root;
+}
+
+/* Keep the search input from increasing the standard pagination row height. */
+#schedule_table .schedule_search {
+	position: relative;
+}
+
+#schedule_table .schedule_search > span {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	white-space: nowrap;
 }
 
 .schedule_table_scroll {
