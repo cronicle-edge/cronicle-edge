@@ -159,6 +159,7 @@ function renderScheduleView(mode, ticks, inactive) {
 	const page = {
 		alt_sort: 1,
 		get_safe_text_value: methods.get_safe_text_value,
+		get_last_job_elapsed: methods.get_last_job_elapsed,
 		div: {
 			removeClass: () => {},
 			html: (html) => { rendered = html; }
@@ -174,6 +175,7 @@ function renderScheduleView(mode, ticks, inactive) {
 				return row ? '<tr><td>' + row[5] + '</td></tr>' : '';
 			}).join('') + '</table>';
 		},
+		init_schedule_columns: () => {},
 		update_job_last_runs: () => {}
 	};
 
@@ -196,6 +198,7 @@ function makeEventApiHarness() {
 	api.requiremanager = () => true;
 	api.requireParams = () => true;
 	api.requireValidEventData = () => true;
+	api.requireValidEventParams = () => true;
 	api.requireValidUser = () => true;
 	api.requirePrivilege = () => true;
 	api.requireCategoryPrivilege = () => true;

@@ -334,8 +334,8 @@ fi
 # ----- SQL Storage Engine
 sqlDrivers=()
 sqlArgs=("--bundle" "--minify" "--platform=node" "--outdir=$dist/bin/engines")
-# exclude unused drivers
-sqlArgs+=("--external:better-sqlite3" "--external:mysql")
+# Knex references optional dialect drivers even when they are not selected.
+sqlArgs+=("--external:better-sqlite3" "--external:mysql" "--external:mariadb")
 
 if [ "$sql" = 1 ]; then
   oracle=1
@@ -384,8 +384,14 @@ if [[ ${#sqlDrivers[@]} -gt 0 ]]; then
   sqlArgs+=("engines/SQL.js")
 
   echo "      - bundling SQL Engine [${sqlDrivers[@]}]"
-  npm "${sqlInstall[@]}"
-  esbuild "${sqlArgs[@]}"
+  if ! npm "${sqlInstall[@]}"; then
+    echo "Failed to install SQL bundle dependencies" >&2
+    exit 1
+  fi
+  if ! esbuild "${sqlArgs[@]}"; then
+    echo "Failed to bundle SQL Engine" >&2
+    exit 1
+  fi
   if [ "$sqlite" = 1 ]; then
     cp -r node_modules/sqlite3/build $dist/bin/
   fi
@@ -521,10 +527,11 @@ fi
 
 #  OPTIONAL UNIT TEST
 if [ "$test" = 1 ]; then
-  writehead " Bundling unit test files"
-  esbuild --bundle --log-level=info --minify=false --platform=node --outdir=$dist/bin lib/test.js
-  writehead " Running tests"
-  node node_modules/pixl-unit/unit.js $dist/bin/test.js --verbose
+  # writehead " Bundling unit test files"
+  # esbuild --bundle --log-level=info --minify=false --platform=node --outdir=$dist/bin lib/test.js
+  # writehead " Running tests"
+  # node node_modules/pixl-unit/unit.js $dist/bin/test.js --verbose
   # remove test files
-  rm $dist/bin/test.js
+  # rm $dist/bin/test.js
+  npm test -- --verbose
 fi

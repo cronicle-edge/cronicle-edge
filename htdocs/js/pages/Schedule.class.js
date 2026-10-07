@@ -1,3 +1,46 @@
+// The syntax modes and theme stylesheets are chosen by the build (see index.html), not by
+// individual plugin records, so the event editor owns these lists and synthesizes the two
+// selects for any plugin with a script textarea.
+const SCRIPT_LANG_ITEMS = ['shell', 'powershell', 'javascript', 'python', 'perl', 'groovy', 'java', 'csharp', 'scala', 'sql', 'yaml', 'toml', 'dockerfile', 'json', 'props'];
+const SCRIPT_THEME_ITEMS = ['default', 'light', 'gruvbox-dark', 'solarized light', 'solarized dark', 'darcula', 'ambiance', 'base16-dark', 'nord'];
+// marks the params the editor synthesizes itself; a Symbol key so a stored plugin record can never carry it
+const SCRIPT_PSEUDO = Symbol('script_pseudo');
+
+function script_pinned_param(plugin_params, id) {
+	// a plugin that declares `lang` or `theme` as a hidden param pins it for every event: the
+	// script box carries fixed-format content such as sql or yaml, so no select is rendered
+	return find_object(plugin_params, { id: id, type: 'hidden' }) || null;
+}
+
+function script_pseudo_param_value(param, event_params) {
+	// an event value that is not on the build's list falls back to the default, so a plugin
+	// record written by another install cannot pin the editor to a mode this build lacks;
+	// `default_lang` is honored for legacy events that carry no `lang` of their own
+	var candidates = [event_params[param.id]];
+	if (param.id == 'lang') candidates.push(event_params.default_lang);
+
+	for (var idx = 0; idx < candidates.length; idx++) {
+		if (param.items.indexOf(candidates[idx]) > -1) return candidates[idx];
+	}
+	return param.value;
+}
+
+function script_pseudo_params_html(plugin_params, event_params) {
+	// these selects drive the script box, so they ride in one compact row directly under it
+	// rather than taking a grid row each at the far end of the plugin params
+	var row = '';
+
+	for (var idx = 0, len = plugin_params.length; idx < len; idx++) {
+		var param = plugin_params[idx];
+		if (!param[SCRIPT_PSEUDO]) continue;
+		row += '<div class="plugin_params_label">' + param.title + ':</div>';
+		row += '<select id="fe_ee_pp_' + param.id + '">' + render_menu_options(param.items, script_pseudo_param_value(param, event_params), true) + '</select>';
+	}
+	if (!row) return '';
+
+	return '<div class="plugin_params_content" style="width: 54rem"><div style="display: flex; gap: 8px; align-items: center">' + row + '</div></div>';
+}
+
 Class.subclass(Page.Base, "Page.Schedule", {
 
 	default_sub: 'events',
@@ -37,8 +80,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			});
 			//app.showMessage('success', resp.data);
 			// self.gosub_servers(self.args);
-		});
-		//app.api.get('app/export?session_id=' + localStorage.session_id )
+		});		
 	},
 
 	show_graph: function (args) {
@@ -670,6 +712,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	gosub_events: function (args) {
 		// render table of events with filters and search
+		if (this.finish_schedule_resize) this.finish_schedule_resize();
 		this.div.removeClass('loading');
 		app.setWindowTitle("Scheduled Events");
 		const self = this
@@ -698,6 +741,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 			'Target',
 			'Timing',
 			'Status',
+			'Elapsed Time',
 			'Modified',
 			'Actions'
 		];
@@ -815,7 +859,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let isGrid = eventView === 'grid' || eventView === 'gridall'
 
 		html += `
-		 <div class="subtitle flex-container" style="height:auto;padding:8px">
+		 <div class="subtitle flex-container" style="height:auto">
 		 <div style="width: calc(45%)">Scheduled Events ${cycleWarning}</div>
 		 <div class="flex-container" style="width:calc(10%)">${miniButtons}</div>
 		 <div style="width: calc(45%);padding-right:10px">
@@ -870,7 +914,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		</div>
 		`
 		// searchBar
-		cols.headerCenter = `<div style="padding-bottom:8px;padding-right:12px"><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="25" onfocus="this.placeholder=''" placeholder="Find events..." class="event-search" autocomplete="one-time-code" value="${escape_text_field_value(args.keywords)}"/></div>`
+		cols.headerCenter = `<div class="schedule_search"><span><i class="fa fa-search">&nbsp;</i><input type="text" id="fe_sch_keywords" size="25" onfocus="this.placeholder=''" placeholder="Find events..." class="event-search" autocomplete="one-time-code" value="${escape_text_field_value(args.keywords)}"/></span></div>`
 
 		// render table
 		let last_group = '';
@@ -889,6 +933,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			let actions;
 			let extraTicks = self.get_safe_text_value(item.ticks)
+			var edit_url = '#Schedule?sub=edit_event&id=' + encodeURIComponent(item.id);
 
 			if (isGrid) {
 				actions = [
@@ -902,7 +947,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				actions = [
 					'<span class="link" onMouseUp="$P().run_event(' + idx + ',event, true)"><b>Start</b></span>',
 					'<span class="link" onMouseUp="$P().run_event(' + idx + ',event)"><b>Run</b></span>',
-					'<span class="link" onMouseUp="$P().edit_event(' + idx + ')"><b>Edit</b></span>',
+					'<a href="' + edit_url + '"><b>Edit</b></a>',
 					'<a href="#History?sub=event_stats&id=' + item.id + '"><b>Stats</b></a>',
 					'<a href="#History?sub=event_history&id=' + item.id + '"><b>History</b></a>',
 					'<span class="link" onMouseUp="$P().delete_event(' + idx + ')"><b>Delete</b></span>',
@@ -996,12 +1041,13 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			tds = [
 				'<input type="checkbox" style="cursor:pointer" onChange="$P().change_event_enabled(' + idx + ', this)" ' + (item.enabled ? 'checked="checked"' : '') + '/>',
-				`<div class="td_big"><span class="link" onMouseUp="$P().edit_event(` + idx + ')">' + evt_name + '</span></div>',
+				'<div class="td_big"><a class="schedule_event_link" href="' + edit_url + '">' + evt_name + '</a></div>',
 				self.getNiceCategory(cat, col_width),
 				self.getNicePlugin(plugin, col_width),
 				self.getNiceGroup(group, item.target, col_width),
 				niceTiming + chainInfo,
 				'<span id="ss_' + item.id + '" onMouseUp="$P().jump_to_last_job(' + idx + ')">' + status_html + '</span>',
+				'<span data-event-elapsed="' + escape_text_field_value(item.id) + '" title="Duration of the last completed run, including failed runs">' + self.get_last_job_elapsed(item.id) + '</span>',
 				get_text_from_seconds(now - item.modified, true, true), //modified
 				actions.join('&nbsp;|&nbsp;')
 			];
@@ -1142,7 +1188,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 
 		html += '<td><div class="button" style="width:130px;" onMouseUp="$P().show_graph()"><i class="fa fa-pie-chart">&nbsp;&nbsp;</i>Show Graph</div></td><td width="40">&nbsp;</td>';
-		this.div.html(html);
+		this.div.html('<div style="padding:20px 20px 30px 20px">' + html + '</div>');
+		if (!isGrid) this.init_schedule_columns();
 		this.update_job_last_runs();
 
 		setTimeout(function () {
@@ -1153,6 +1200,107 @@ Class.subclass(Page.Base, "Page.Schedule", {
 				}
 			});
 		}, 1);
+	},
+
+	get_last_job_elapsed: function (event_id) {
+		var elapsed = (app.state.jobElapsed || {})[event_id];
+		return Number.isFinite(elapsed) && elapsed >= 0 ? get_text_from_seconds(elapsed, true, false) : 'n/a';
+	},
+
+	update_job_last_elapsed: function () {
+		var self = this;
+		this.div.find('[data-event-elapsed]').each(function () {
+			this.innerHTML = self.get_last_job_elapsed(this.getAttribute('data-event-elapsed'));
+		});
+	},
+
+	init_schedule_columns: function () {
+		// Keep this preference local to the browser, including across restarts.
+		var self = this;
+		var table = this.div.find('#schedule_table table.data_table')[0];
+		if (!table) return;
+		var headers = Array.from(table.rows[0].cells);
+		var keys = ['enabled', 'title', 'category', 'plugin', 'target', 'timing', 'status', 'elapsed', 'modified', 'actions'];
+		var pref = 'schedule_column_widths_v1';
+		var widths = {};
+		try { widths = JSON.parse(localStorage.getItem(pref)) || {}; }
+		catch (err) { /* Storage may be unavailable or contain an old invalid value. */ }
+		// Preserve the existing nine-column preference when adding Elapsed Time.
+		if (widths.title && widths.elapsed === undefined) widths.elapsed = 120;
+		if (!keys.every(function (key) { return Number.isFinite(widths[key]) && widths[key] >= 40 && widths[key] <= 2000; })) widths = {};
+
+		table.parentNode.classList.add('schedule_table_scroll');
+		table.classList.add('schedule_resizable');
+		var colgroup = document.createElement('colgroup');
+		keys.forEach(function () { colgroup.appendChild(document.createElement('col')); });
+		table.insertBefore(colgroup, table.firstChild);
+
+		function apply_widths() {
+			table.classList.add('schedule_fixed_columns');
+			table.style.width = keys.reduce(function (total, key, idx) {
+				colgroup.children[idx].style.width = widths[key] + 'px';
+				return total + widths[key];
+			}, 0) + 'px';
+		}
+		function save_widths() {
+			try { localStorage.setItem(pref, JSON.stringify(widths)); }
+			catch (err) { /* Resizing still works when browser storage is blocked. */ }
+		}
+		if (widths.title) apply_widths();
+
+		headers.forEach(function (header, idx) {
+			var handle = document.createElement('span');
+			handle.className = 'schedule_column_resize';
+			handle.tabIndex = 0;
+			handle.setAttribute('role', 'separator');
+			handle.setAttribute('aria-orientation', 'vertical');
+			handle.setAttribute('aria-label', 'Resize ' + (idx ? header.textContent : 'Enabled') + ' column');
+			handle.title = 'Drag or use arrow keys to resize. Double-click to reset all column widths.';
+			header.appendChild(handle);
+
+			function measure_widths() {
+				if (widths.title) return;
+				headers.forEach(function (cell, index) {
+					widths[keys[index]] = Math.max(40, Math.min(2000, cell.getBoundingClientRect().width));
+				});
+			}
+			function resize(width) {
+				widths[keys[idx]] = Math.max(40, Math.min(2000, width));
+				apply_widths();
+			}
+			handle.onpointerdown = function (event) {
+				if (event.button !== 0) return;
+				event.preventDefault();
+				measure_widths();
+				var start_x = event.clientX;
+				var start_width = widths[keys[idx]];
+				handle.setPointerCapture(event.pointerId);
+				handle.onpointermove = function (event) { resize(start_width + event.clientX - start_x); };
+				self.finish_schedule_resize = function () {
+					handle.onpointermove = null;
+					handle.onpointerup = handle.onpointercancel = handle.onlostpointercapture = null;
+					if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+					self.finish_schedule_resize = null;
+					save_widths();
+				};
+				handle.onpointerup = handle.onpointercancel = handle.onlostpointercapture = self.finish_schedule_resize;
+			};
+			handle.onkeydown = function (event) {
+				if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+				event.preventDefault();
+				measure_widths();
+				resize(widths[keys[idx]] + (event.key === 'ArrowRight' ? 10 : -10));
+				save_widths();
+			};
+			handle.ondblclick = function () {
+				try { localStorage.removeItem(pref); }
+				catch (err) { /* Reset the current table even without browser storage. */ }
+				widths = {};
+				table.classList.remove('schedule_fixed_columns');
+				table.style.width = '';
+				Array.from(colgroup.children).forEach(function (col) { col.style.width = ''; });
+			};
+		});
 	},
 
 	update_job_last_runs: function () {
@@ -2912,15 +3060,48 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		if (plugin_id) {
 			var plugin = find_object(app.plugins, { id: plugin_id });
-			if (plugin && plugin.params && plugin.params.length) {
-				for (var idx = 0, len = plugin.params.length; idx < len; idx++) {
-					var param = plugin.params[idx];
-					event.params[param.id] = param.value;
-				}
+			var plugin_params = this.get_plugin_editor_params(plugin);
+			for (var idx = 0, len = plugin_params.length; idx < len; idx++) {
+				var param = plugin_params[idx];
+				event.params[param.id] = param.value;
 			}
 		}
 
 		this.refresh_plugin_params();
+	},
+
+	get_plugin_editor_params: function (plugin) {
+		// the editor's view of a plugin's params: a plugin that edits a script gets the
+		// build-defined syntax and theme selects in place of whatever it declares for them,
+		// unless it pins one as a hidden param (see script_pinned_param).
+		// The plugin record itself is never rewritten, and plugins without a script textarea
+		// (the only shape CodeMirror binds to) are returned untouched.
+		var params = (plugin && Array.isArray(plugin.params)) ? plugin.params : [];
+		if (!find_object(params, { id: 'script', type: 'textarea' })) return params;
+
+		var declared_lang = find_object(params, { id: 'lang' });
+		var declared_default_lang = find_object(params, { id: 'default_lang' });
+		var declared_theme = find_object(params, { id: 'theme' });
+		var pinned_lang = script_pinned_param(params, 'lang');
+		var pinned_theme = script_pinned_param(params, 'theme');
+
+		var lang = (declared_lang && declared_lang.value) || (declared_default_lang && declared_default_lang.value) || 'shell';
+		if (SCRIPT_LANG_ITEMS.indexOf(lang) == -1) lang = 'shell';
+
+		var theme = (declared_theme && declared_theme.value) || 'default';
+		if (SCRIPT_THEME_ITEMS.indexOf(theme) == -1) theme = 'default';
+
+		var pseudo = [];
+		if (!pinned_lang) pseudo.push({ id: 'lang', type: 'select', title: 'Syntax', items: SCRIPT_LANG_ITEMS, value: lang, [SCRIPT_PSEUDO]: true });
+		if (!pinned_theme) pseudo.push({ id: 'theme', type: 'select', title: 'Theme', items: SCRIPT_THEME_ITEMS, value: theme, [SCRIPT_PSEUDO]: true });
+
+		// a pinned param stays where it is: the hidden case renders nothing and saves the
+		// plugin's value on every event, as for any hidden param
+		return params.filter(function (param) {
+			if (param.id == 'lang') return !!pinned_lang;
+			if (param.id == 'theme') return !!pinned_theme;
+			return true;
+		}).concat(pseudo);
 	},
 
 	setScriptEditor: function () {
@@ -2933,7 +3114,22 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		let privs = app.user.privileges;
 		let canEdit = privs.admin || privs.edit_events || privs.create_events;
 
-		let lang = params.lang || params.default_lang || 'shell';
+		let lang_el = document.getElementById("fe_ee_pp_lang")
+		let theme_el = document.getElementById("fe_ee_pp_theme")
+
+		let plugin = find_object(app.plugins, { id: this.event.plugin });
+		let plugin_params = (plugin && Array.isArray(plugin.params)) ? plugin.params : [];
+		let pinned_lang = script_pinned_param(plugin_params, 'lang');
+		let pinned_theme = script_pinned_param(plugin_params, 'theme');
+
+		// the selects are the source of truth once rendered; a pinned value renders no select and
+		// applies ahead of whatever the event stored (off the build's list the editor mode falls
+		// back while the event still saves the pinned value); the params fall back covers a
+		// plugin whose script param is not the textarea shape these selects accompany
+		let lang = (lang_el && lang_el.value) || params.lang || params.default_lang || 'shell';
+		if (pinned_lang) lang = (SCRIPT_LANG_ITEMS.indexOf(pinned_lang.value) > -1) ? pinned_lang.value : 'shell';
+		let sel_theme = (theme_el && theme_el.value) || params.theme || 'default';
+		if (pinned_theme) sel_theme = (SCRIPT_THEME_ITEMS.indexOf(pinned_theme.value) > -1) ? pinned_theme.value : 'default';
 		// gutter for yaml linting
 		let gutter = ''
 		let lint = 'false'
@@ -2955,8 +3151,8 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		}
 		if (lang == 'props') { lang = 'text/x-properties' }
 
-		let theme = app.getPref('theme') == 'dark' && params.theme == 'default' ? 'gruvbox-dark' : params.theme;
-		if (params.theme == 'light') theme = 'default'
+		let theme = app.getPref('theme') == 'dark' && sel_theme == 'default' ? 'gruvbox-dark' : sel_theme;
+		if (sel_theme == 'light') theme = 'default'
 
 		let editor = CodeMirror.fromTextArea(el, {
 			mode: lang,
@@ -2979,7 +3175,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		editor.on('change', (cm) => { el.value = cm.getValue() })
 
 		// syntax selector
-		document.getElementById("fe_ee_pp_lang").addEventListener("change", function () {
+		if (lang_el) lang_el.addEventListener("change", function () {
 			let ln = this.options[this.selectedIndex].value;
 
 			editor.setOption("gutters", ['']);
@@ -3005,7 +3201,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		});
 
 		// theme 
-		document.getElementById("fe_ee_pp_theme").addEventListener("change", function () {
+		if (theme_el) theme_el.addEventListener("change", function () {
 			var thm = this.options[this.selectedIndex].value;
 			if (thm === 'default' && app.getPref('theme') === 'dark') thm = 'gruvbox-dark';
 			if (thm === 'light') thm = 'default';
@@ -3021,13 +3217,16 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 		if (event.plugin) {
 			var plugin = find_object(app.plugins, { id: event.plugin });
-			if (plugin && plugin.params && plugin.params.length) {
+			var plugin_params = this.get_plugin_editor_params(plugin);
+			if (plugin_params.length) {
 
 				html += '<div style="font-size:13px; margin-top:7px; display:none;"><span class="link addme" onMouseUp="$P().expand_fieldset($(this))"><i class="fa fa-plus-square-o">&nbsp;</i>Plugin Parameters</span></div>';
 				html += '<fieldset style="margin-top:7px; padding:10px 10px 0 10px; width: 55rem;"><legend class="link addme" onMouseUp="$P().collapse_fieldset($(this))"><i class="fa fa-minus-square-o">&nbsp;</i>Plugin Parameters</legend>';
 
-				for (var idx = 0, len = plugin.params.length; idx < len; idx++) {
-					var param = plugin.params[idx];
+				for (var idx = 0, len = plugin_params.length; idx < len; idx++) {
+					var param = plugin_params[idx];
+					// rendered under the script box instead, by the textarea case below
+					if (param[SCRIPT_PSEUDO]) continue;
 					var value = (param.id in params) ? params[param.id] : param.value;
 					switch (param.type) {
 
@@ -3041,6 +3240,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 							let ta_height = parseInt(param.rows) * 15;
 							html += '<div class="plugin_params_label">' + param.title + '</div>';
 							html += '<div class="plugin_params_content" style="width: 54rem"><textarea id="fe_ee_pp_' + param.id + '" style="width:99%; height:' + ta_height + 'px; resize:vertical;" spellcheck="false" onkeydown="return catchTab(this,event)">' + escape_text_field_value(value) + '</textarea></div>';
+							if (param.id == 'script') html += script_pseudo_params_html(plugin_params, params);
 							break;
 
 						case 'checkbox':
@@ -3221,9 +3421,10 @@ Class.subclass(Page.Base, "Page.Schedule", {
 		// plugin params
 		event.params = {};
 		var plugin = find_object(app.plugins, { id: event.plugin });
-		if (plugin && plugin.params && plugin.params.length) {
-			for (var idx = 0, len = plugin.params.length; idx < len; idx++) {
-				var param = plugin.params[idx];
+		var plugin_params = this.get_plugin_editor_params(plugin);
+		if (plugin_params.length) {
+			for (var idx = 0, len = plugin_params.length; idx < len; idx++) {
+				var param = plugin_params[idx];
 				switch (param.type) {
 					case 'text':
 					case 'textarea':
@@ -3378,7 +3579,10 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 			case 'state':
 				if (this.args.sub == 'edit_event') this.update_rc_value();
-				else if (this.args.sub == 'events') this.update_job_last_runs();
+				else if (this.args.sub == 'events') {
+					this.update_job_last_runs();
+					this.update_job_last_elapsed();
+				}
 				break;
 
 			case 'tick':  // refresh schedule page on minute tick to update timing
@@ -3411,6 +3615,7 @@ Class.subclass(Page.Base, "Page.Schedule", {
 
 	onDeactivate: function () {
 		// called when page is deactivated
+		if (this.finish_schedule_resize) this.finish_schedule_resize();
 		// this.div.html( '' );
 		if (app.network) app.network.unselectAll();
 
