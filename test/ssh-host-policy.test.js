@@ -10,7 +10,7 @@ const {
 	normalizeFingerprint,
 	parseFingerprintList,
 	resolveSshTarget
-} = require('../lib/ssh-host-policy');
+} = require('../bin/ssh-host-policy');
 
 const root = path.dirname(__dirname);
 let suiteBefore = function() {};

@@ -6,7 +6,7 @@ const conn = new Client();
 const {EOL} = require('os')
 const JSONStream = require('pixl-json-stream');
 const { spawn } = require('child_process')
-const { buildConnectionOptions, resolveSshTarget } = require('../lib/ssh-host-policy')
+const { buildConnectionOptions, resolveSshTarget } = require('./ssh-host-policy')
 
 const print = (text) => {
 	process.stdout.write(text + EOL);

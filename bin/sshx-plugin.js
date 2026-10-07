@@ -5,7 +5,7 @@ const { Client } = require('ssh2');
 const conn = new Client();
 const { EOL } = require('os')
 const fs = require('fs')
-const { buildConnectionOptions, resolveSshTarget } = require('../lib/ssh-host-policy')
+const { buildConnectionOptions, resolveSshTarget } = require('./ssh-host-policy')
 
 // read job info from stdin (sent by Cronicle engine)
 const job = JSON.parse(fs.readFileSync(process.stdin.fd))
