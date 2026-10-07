@@ -95,4 +95,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           tags: |
-            docker.io/cronicle/edge:${{ env.TAG }}
+            ${{ env.TAGS }}

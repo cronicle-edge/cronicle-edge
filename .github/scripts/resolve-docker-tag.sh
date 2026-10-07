@@ -5,6 +5,9 @@ set -euo pipefail
 case "${PUBLISH_EVENT_NAME:-}" in
 	push)
 		image_tag="latest"
+		if [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
+			image_tag="${GITHUB_REF#refs/tags/}"
+		fi
 		;;
 	release)
 		image_tag="${PUBLISH_RELEASE_TAG:-}"
@@ -27,3 +30,8 @@ if [[ -z "${GITHUB_ENV:-}" ]]; then
 fi
 
 printf 'TAG=%s\n' "$image_tag" >> "$GITHUB_ENV"
+image_tags="docker.io/cronicle/edge:$image_tag"
+if [[ "$image_tag" != latest ]]; then
+	image_tags+=",docker.io/cronicle/edge:latest"
+fi
+printf 'TAGS=%s\n' "$image_tags" >> "$GITHUB_ENV"

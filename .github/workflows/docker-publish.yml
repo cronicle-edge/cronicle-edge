@@ -78,6 +78,9 @@ jobs:
       - name: downcase REPO
         run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
@@ -100,19 +103,9 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Build and push Docker image (dockerhub)
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DHUB_USER }}
-          DOCKERHUB_TOKEN: ${{ secrets.DHUB_TOKEN }}
-        run: |
-          echo "building for $DOCKERHUB_USERNAME"
-          echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
-          echo "publishing tag $TAG"
-          docker build -t "cronicle/edge:$TAG" -f Dockerfile .
-          docker push "cronicle/edge:$TAG"

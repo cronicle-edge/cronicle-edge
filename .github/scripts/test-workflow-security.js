@@ -7,7 +7,7 @@ const os = require('os');
 const path = require('path');
 const yaml = require('js-yaml');
 
-const repoRoot = path.resolve(__dirname, '..');
+const repoRoot = path.resolve(__dirname, '../..');
 const workflowDir = path.join(repoRoot, '.github', 'workflows');
 const tagResolver = path.join(repoRoot, '.github', 'scripts', 'resolve-docker-tag.sh');
 
@@ -152,6 +152,7 @@ function runResolverCase(testCase) {
 			env: {
 				...process.env,
 				GITHUB_ENV: envFile,
+				GITHUB_REF: testCase.ref || 'refs/heads/main',
 				PUBLISH_EVENT_NAME: testCase.eventName,
 				PUBLISH_RELEASE_TAG: releaseTag || ''
 			}
@@ -163,7 +164,9 @@ function runResolverCase(testCase) {
 
 		if (testCase.expectedTag) {
 			assert.strictEqual(result.status, 0, `${testCase.name} should succeed: ${result.stderr}`);
-			assert.strictEqual(envOutput, `TAG=${testCase.expectedTag}\n`, `${testCase.name} wrote an unexpected environment value`);
+			const tags = `docker.io/cronicle/edge:${testCase.expectedTag}` +
+				(testCase.expectedTag === 'latest' ? '' : ',docker.io/cronicle/edge:latest');
+			assert.strictEqual(envOutput, `TAG=${testCase.expectedTag}\nTAGS=${tags}\n`, `${testCase.name} wrote an unexpected environment value`);
 		}
 		else {
 			assert.notStrictEqual(result.status, 0, `${testCase.name} should be rejected`);
@@ -179,6 +182,10 @@ const workflowAudit = auditWorkflows();
 
 [
 	{ name: 'push', eventName: 'push', releaseTag: '', expectedTag: 'latest' },
+	{ name: 'tag push', eventName: 'push', ref: 'refs/tags/v1.2.3', expectedTag: 'v1.2.3' },
+	{ name: 'branch push', eventName: 'push', ref: 'refs/heads/v1.2.3', expectedTag: 'latest' },
+	{ name: 'invalid pushed tag', eventName: 'push', ref: 'refs/tags/v1$(id)' },
+	{ name: 'newline in pushed tag', eventName: 'push', ref: 'refs/tags/v1\nTAG=latest' },
 	{ name: 'simple release', eventName: 'release', releaseTag: 'v1.2.3', expectedTag: 'v1.2.3' },
 	{ name: 'underscore prefix', eventName: 'release', releaseTag: '_candidate-1.2', expectedTag: '_candidate-1.2' },
 	{ name: 'maximum length', eventName: 'release', releaseTag: `a${'b'.repeat(127)}`, expectedTag: `a${'b'.repeat(127)}` },
