@@ -28,6 +28,18 @@ process.stdout.setEncoding('utf8');
 
 const stream = new JSONStream(process.stdin, process.stdout);
 
+// timestamp for annotated log lines. Anything but an enabled classic_stamp param -
+// including plugin records predating it, where parseInt sees undefined - keeps the
+// ISO-8601 UTC default; enabled switches to the classic Cronicle stamp
+// (yyyy/mm/dd hh:mi:ss) in the runner's local timezone.
+// Kept dependency free on purpose: pulling pixl-tools in just for getDateArgs would
+// grow this bundle by ~100 KB, and it is spawned once per job.
+function formatTimestamp(d, classic) {
+	if (!parseInt(classic)) return d.toISOString();
+	const p2 = (n) => String(n).padStart(2, '0');
+	return `${String(d.getFullYear()).padStart(4, '0')}/${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+}
+
 // detect "clear line" like sequences and return string after it.
 function trimAnimation(line) {
 		if(line.lastIndexOf('\x1b[0K') > -1)  return line.substring(line.lastIndexOf('\x1b[0K') + 4)
@@ -174,9 +186,7 @@ stream.on('json', function (job) {
           // otherwise just log it
 		  line = trimAnimation(line)
           if (job.params.annotate) {
-            // let dargs = Tools.getDateArgs(new Date());
-            // line = '[' + dargs.yyyy_mm_dd + ' ' + dargs.hh_mi_ss + '] ' + line;
-            line = `[${new Date().toISOString()}] ${line}`;
+            line = `[${formatTimestamp(new Date(), job.params.classic_stamp)}] ${line}`;
           }
 		  if(typeof line !== 'string') line = ''
           fs.appendFileSync(job.log_file, line.endsWith('\n') ? line : line + "\n");
