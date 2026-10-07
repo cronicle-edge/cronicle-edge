@@ -84,7 +84,10 @@
                     });
                 },
                 ajax: {  //api_key=f588e568b79826bd0e5577beef321dd5
-                    "url": "api/app/get_history?limit=1000&session_id=" + localStorage.session_id,
+                    "url": "api/app/get_history?limit=1000",
+                    "headers": {
+                        'X-Session-Id': localStorage.session_id
+                    },
                     "dataSrc": "rows"
                 },
 
