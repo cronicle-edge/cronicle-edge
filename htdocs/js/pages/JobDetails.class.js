@@ -439,9 +439,15 @@ Class.subclass(Page.Base, "Page.JobDetails", {
         return line;
       }
 
-      $.get(
-        `./api/app/get_job_log?id=${job.id}&session_id=${localStorage.session_id}`,
-        function (data) {
+
+	fetch(`./api/app/get_job_log?id=${job.id}`, {
+		method: 'GET',
+		headers: {
+			'X-Session-Id': localStorage.session_id
+		}
+	})
+	 .then(response => response.text())
+	 .then((data) => {
 		  if(job.debug) self.log = data // record output to $()P.log, to examine in browser console
 		  // detect "clear screen" sequence
 		  if(data.lastIndexOf('\x1b[2J') > -1) {
@@ -467,7 +473,7 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 
            $("#console_output").html(ansi_up.ansi_to_html(data));
         }
-      );
+      )
     }
 
 		this.div.html(html);
@@ -719,10 +725,27 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		this.charts.mem = mem_chart;
 	},
 
-	do_download_log: function () {
+	do_download_log: async function () {
 		// download job log file
 		const job = this.job;
-		window.location =  './api/app/get_job_log?id=' + job.id + '&download=1' + '&session_id=' + localStorage.session_id;
+		const response = await fetch(`./api/app/get_job_log?id=${job.id}&download=1`, {
+			headers: {
+				'X-Session-Id': localStorage.session_id
+			}
+		})
+
+		if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+		const blob = await response.blob();
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `${job.id}.log`;
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+		URL.revokeObjectURL(url);
+
 	},
 
 	getNiceJobSource: function(job) {
@@ -936,8 +959,12 @@ Class.subclass(Page.Base, "Page.JobDetails", {
 		}
 
 		try {
-			record.request = $.get('./api/app/get_job_log?id=' + this.encodeQueryComponent(id) +
-				'&session_id=' + this.encodeQueryComponent(localStorage.session_id || ''), handleSuccess)
+			record.request = $.ajax({
+				url: './api/app/get_job_log?id=' + this.encodeQueryComponent(id),
+				headers: { 'X-Session-Id': localStorage.session_id || '' },
+				dataType: 'text',
+				success: handleSuccess
+			})
 			if (record.request && record.request.fail) record.request.fail(handleFailure)
 			if (record.cancelled && record.request && record.request.abort) record.request.abort()
 		}

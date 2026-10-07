@@ -4,6 +4,8 @@ const http = require('node:http');
 const User = require('../lib/user');
 const OIDC = User.prototype;
 const Admin = require('../lib/api/admin');
+const defaultConfig = require('../sample_conf/config.json');
+const oidcExample = require('../sample_conf/examples/oauth.oidc.json');
 
 let suiteBefore = function() {};
 let suiteAfter = function() {};
@@ -165,6 +167,47 @@ function invokeLocalLogout(user, sessionId) {
 
 function recordExists(storage, key) { return storage.records.has(key); }
 
+test('Bundled defaults preserve legacy OAuth-only configuration', () => {
+	const configured = JSON.parse(JSON.stringify(defaultConfig.oauth));
+	Object.assign(configured, {
+		enabled: true,
+		client_id: 'cronicle-edge',
+		client_secret: 'test-secret',
+		redirect_uri: 'https://cron.example/api/user/callback',
+		authorize_url: 'https://idp.example/authorize',
+		token_url: 'https://idp.example/token',
+		user_url: 'https://idp.example/userinfo',
+		scope: 'openid profile email'
+	});
+	const user = Object.create(User.prototype);
+	user.server = { config: { get: (key) => key === 'oauth' ? configured : undefined } };
+	user.config = { get: () => ({}) };
+	user.logError = () => {};
+
+	const oauthConfig = user.getOauthConfig();
+	assert.equal(oauthConfig.issuer, '');
+	assert.equal(oauthConfig.jwks_url, '');
+	assert.equal(!!(oauthConfig.issuer && oauthConfig.jwks_url), false);
+	assert.equal(oauthConfig.logout.enabled, false);
+	assert.equal(oauthConfig.logout.end_session_url, '');
+	assert.equal(oauthConfig.logout.post_logout_redirect_uri, '');
+});
+
+test('OIDC example remains complete without becoming a runtime default', () => {
+	assert.equal(oidcExample.oauth.enabled, true);
+	assert.match(oidcExample.oauth.issuer, /^https:\/\/idp\.example\//);
+	assert.match(oidcExample.oauth.jwks_url, /^https:\/\/idp\.example\//);
+	assert.equal(oidcExample.oauth.logout.enabled, true);
+	assert.match(oidcExample.oauth.logout.end_session_url, /^https:\/\/idp\.example\//);
+});
+
+test('OAuth errors prefer the underlying fetch cause without losing ordinary errors', () => {
+	assert.equal(OIDC.getOAuthErrorMessage(new TypeError('fetch failed', {
+		cause: new Error('connect ECONNREFUSED 127.0.0.1:443')
+	})), 'connect ECONNREFUSED 127.0.0.1:443');
+	assert.equal(OIDC.getOAuthErrorMessage(new Error('response is not json')), 'response is not json');
+});
+
 test('RP logout is disabled by default', () => {
 	assert.equal(OIDC.buildOidcLogoutLocation({ client_id: 'client' }, {}), null);
 });
@@ -296,6 +339,51 @@ test('OIDC session metadata is minimal and validates subject consistency', () =>
 	assert.throws(() => OIDC.buildOidcSessionMetadata(oauth, { sub: 'one' }, { sub: 'two' }, 'id.token', 'session-secret'), /does not match/);
 	assert.throws(() => OIDC.buildOidcSessionMetadata(oauth, { sub: 'alice-id' }, { sub: 'alice-id' }, null,
 		'session-secret'), /requires a verified ID Token/);
+});
+
+test('OAuth callback exposes the authenticated user to before_login hooks', async () => {
+	const oauth = {
+		client_id: 'cronicle-edge',
+		client_secret: 'test-secret',
+		redirect_uri: 'https://cron.example/api/user/callback',
+		token_url: 'https://idp.example/token',
+		user_url: 'https://idp.example/userinfo'
+	};
+	const { user } = makeUser(oauth);
+	const authenticatedUser = {
+		username: 'alice',
+		email: 'alice@example.test',
+		full_name: 'Alice',
+		active: 1,
+		privileges: { admin: 1 }
+	};
+	let beforeLoginUser;
+
+	user.oauth_state = { 'state.Home': {} };
+	user.config = { get: (key) => key === 'session_expire_days' ? 30 : undefined };
+	user.requireParams = User.prototype.requireParams;
+	user.postJsonAsync = async () => ({ access_token: 'access-token', token_type: 'Bearer' });
+	user.getJsonAsync = async () => ({ login: 'alice' });
+	user.getUserAsync = async () => authenticatedUser;
+	user.doError = (code, description, callback) => callback({ code, description });
+	user.fireHook = function(name, args, callback) {
+		if (name === 'before_login') {
+			beforeLoginUser = args.user;
+			return callback('stop after before_login');
+		}
+		if (callback) callback();
+	};
+
+	await new Promise((resolve) => user.api_callback({
+		request: { headers: { 'user-agent': 'test' } },
+		response: { setHeader: function() {}, writeHead: function() {}, end: function() {} },
+		params: { code: 'auth-code', state: 'state.Home' },
+		query: {},
+		cookies: {},
+		ip: '127.0.0.1'
+	}, resolve));
+
+	assert.equal(beforeLoginUser, authenticatedUser);
 });
 
 let jose;

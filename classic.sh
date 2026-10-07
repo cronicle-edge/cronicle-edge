@@ -6,7 +6,7 @@ if [ -z "$1" ]; then
 fi
 
 if [ -z "$2" ]; then
-    baseImage="alpine:3.17"
+    baseImage="alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b"
 else
     baseImage="$2"
 fi

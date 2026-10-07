@@ -5,7 +5,7 @@ const PixlRequest = require('pixl-request');
 const request = new PixlRequest();
 const {EOL} = require('os')
 const JSONStream = require('pixl-json-stream');
-const { buildWorkflowReportTable } = require('../lib/workflow_report');
+const { buildWorkflowReportTable } = require('./workflow-report');
 
 let bullet = '>' // '⬤'
 

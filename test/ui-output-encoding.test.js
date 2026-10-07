@@ -7,7 +7,7 @@ const vm = require('node:vm');
 const { JSDOM } = require('jsdom');
 const filterXSS = require('xss');
 const AnsiUp = require('ansi_up').default;
-const { buildWorkflowReportTable, getLogTitle } = require('../lib/workflow_report');
+const { buildWorkflowReportTable, getLogTitle } = require('../bin/workflow-report');
 
 const projectRoot = path.dirname(__dirname);
 
@@ -77,13 +77,15 @@ function makeLog(payload) {
 	return ['head1', 'head2', 'head3', 'head4', payload, 'foot1', 'foot2', 'foot3', 'foot4'].join('\n');
 }
 
-function installDeferredGet(window) {
+function installDeferredAjax(window) {
 	const requests = [];
 	window.$ = {
-		get: function(url, success) {
+		ajax: function(options) {
+			const success = options.success;
 			const failureHandlers = [];
 			const request = {
-				url: url,
+				url: options.url,
+				headers: options.headers,
 				aborted: false,
 				fail: function(handler) {
 					failureHandlers.push(handler);
@@ -279,9 +281,9 @@ addTest('workflow view-log click and close use DOM-safe title id and ANSI output
 	const log = ['head1', 'head2', 'head3', 'head4', logPayload, 'foot1', 'foot2', 'foot3', 'foot4'].join('\n');
 	const requests = [];
 	window.$ = {
-		get: function(url, callback) {
-			requests.push(url);
-			callback(log);
+		ajax: function(options) {
+			requests.push(options);
+			options.success(log);
 			return { fail: function() { return this; } };
 		}
 	};
@@ -304,9 +306,10 @@ addTest('workflow view-log click and close use DOM-safe title id and ANSI output
 	assert.ok(icon.classList.contains('fa-eye-slash'));
 	assert.equal(window.globalThis.pwned, undefined);
 
-	const requestUrl = new URL(requests[0], window.location.href);
+	const requestUrl = new URL(requests[0].url, window.location.href);
 	assert.equal(requestUrl.searchParams.get('id'), id);
-	assert.equal(requestUrl.searchParams.get('session_id'), window.localStorage.session_id);
+	assert.equal(requestUrl.searchParams.has('session_id'), false);
+	assert.equal(requests[0].headers['X-Session-Id'], window.localStorage.session_id);
 
 	control.click();
 	assert.equal(grid.querySelector('.workflow-log-preview'), null);
@@ -334,7 +337,7 @@ addTest('workflow view-log deduplicates rapid clicks while a request is pending'
 	};
 	const view = createWorkflowView(window, id, job);
 	window.document.body.appendChild(view.root);
-	const requests = installDeferredGet(window);
+	const requests = installDeferredAjax(window);
 	const page = Object.create(window.Page.JobDetails.prototype);
 	page.args = { tail: 25 };
 	page.bind_workflow_log_controls(view.root);
@@ -364,7 +367,7 @@ addTest('workflow view-log ignores a stale response after unbind and reactivatio
 	const newJob = Object.assign({}, oldJob, { title: 'New safe generation' });
 	const oldView = createWorkflowView(window, id, oldJob);
 	window.document.body.appendChild(oldView.root);
-	const requests = installDeferredGet(window);
+	const requests = installDeferredAjax(window);
 	const page = Object.create(window.Page.JobDetails.prototype);
 	page.args = { tail: 25 };
 	page.bind_workflow_log_controls(oldView.root);
@@ -406,7 +409,7 @@ addTest('workflow view-log ignores a failure delivered after a successful previe
 	};
 	const view = createWorkflowView(window, id, job);
 	window.document.body.appendChild(view.root);
-	const requests = installDeferredGet(window);
+	const requests = installDeferredAjax(window);
 	const page = Object.create(window.Page.JobDetails.prototype);
 	page.args = { tail: 25 };
 	page.bind_workflow_log_controls(view.root);

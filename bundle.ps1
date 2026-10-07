@@ -358,8 +358,8 @@ if ($Level) {
 
 $sqlDrivers = [System.Collections.ArrayList]::new()
 $sqlArgs = [System.Collections.ArrayList]::new(@("--bundle", "--minify", "--platform=node", "--outdir=$Path/bin/engines"))
-# exclude unused drivers
-$sqlArgs.AddRange(@("--external:better-sqlite3", "--external:mysql"))
+# Knex references optional dialect drivers even when they are not selected.
+$sqlArgs.AddRange(@("--external:better-sqlite3", "--external:mysql", "--external:mariadb"))
 
 if($SQL) { $Oracle = $MSSQL = $Mysql = $Pgsql = $true }
 
@@ -398,7 +398,13 @@ if($sqlDrivers.Count -gt 0) {
   Write-Host "     - bundling SQL Engine [$($sqlDrivers -join ",")]"
   $engines += ", SQL [$($sqlDrivers -join ",")]"
   & npm $sqlInstall
+  if($LASTEXITCODE -ne 0) {
+    throw "Failed to install SQL bundle dependencies"
+  }
   & esbuild $sqlArgs
+  if($LASTEXITCODE -ne 0) {
+    throw "Failed to bundle SQL Engine"
+  }
   if($Sqlite) {
     Copy-Item -Recurse -Force node_modules/sqlite3/build $Path/bin/
   }
@@ -506,9 +512,10 @@ Write-Host "  cd $Path
 # perform unit test if needed
 if($Test) {
 
-  Write-Bold "Running unit test"
-  Write-Host "     - building test script"
-  esbuild --bundle --outdir=$Path/bin/ --platform=node lib/test.js
-  node .\node_modules\pixl-unit\unit.js $Path\bin\test.js 
-  Remove-Item $Path\bin\test.js 
+  # Write-Bold "Running unit test"
+  # Write-Host "     - building test script"
+  # esbuild --bundle --outdir=$Path/bin/ --platform=node lib/test.js
+  # node .\node_modules\pixl-unit\unit.js $Path\bin\test.js 
+  # Remove-Item $Path\bin\test.js 
+  npm test -- --verbose
 }

@@ -6,6 +6,8 @@ OIDC does not provision users or assign privileges. The username selected from U
 
 ## Example configuration
 
+A machine-readable copy of this example is available at [`sample_conf/examples/oauth.oidc.json`](../sample_conf/examples/oauth.oidc.json). It is not copied into the active configuration by the bundle or Docker image.
+
 ```json
 {
   "oauth": {
@@ -46,6 +48,8 @@ OIDC does not provision users or assign privileges. The username selected from U
 ```
 
 Use the exact URLs published by the provider. In particular, `issuer` is compared as an exact string with the signed `iss` claim, including a trailing slash when the provider includes one.
+
+The installed default configuration leaves the optional OIDC and logout endpoint values empty. Set them explicitly when enabling token validation or provider logout; the example URLs in this document are not runtime defaults.
 
 ## Configuration reference
 

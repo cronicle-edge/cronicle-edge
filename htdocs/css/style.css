@@ -1,8 +1,14 @@
 /* Styles for Cronicle */
 /* Theme colors: #3f7ed5, #5890db, #7cafda, #9ccffa */
 
+html {
+	scrollbar-gutter: stable;
+}
+
 div.container {
 	min-width: 750px;
+	width: auto;
+	margin: 0 0 0 12px;
 }
 
 #d_header_logo {
@@ -330,6 +336,63 @@ pre.log_chunk {
 }
 
 /* Data Table Row Colors */
+
+.schedule_event_link {
+	display: flow-root;
+}
+
+/* Keep the search input from increasing the standard pagination row height. */
+#schedule_table .schedule_search {
+	position: relative;
+}
+
+#schedule_table .schedule_search > span {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	white-space: nowrap;
+}
+
+.schedule_table_scroll {
+	overflow-x: auto;
+}
+
+.schedule_resizable th {
+	position: relative;
+}
+
+.schedule_column_resize {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 8px;
+	height: 100%;
+	cursor: col-resize;
+	touch-action: none;
+	user-select: none;
+	border-right: 2px solid transparent;
+	box-sizing: border-box;
+}
+
+.schedule_column_resize:hover, .schedule_column_resize:focus {
+	border-right-color: currentColor;
+	outline: none;
+}
+
+.schedule_fixed_columns {
+	table-layout: fixed;
+}
+
+.schedule_fixed_columns th, .schedule_fixed_columns td {
+	box-sizing: border-box;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.schedule_fixed_columns td .ellip {
+	max-width: 100% !important;
+}
 
 .data_table tr.plain td, .swatch.plain {
 	background-color: #efefef;
