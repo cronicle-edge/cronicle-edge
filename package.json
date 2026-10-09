@@ -50,7 +50,7 @@
 		"jstimezonedetect": "1.0.6",
 		"ldapts": "^8.1.7",
 		"lodash": "^4.18.1",
-		"moment": "2.29.4",
+		"moment": "2.31.0",
 		"moment-timezone": "0.5.37",
 		"netmask": "^2.0.2",
 		"openssl-wrapper": "^0.3.4",
@@ -62,7 +62,7 @@
 		"pixl-config": "^1.0.14",
 		"pixl-json-stream": "^1.0.9",
 		"pixl-logger": "^2.0.4",
-		"pixl-mail": "^1.1.10",
+		"pixl-mail": "1.1.10",
 		"pixl-perf": "^1.0.9",
 		"pixl-request": "^2.6.11",
 		"pixl-server": "^1.0.50",
@@ -72,7 +72,7 @@
 		"pixl-tools": "^2.0.2",
 		"pixl-webapp": "^2.0.3",
 		"read-last-lines": "^1.8.0",
-		"shell-quote": "1.9.0",
+		"shell-quote": "1.11.0",
 		"socket.io": "4.8.1",
 		"socket.io-client": "4.8.1",
 		"ssh2": "^1.11.0",
@@ -82,6 +82,11 @@
 		"uuid": "^13.0.2",
 		"vis-network": "^10.0.2",
 		"xss": "^1.0.8"
+	},
+	"overrides": {
+		"get-uri": {
+			"basic-ftp": "6.2.2"
+		}
 	},
 	"devDependencies": {
 		"pixl-unit": "^2.0.1"
