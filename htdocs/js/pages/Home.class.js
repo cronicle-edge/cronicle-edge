@@ -155,6 +155,34 @@ Class.subclass( Page.Base, "Page.Home", {
 		return true;
 	},
 	
+	get_failed_job_badge: function(stats, ui) {
+		stats = stats || {};
+		ui = ui || {};
+
+		var failedCount = Math.max(0, parseInt(stats.jobs_failed, 10) || 0);
+		var completedCount = Math.max(0, parseInt(stats.jobs_completed, 10) || 0);
+		var errorRate = parseFloat(ui.err_rate) || 0.03;
+		var badgeClass = completedCount && ((failedCount / completedCount) > errorRate) ? 'red2' : 'gray';
+		var errorEntries = Object.entries(stats.errorLog || {}).map(function(entry) {
+			return [String(entry[0]), Math.max(0, parseInt(entry[1], 10) || 0)];
+		});
+		var failedRuns = errorEntries.reduce(function(total, entry) { return total + entry[1]; }, 0);
+		var tooltip = errorEntries.sort(function(left, right) { return right[1] - left[1]; }).slice(0, 21)
+			.map(function(entry) {
+				// Event titles are text, while the count markup below is deliberately trusted.
+				return encode_entities(entry[0]) + ':\t<b>' + entry[1] + '</b>';
+			}).join('\n');
+
+		if (failedCount > failedRuns) {
+			tooltip = '<u>Failed to start: <b>' + (failedCount - failedRuns) + '</b></u> \n' + tooltip;
+		}
+
+		// Encode the complete, mixed-content tooltip for its surrounding HTML attribute.
+		var titleAttribute = escape_text_field_value(tooltip);
+		return '<a style="cursor:pointer;" href="#History?sub=error_history&error=1&max=' + failedCount +
+			'" title="' + titleAttribute + '" class="color_label ' + badgeClass + '">' + failedCount + '</a>&nbsp;';
+	},
+
 	refresh_header_stats: function () {
 		// refresh daemons stats in header fieldset
 		var html = '';
@@ -185,14 +213,7 @@ Class.subclass( Page.Base, "Page.Home", {
 		$(document).tooltip("disable")
 		$(document).tooltip("enable")
 
-		let errBg = stats.jobs_completed > 0 && (stats.jobs_failed || 0)/stats.jobs_completed > (parseFloat(ui.err_rate) || 0.03) ? 'red2' : 'gray'
-		let errorLog = Object.entries(stats.errorLog || {})
-		let runs_failed = Object.values(stats.errorLog || {}).reduce((a,b)=>a+b, 0)
-		let errTitle = errorLog.slice(0,21).sort((a,b)=> a[1] < b[1] ? 1 : -1).map(e=>`${e[0]}:\t<b>${e[1]}</b>`).join("\n")
-		if(stats.jobs_failed > runs_failed ) errTitle  = `<u>Failed to start: <b>${stats.jobs_failed - runs_failed }</b></u> \n` + errTitle 
-    // xhtml
-
-	let failed_badge = `<span style="cursor:pointer;" onclick='Nav.go("History?sub=error_history&error=1&max=${stats.jobs_failed || 0}")' title="${errTitle}" class="color_label ${errBg}">${stats.jobs_failed || 0}</span>&nbsp;`
+	let failed_badge = this.get_failed_job_badge(stats, ui)
 	
 	status_bar = [
 		{name: "EVENTS", value:  active_events.length},
