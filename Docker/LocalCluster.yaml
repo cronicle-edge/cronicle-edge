@@ -2,9 +2,8 @@
 
 # Before you start:
 # make sure your docker engine is in swarm mode
-# build a local cronicle-edge image: docker build -t cronicle:edge -f Dockerfile .
-# create cronicle secret: echo myPassword123 | docker secret create secret_key -
-# make sure secret_key is not numeric (e.g. 123456), it should contain at least 1 letter or special character
+# build a local cronicle-edge image: docker build -t cronicle:bundle -f Dockerfile .
+# create the external secret once: openssl rand -hex 32 | docker secret create secret_key -
 
 # start cluster:         docker stack deploy --compose-file  Docker/LocalCluster.yaml cron_stack
 # check status:          docker stack ps cron_stack
@@ -16,40 +15,36 @@ services:
   worker1:
     image: cronicle:bundle
     hostname: worker1
-    ports: 
-      - "3013:3012"
     networks:
       - cw
     deploy:
       replicas: 1
-    entrypoint: worker
+    command: worker
     environment:
-      - CRONICLE_secret_key = cronicle_secret_key
-    # secrets:
-    #   - source: "secret_key"
-    #     target: "secret_key"
-    #     uid: "0"
-    #     gid: "0"
-    #     mode: 0400
+      - CRONICLE_secret_key_file=/run/secrets/secret_key
+    secrets:
+      - source: "secret_key"
+        target: "secret_key"
+        uid: "0"
+        gid: "0"
+        mode: 0400
 
   worker2:
     image: cronicle:bundle
     hostname: worker2
-    ports: 
-      - "3014:3012"
     networks:
       - cw
     deploy:
       replicas: 1
-    entrypoint: worker
+    command: worker
     environment:
-      - CRONICLE_secret_key = cronicle_secret_key
-    # secrets:
-    #   - source: "secret_key"
-    #     target: "secret_key"
-    #     uid: "0"
-    #     gid: "0"
-    #     mode: 0400
+      - CRONICLE_secret_key_file=/run/secrets/secret_key
+    secrets:
+      - source: "secret_key"
+        target: "secret_key"
+        uid: "0"
+        gid: "0"
+        mode: 0400
  
   manager1:
     image: cronicle:bundle
@@ -57,29 +52,29 @@ services:
     ports: 
       - "3012:3012"
     volumes:
-      - cron_drive_fs:/data
+      - cron_drive_fs:/opt/cronicle/data
     networks:
       - cw
     deploy:
       replicas: 1
-    entrypoint: manager 
+    command: manager
     environment:
-      - CRONICLE_secret_key = cronicle_secret_key
-    # secrets:
-    #   - source: "secret_key"
-    #     target: "secret_key"
-    #     uid: "0"
-    #     gid: "0"
-    #     mode: 0400
+      - CRONICLE_secret_key_file=/run/secrets/secret_key
+    secrets:
+      - source: "secret_key"
+        target: "secret_key"
+        uid: "0"
+        gid: "0"
+        mode: 0400
 
 networks:
   cw:
     driver: overlay
     attachable: true
     
-# secrets:
-#   secret_key:
-#     external: true
+secrets:
+  secret_key:
+    external: true
 
 volumes:
   cron_drive_fs:
