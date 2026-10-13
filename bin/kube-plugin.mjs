@@ -6,6 +6,7 @@ import { readFileSync } from 'fs'
 import { PassThrough } from 'stream';
 import { EOL } from 'os'
 import { load } from 'js-yaml'
+import PluginEnv from '../lib/plugin-env.js'
 
 // cronicle should send job json to stdin
 let job = {}
@@ -82,7 +83,6 @@ if (KUBE_CONFIG && KUBE_CONFIG.trim() !== "") {
   try { kc.loadFromString(KUBE_CONFIG) }
   catch {
     printWarning("Invalid kube config setting. Falling back to default")
-    console.log(KUBE_CONFIG)
     kc.loadFromDefault()
   }
 }
@@ -116,12 +116,9 @@ process.on(sig, async (message) => {
 
 
 // --------- Resolve ENV Variables (to pass to pod) -------------------------//
-let exclude = ['KUBE_CONFIG']
-let include = ['BASE_URL', 'BASE_APP_URL', 'NAMESPACE', 'KEEP_POD', 'IMAGE']
 let truncVar = parseInt(process.env['TRUNC_VAR'])
-let envVars = Object.entries(process.env)
-  .filter(([k, v]) => ((k.startsWith('JOB_') || k.startsWith('KUBE_') || k.startsWith('ARG') || include.indexOf(k) > -1) && exclude.indexOf(k) === -1))
-  .map(([k, v]) => { return { name: (truncVar ? k.replace(/^KUBE_/, '') : k), value: v } })
+let envVars = PluginEnv.buildKubePluginEnv(process.env, truncVar)
+  .map(([name, value]) => { return { name, value } })
 
 
 // ------------------------ POD/JOB Manifest for Kube-Run --------------------------------

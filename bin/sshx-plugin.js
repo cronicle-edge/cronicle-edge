@@ -5,6 +5,7 @@ const { Client } = require('ssh2');
 const conn = new Client();
 const { EOL } = require('os')
 const fs = require('fs')
+const PluginEnv = require('../lib/plugin-env.js')
 
 // read job info from stdin (sent by Cronicle engine)
 const job = JSON.parse(fs.readFileSync(process.stdin.fd))
@@ -53,13 +54,10 @@ let SCRIPT_BASE64 = Buffer.from(process.env['SCRIPT'] ?? '#!/usr/bin/env sh\nech
 let prefix = process.env['PREFIX'] || ''
 
 // generate stdin script to pass variables and user script in base64 format
-let exclude = ['SSH_HOST', 'SSH_KEY', 'SSH_PASSWORD']
-let include = ['BASE_URL', 'BASE_APP_URL']
 process.env['JOB_CHAIN_DATA'] = JSON.stringify(job.chain_data) || 'has no data'
 
-let vars = Object.entries(process.env)
-    .filter(([k, v]) => ((k.startsWith('JOB_') || k.startsWith('SSH_') || k.startsWith('ARG') || include.indexOf(k) > -1) && exclude.indexOf(k) === -1))
-    .map(([key, value]) => `export ${truncVar ? key.replace(/^SSH_/, '') : key}=$(printf "${Buffer.from(value).toString('base64')}" | base64 -di)`)
+let vars = PluginEnv.buildSSHXPluginEnv(process.env, truncVar)
+    .map(([key, value]) => `export ${key}=$(printf "${Buffer.from(value).toString('base64')}" | base64 -di)`)
     .join('\n')
 
 let script = `
@@ -245,4 +243,3 @@ process.on(sig, (signal) => {
         if (process.connected) process.disconnect()
     }
 })
-
