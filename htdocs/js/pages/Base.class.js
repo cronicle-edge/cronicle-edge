@@ -5,6 +5,17 @@ Class.subclass(Page, "Page.Base", {
 	requireLogin: function (args) {
 		// user must be logged into to continue
 		var self = this;
+		var session_reload_key = 'cronicle_resume_session_reload:' + window.location.pathname;
+		var session_reload_limit = 30000;
+
+		function show_session_error(err) {
+			if (err && (typeof(err.code) == 'number')) {
+				app.doError("Network Error: " + err.code + ": " + err.description);
+			}
+			else {
+				app.doError("Error: " + ((err && err.description) || "Unknown error"));
+			}
+		}
 
 		if (!app.user) {
 			// require login
@@ -17,7 +28,13 @@ Class.subclass(Page, "Page.Base", {
 			Debug.trace("Recovering session using session_id or cookie");
 
             // check for session_id on the backend  (vs localStorage), it might be stored in cookie now (during oauth)
-			app.api.post('user/resume_session', {session_id: session_id}, function (resp) {
+			app.api.post('user/resume_session', {session_id: session_id}
+				// success response
+				, function (resp) {
+					// A successful response proves the external proxy session is usable again.
+					try { window.sessionStorage.removeItem(session_reload_key); }
+					catch (storage_error) {;}
+
 					if (resp.user) {
 						Debug.trace("User Session Resume: " + resp.username + ": " + resp.session_id);
 						app.hideProgress();
@@ -33,7 +50,35 @@ Class.subclass(Page, "Page.Base", {
 						if (session_id) self.setPref('session_id', '');
 						setTimeout(function () { Nav.go('Login'); }, 1);
 					}
-				});
+				}
+				// error response
+				, function (err) {
+					// External auth proxies can reject expired AJAX sessions with HTTP 401.
+					// Retry once as a top-level request so their interactive login can run.
+					if (!err || (typeof(err.code) != 'number') || (err.code != 401)) {
+						show_session_error(err);
+						return;
+					}
+
+					var now = Date.now();
+					try {
+						var last_reload = parseInt(window.sessionStorage.getItem(session_reload_key), 10) || 0;
+						if (last_reload && ((now - last_reload) < session_reload_limit)) {
+							show_session_error(err);
+							return;
+						}
+						window.sessionStorage.setItem(session_reload_key, now);
+					}
+					catch (storage_error) {
+						// Do not risk a reload loop when the browser blocks sessionStorage.
+						show_session_error(err);
+						return;
+					}
+
+					Debug.trace("Session resume was rejected by an external auth proxy, reloading for authentication");
+					window.location.reload();
+				}
+			);
 
 			return false;
 		}
