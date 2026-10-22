@@ -27,6 +27,18 @@ Class.subclass( Page.Base, "Page.History", {
 		
 		return true;
 	},
+
+	render_job_status: function(job) {
+		if (job.code == 0) {
+			return '<span class="color_label green"><i class="fa fa-check">&nbsp;</i>Success</span>';
+		}
+
+		var errorTitle = typeof job.description === 'string' ? job.description.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "") : " ";
+		errorTitle = encode_attrib_entities(errorTitle);
+		var color = (job.code == 255) ? 'yellow' : 'red';
+		var label = (job.code == 255) ? 'Warning' : 'Error';
+		return `<span class="color_label ${color}" title="${errorTitle}"><i class="fa fa-warning">&nbsp;</i>${label}</span>`;
+	},
 	
 	gosub_history: function(args) {
 		// show history
@@ -128,12 +140,7 @@ Class.subclass( Page.Base, "Page.History", {
 			var job_link = '<div class="td_big">--</div>';
 			if (job.id) job_link = `<div class="td_big">${href}` + self.getNiceJob('<b>' + job.id + '</b>') + '</a></div>';
 			
-			// error title - clear from escape characters and tags
-			var errorTitle = typeof job.description === 'string' ? job.description.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "").replace(/"/g, "&quot;") : " " 
-			if(errorTitle.indexOf('<') > -1) errorTitle = encode_entities(errorTitle) // sometime error message contains <>
-
-			var jobStatus = (job.code == 0) ? '<span class="color_label green"><i class="fa fa-check">&nbsp;</i>Success</span>' : `<span class="color_label red" title="${errorTitle}"><i class="fa fa-warning">&nbsp;</i>Error</span>`
-			if(job.code == 255) {jobStatus = `<span class="color_label yellow" title="${errorTitle}"><i class="fa fa-warning">&nbsp;</i>Warning</span>`}
+			var jobStatus = self.render_job_status(job)
 			
 			var tds = [
 				job_link,				
@@ -852,9 +859,7 @@ Class.subclass( Page.Base, "Page.History", {
 			if (job.cpu) cpu_avg = short_float( (job.cpu.total || 0) / (job.cpu.count || 1) );
 			if (job.mem) mem_avg = short_float( (job.mem.total || 0) / (job.mem.count || 1) );
 			
-			var errorTitle = job.description ? job.description.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, "") : " " 
-			var jobStatusHist = (job.code == 0) ? '<span class="color_label green"><i class="fa fa-check">&nbsp;</i>Success</span>' : `<span title="${errorTitle}" class="color_label red"><i class="fa fa-warning">&nbsp;</i>Error</span>`
-			if(job.code == 255) {jobStatusHist = `<span title="${errorTitle}" class="color_label yellow"><i class="fa fa-warning">&nbsp;</i>Warning</span>`}
+			var jobStatusHist = self.render_job_status(job)
 
 			let job_expired = time_now() > job.expires_at
 			let href = job_expired ? '' : '<a href="#JobDetails?id='+job.id+'">'
