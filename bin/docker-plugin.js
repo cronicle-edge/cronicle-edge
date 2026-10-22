@@ -6,6 +6,7 @@ const { Writable } = require('stream');
 const { EOL } = require('os');
 const path = require('path')
 const fs = require('fs')
+const { normalizeDockerAttachmentName } = require('./docker-attachment')
 
 // cronicle should send job json to stdin
 let job = {}
@@ -182,18 +183,24 @@ const dockerRun = async () => {
 
     // create tar archive for entrypoint script
     const pack = tar.pack()
+	const archiveNames = new Set([path.posix.basename(ENTRYPOINT_PATH)])
 
     pack.entry({ name: path.basename(ENTRYPOINT_PATH), mode: 0o755 }, script)
 
     if (job.chain_data) {
         pack.entry({ name: 'chain_data'}, JSON.stringify(job.chain_data))
+		archiveNames.add('chain_data')
     }
     
     // attach file
 	if(Array.isArray(job.files)) {
 		job.files.forEach((e)=> {
             if(e.name) { 
-                pack.entry({  name: e.name }, e.content || '')
+				let name
+				try { name = normalizeDockerAttachmentName(e.name, archiveNames) }
+				catch (err) { exit(err.message) }
+				archiveNames.add(name)
+				pack.entry({ name: name }, e.content || '')
 			}
 		})
 	}
