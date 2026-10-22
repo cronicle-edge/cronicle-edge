@@ -173,14 +173,39 @@ Class.subclass(Page, "Page.Base", {
 		return html;
 	},
 
+	toWellFormedString: function(value) {
+		// encodeURIComponent throws on lone UTF-16 surrogates, so normalize them first
+		var input = (value == null) ? '' : String(value);
+		if (input.toWellFormed) return input.toWellFormed();
+
+		var output = '';
+		for (var idx = 0; idx < input.length; idx++) {
+			var code = input.charCodeAt(idx);
+			if ((code >= 0xD800) && (code <= 0xDBFF)) {
+				var next = input.charCodeAt(idx + 1);
+				if ((next >= 0xDC00) && (next <= 0xDFFF)) {
+					output += input.charAt(idx) + input.charAt(++idx);
+				}
+				else output += '\uFFFD';
+			}
+			else if ((code >= 0xDC00) && (code <= 0xDFFF)) output += '\uFFFD';
+			else output += input.charAt(idx);
+		}
+		return output;
+	},
+
+	encodeQueryComponent: function(value) {
+		return encodeURIComponent(this.toWellFormedString(value));
+	},
+
 	getNiceArgument: function(arg, maxWidth, context) {
 		context = context || {}
 		let nice_arg = encode_entities(`${arg || ''}`)
 		if(nice_arg.length > maxWidth) nice_arg = nice_arg.substring(0,maxWidth-3) + "..."
 		let href = '#History?sub=error_history'
-		if(context.id) href += ('&id=' + context.id)
+		if(context.id) href += ('&id=' + this.encodeQueryComponent(context.id))
 		if(context.error) href += '&error=1'
-		return `<a href="${href}&max=25&arg=${encodeURIComponent(arg)}">${nice_arg}</a>`
+		return `<a href="${href}&max=25&arg=${this.encodeQueryComponent(arg)}">${nice_arg}</a>`
 	},
 
 	setGroupVisible: function (group, visible) {
