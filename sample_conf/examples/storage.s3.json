@@ -6,10 +6,6 @@
         "forcePathStyle": true,
         "region": "us-east-1",
         "hostPrefixEnabled": false,
-        "credentials": {
-            "accessKeyId": "minioadmin",
-            "secretAccessKey": "minioadmin"
-        },
         "correctClockSkew": true,
         "maxRetries": 5,
         "httpOptions": {
